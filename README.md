@@ -1,4 +1,4 @@
- fs /# Spark Excel Library
+# Spark Excel Library
 
 A library for querying Excel files with Apache Spark, for Spark SQL and DataFrames.
 
