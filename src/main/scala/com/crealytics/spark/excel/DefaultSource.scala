@@ -15,10 +15,10 @@ class DefaultSource
                                parameters: Map[String, String]): ExcelRelation = {
 
     val location = checkParameter(parameters, "location")
-    val sheetName = checkParameter(parameters, "sheetName")
+    val sheetName = parameters.get("sheetName")
     val useHeader = checkParameter(parameters, "useHeader").toBoolean
     val treatEmptyValuesAsNulls = checkParameter(parameters, "treatEmptyValuesAsNulls").toBoolean
-    val userSchema = null//checkParameter(parameters, "userSchema")
+    val userSchema = null // checkParameter(parameters, "userSchema")
     val inferSchema = checkParameter(parameters, "inferSchema").toBoolean
     val addColorColumns = checkParameter(parameters, "addColorColumns").toBoolean
     ExcelRelation(

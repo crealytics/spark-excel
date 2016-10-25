@@ -6,7 +6,7 @@ import java.text.NumberFormat
 import java.util.Locale
 import java.io._
 import scala.collection.JavaConverters._
-import org.apache.poi.ss.usermodel.{ WorkbookFactory, Row => SheetRow, Cell, DataFormatter }
+import org.apache.poi.ss.usermodel.{ WorkbookFactory, Row => SheetRow, Cell, DataFormatter, Sheet, Workbook }
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.sources._
@@ -16,7 +16,7 @@ import scala.util.Try
 
 case class ExcelRelation(
   location: String,
-  sheetName: String,
+  sheetName: Option[String],
   useHeader: Boolean,
   treatEmptyValuesAsNulls: Boolean,
   inferSheetSchema: Boolean,
@@ -26,10 +26,18 @@ case class ExcelRelation(
   (@transient val sqlContext: SQLContext)
 extends BaseRelation with TableScan with PrunedScan {
   val workbook = WorkbookFactory.create(new FileInputStream(location))
-  val sheet = workbook.getSheet(sheetName)
+  val sheet = findSheet(workbook, sheetName)
   val headers = sheet.getRow(0).cellIterator().asScala.to[Vector]
   override val schema: StructType = inferSchema
   val dataFormatter = new DataFormatter();
+
+  private def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet = {
+    sheetName.map { sn =>
+      Option(workBook.getSheet(sn)).getOrElse(
+          throw new IllegalArgumentException(s"Unknow sheet $sn")
+        )
+    }.getOrElse(workBook.sheetIterator.next)
+  }
   override def buildScan: RDD[Row] = buildScan(schema.map(_.name).toArray)
 
   override def buildScan(requiredColumns: Array[String]): RDD[Row] = {
@@ -41,12 +49,13 @@ extends BaseRelation with TableScan with PrunedScan {
       val cellExtractor: Cell => Any = if (isColor == null) {
         { cell: Cell =>
           val value = cell.getCellType match {
-            case Cell.CELL_TYPE_NUMERIC => cell.getNumericCellValue
-            case Cell.CELL_TYPE_BOOLEAN => cell.getBooleanCellValue
-            case Cell.CELL_TYPE_STRING => cell.getStringCellValue
+            case Cell.CELL_TYPE_NUMERIC => cell.getNumericCellValue.toString
+            case Cell.CELL_TYPE_BOOLEAN => cell.getBooleanCellValue.toString
+            case Cell.CELL_TYPE_STRING => cell.getStringCellValue.toString
+            case Cell.CELL_TYPE_BLANK => null
             case t => throw new RuntimeException(s"Unknown cell type $t for $cell")
           }
-          castTo(value.toString, schema(columnIndex).dataType)
+          castTo(value, schema(columnIndex).dataType)
         }
       } else {
         _.getCellStyle.getFillForegroundColorColor match {
@@ -64,7 +73,7 @@ extends BaseRelation with TableScan with PrunedScan {
         }
       }
     }.to[Vector]
-    val rows = sheet.rowIterator().asScala.drop(1).map(row => lookups.map(l => l(row)))
+    val rows = dataRows.map(row => lookups.map(l => l(row)))
     val result = rows.to[Vector]
 
     sqlContext.sparkContext.parallelize(result.map(Row.fromSeq))
@@ -72,6 +81,9 @@ extends BaseRelation with TableScan with PrunedScan {
 
   // Cast a String to a Spark Data Type
   private def castTo(datum: String, castType: DataType): Any = {
+    if (datum == null) {
+      return null
+    }
     castType match {
       case _: ByteType => datum.toByte
       case _: ShortType => datum.toShort
@@ -93,6 +105,8 @@ extends BaseRelation with TableScan with PrunedScan {
   private def rowsRdd: RDD[SheetRow] = {
     parallelize(sheet.rowIterator().asScala.toSeq)
   }
+
+  private def dataRows = sheet.rowIterator.asScala.drop(if (useHeader) 1 else 0)
   private def parallelize[T: scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
   private def inferSchema(): StructType = {
     if (this.userSchema != null) {
@@ -105,7 +119,7 @@ extends BaseRelation with TableScan with PrunedScan {
         firstRow.zipWithIndex.map { case (value, index) => s"C$index"}
       }
       val baseSchema = if (this.inferSheetSchema) {
-        val stringsAndCellTypes = sheet.rowIterator.asScala.drop(1).map(_.cellIterator.asScala.map(c => c.getCellType).toVector).toVector
+        val stringsAndCellTypes = dataRows.map(_.cellIterator.asScala.map(c => c.getCellType).toVector).toVector
         InferSchema(parallelize(stringsAndCellTypes), header.toArray)
       } else {
         // By default fields are assumed to be StringType
