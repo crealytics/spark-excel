@@ -29,7 +29,6 @@ extends BaseRelation with TableScan with PrunedScan {
   val path = new Path(location)
   val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
   val workbook = WorkbookFactory.create(inputStream)
-  inputStream.close()
   val sheet = findSheet(workbook, sheetName)
   val headers = sheet.getRow(0).cellIterator().asScala.to[Vector]
   override val schema: StructType = inferSchema
