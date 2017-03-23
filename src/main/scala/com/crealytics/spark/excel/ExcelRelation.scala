@@ -30,7 +30,14 @@ extends BaseRelation with TableScan with PrunedScan {
   val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
   val workbook = WorkbookFactory.create(inputStream)
   val sheet = findSheet(workbook, sheetName)
-  lazy val firstRowWithData = sheet.asScala.find(_ != null).getOrElse(throw new RuntimeException(s"Sheet $sheet doesn't seem to contain any data")).cellIterator().asScala.to[Vector]
+  lazy val firstRowWithData = sheet
+    .asScala
+    .find(_ != null)
+    .getOrElse(throw new RuntimeException(s"Sheet $sheet doesn't seem to contain any data"))
+    .cellIterator()
+    .asScala
+    .to[Vector]
+
   override val schema: StructType = inferSchema
   val dataFormatter = new DataFormatter();
 
