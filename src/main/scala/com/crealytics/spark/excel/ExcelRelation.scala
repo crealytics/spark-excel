@@ -151,7 +151,8 @@ extends BaseRelation with TableScan with PrunedScan {
     while(isRowEmpty) {
       if(sheet.getRow(rowIndex) != null) {
         isRowEmpty = false
-        headers = sheet.getRow(rowIndex).cellIterator().asScala.to[Vector]
+        headers = 
+          sheet.getRow(rowIndex).cellIterator().asScala.to[Vector]
       }
       rowIndex += 1
     }
