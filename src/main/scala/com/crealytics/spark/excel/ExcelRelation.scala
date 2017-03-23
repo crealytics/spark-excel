@@ -30,7 +30,7 @@ extends BaseRelation with TableScan with PrunedScan {
   val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
   val workbook = WorkbookFactory.create(inputStream)
   val sheet = findSheet(workbook, sheetName)
-  val headers = sheet.getRow(0).cellIterator().asScala.to[Vector]
+  lazy val firstRowWithData = sheet.asScala.find(_ != null).getOrElse(throw new RuntimeException(s"Sheet $sheet doesn't seem to contain any data")).cellIterator().asScala.to[Vector]
   override val schema: StructType = inferSchema
   val dataFormatter = new DataFormatter();
 
@@ -115,7 +115,7 @@ extends BaseRelation with TableScan with PrunedScan {
     if (this.userSchema != null) {
       userSchema
     } else {
-      val firstRow = headers
+      val firstRow = firstRowWithData
       val header = if (useHeader) {
         firstRow.map(_.getStringCellValue)
       } else {
