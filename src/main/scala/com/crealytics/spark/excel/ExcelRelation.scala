@@ -14,6 +14,7 @@ import org.apache.spark.sql.types._
 import org.apache.hadoop.fs.{FileSystem, Path}
 
 import scala.util.Try
+import scala.collection.immutable.Vector
 
 case class ExcelRelation(
   location: String,
@@ -30,7 +31,7 @@ extends BaseRelation with TableScan with PrunedScan {
   val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
   val workbook = WorkbookFactory.create(inputStream)
   val sheet = findSheet(workbook, sheetName)
-  val headers = sheet.getRow(0).cellIterator().asScala.to[Vector]
+  val headers = getHeaders(sheet)
   override val schema: StructType = inferSchema
   val dataFormatter = new DataFormatter();
 
@@ -137,5 +138,28 @@ extends BaseRelation with TableScan with PrunedScan {
         baseSchema
       }
     }
+  }
+  
+  /**
+   * Returns the header of a sheet skipping initial empty rows.
+   * 
+   * @param The sheet for which the header should be returned
+   * @return Vector[Cell]
+   */
+  private def getHeaders(sheet: Sheet): Vector[Cell] = {
+    var headers: Vector[Cell] = Vector.empty
+    
+    var rowIndex = 0
+    var isRowEmpty = true
+    while(isRowEmpty) {
+      if(sheet.getRow(rowIndex) != null) {
+        isRowEmpty = false
+        headers = 
+          sheet.getRow(rowIndex).cellIterator().asScala.to[Vector]
+      }
+      rowIndex += 1
+    }
+    
+    return headers
   }
 }
