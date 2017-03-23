@@ -11,6 +11,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
+import org.apache.hadoop.fs.{FileSystem, Path}
 
 import scala.util.Try
 
@@ -25,7 +26,9 @@ case class ExcelRelation(
   )
   (@transient val sqlContext: SQLContext)
 extends BaseRelation with TableScan with PrunedScan {
-  val workbook = WorkbookFactory.create(new FileInputStream(location))
+  val path = new Path(location)
+  val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
+  val workbook = WorkbookFactory.create(inputStream)
   val sheet = findSheet(workbook, sheetName)
   val headers = sheet.getRow(0).cellIterator().asScala.to[Vector]
   override val schema: StructType = inferSchema
@@ -34,7 +37,7 @@ extends BaseRelation with TableScan with PrunedScan {
   private def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet = {
     sheetName.map { sn =>
       Option(workBook.getSheet(sn)).getOrElse(
-          throw new IllegalArgumentException(s"Unknow sheet $sn")
+          throw new IllegalArgumentException(s"Unknown sheet $sn")
         )
     }.getOrElse(workBook.sheetIterator.next)
   }
