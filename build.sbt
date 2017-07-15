@@ -10,7 +10,7 @@ spName := "crealytics/spark-excel"
 
 crossScalaVersions := Seq("2.10.6", "2.11.8")
 
-sparkVersion := "2.0.0"
+sparkVersion := "2.1.1"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
@@ -20,7 +20,7 @@ sparkComponents := Seq("core", "sql")
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
-  "org.apache.poi" % "poi-ooxml" % "3.14"
+  "org.apache.poi" % "poi-ooxml" % "3.16"
 )
 
 libraryDependencies ++= Seq(
