@@ -37,8 +37,13 @@ matrix:
     - jdk: openjdk7
       scala: 2.11.7
       env: TEST_SPARK_VERSION="2.0.0"
+    # Spark 2.1.1
+    - jdk: openjdk7
+      scala: 2.11.8
+      env: TEST_SPARK_VERSION="2.1.1"
 script:
   - sbt -Dspark.testVersion=$TEST_SPARK_VERSION ++$TRAVIS_SCALA_VERSION compile
+  - sbt ++$TRAVIS_SCALA_VERSION test
   - sbt ++$TRAVIS_SCALA_VERSION assembly
   - sbt ++$TRAVIS_SCALA_VERSION scalastyle
   - sbt ++$TRAVIS_SCALA_VERSION "test:scalastyle"

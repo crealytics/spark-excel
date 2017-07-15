@@ -13,22 +13,16 @@ class DefaultSource
   override def createRelation(
                                sqlContext: SQLContext,
                                parameters: Map[String, String]): ExcelRelation = {
-
-    val location = checkParameter(parameters, "location")
-    val sheetName = parameters.get("sheetName")
-    val useHeader = checkParameter(parameters, "useHeader").toBoolean
-    val treatEmptyValuesAsNulls = checkParameter(parameters, "treatEmptyValuesAsNulls").toBoolean
-    val userSchema = null // checkParameter(parameters, "userSchema")
-    val inferSchema = checkParameter(parameters, "inferSchema").toBoolean
-    val addColorColumns = checkParameter(parameters, "addColorColumns").toBoolean
     ExcelRelation(
-      location,
-      sheetName,
-      useHeader,
-      treatEmptyValuesAsNulls,
-      inferSchema,
-      addColorColumns
-      )(sqlContext)
+      location = checkParameter(parameters, "location"),
+      sheetName = parameters.get("sheetName"),
+      useHeader = checkParameter(parameters, "useHeader").toBoolean,
+      treatEmptyValuesAsNulls = checkParameter(parameters, "treatEmptyValuesAsNulls").toBoolean,
+      inferSheetSchema = checkParameter(parameters, "inferSchema").toBoolean,
+      addColorColumns = checkParameter(parameters, "addColorColumns").toBoolean,
+      startColumn = parameters.get("startColumn").fold(0)(_.toInt),
+      endColumn = parameters.get("endColumn").fold(Int.MaxValue)(_.toInt)
+    )(sqlContext)
   }
 
   // Forces a Parameter to exist, otherwise an exception is thrown.

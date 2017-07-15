@@ -1,6 +1,6 @@
 name := "spark-excel"
 
-version := "0.8.3"
+version := "0.8.4-SNAPSHOT"
 
 organization := "com.crealytics"
 
@@ -21,6 +21,12 @@ sparkComponents := Seq("core", "sql")
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
   "org.apache.poi" % "poi-ooxml" % "3.14"
+)
+
+libraryDependencies ++= Seq(
+  "org.scalatest" %% "scalatest" % "3.0.1" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.13.4" % Test,
+  "org.scalamock" %% "scalamock-scalatest-support" % "3.5.0" % Test
 )
 
 publishMavenStyle := true
