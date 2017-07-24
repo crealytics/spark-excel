@@ -1,14 +1,14 @@
 name := "spark-excel"
 
-version := "0.8.4-SNAPSHOT"
+version := "0.8.4"
 
 organization := "com.crealytics"
 
-scalaVersion := "2.11.8"
+crossScalaVersions := Seq("2.11.11", "2.10.6")
+
+scalaVersion := crossScalaVersions.value.head
 
 spName := "crealytics/spark-excel"
-
-crossScalaVersions := Seq("2.10.6", "2.11.8")
 
 sparkVersion := "2.1.1"
 
