@@ -4,15 +4,15 @@ import java.math.BigDecimal
 import java.sql.{Date, Timestamp}
 import java.text.NumberFormat
 import java.util.Locale
-import java.io._
-import scala.collection.JavaConverters._
-import org.apache.poi.ss.usermodel.{ WorkbookFactory, Row => SheetRow, Cell, DataFormatter, Sheet, Workbook }
+
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.poi.ss.usermodel.{Cell, DataFormatter, Sheet, Workbook, WorkbookFactory, Row => SheetRow}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
-import org.apache.hadoop.fs.{FileSystem, Path}
 
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 case class ExcelRelation(
@@ -22,24 +22,25 @@ case class ExcelRelation(
   treatEmptyValuesAsNulls: Boolean,
   inferSheetSchema: Boolean,
   addColorColumns: Boolean = true,
-  userSchema: StructType = null
+  userSchema: StructType = null,
+  startColumn: Int = 0,
+  endColumn: Int = Int.MaxValue
   )
   (@transient val sqlContext: SQLContext)
 extends BaseRelation with TableScan with PrunedScan {
-  val path = new Path(location)
-  val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
-  val workbook = WorkbookFactory.create(inputStream)
-  val sheet = findSheet(workbook, sheetName)
-  lazy val firstRowWithData = sheet
+  private val path = new Path(location)
+  private val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
+  private val workbook = WorkbookFactory.create(inputStream)
+  private val sheet = findSheet(workbook, sheetName)
+  private lazy val firstRowWithData = sheet
     .asScala
     .find(_ != null)
     .getOrElse(throw new RuntimeException(s"Sheet $sheet doesn't seem to contain any data"))
-    .cellIterator()
-    .asScala
+    .eachCellIterator(startColumn, endColumn)
     .to[Vector]
 
   override val schema: StructType = inferSchema
-  val dataFormatter = new DataFormatter();
+  val dataFormatter = new DataFormatter()
 
   private def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet = {
     sheetName.map { sn =>
@@ -75,7 +76,7 @@ extends BaseRelation with TableScan with PrunedScan {
         }
       }
       { row: SheetRow =>
-        val cell = row.getCell(columnIndex)
+        val cell = row.getCell(columnIndex + startColumn)
         if (cell == null) {
           null
         } else {
@@ -118,18 +119,20 @@ extends BaseRelation with TableScan with PrunedScan {
 
   private def dataRows = sheet.rowIterator.asScala.drop(if (useHeader) 1 else 0)
   private def parallelize[T: scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
-  private def inferSchema(): StructType = {
+  private def inferSchema: StructType = {
     if (this.userSchema != null) {
       userSchema
     } else {
-      val firstRow = firstRowWithData
-      val header = if (useHeader) {
-        firstRow.map(_.getStringCellValue)
-      } else {
-        firstRow.zipWithIndex.map { case (value, index) => s"C$index"}
+      val header = firstRowWithData.zipWithIndex.map {
+        case (Some(value), _) if useHeader => value.getStringCellValue
+        case (_, index) => s"C$index"
       }
       val baseSchema = if (this.inferSheetSchema) {
-        val stringsAndCellTypes = dataRows.map(_.cellIterator.asScala.map(c => c.getCellType).toVector).toVector
+        val stringsAndCellTypes = dataRows.map { row =>
+          row.eachCellIterator(startColumn, endColumn).map { cell =>
+            cell.fold(Cell.CELL_TYPE_BLANK)(_.getCellType)
+          }.toVector
+        }.toVector
         InferSchema(parallelize(stringsAndCellTypes), header.toArray)
       } else {
         // By default fields are assumed to be StringType
