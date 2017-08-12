@@ -4,6 +4,14 @@ import org.apache.poi.ss.usermodel.Row.MissingCellPolicy
 import org.apache.poi.ss.usermodel.{Cell, Row}
 
 package object excel {
+  val LOCATION_KEY = "location"
+  val SHEET_NAME_KEY = "sheetName"
+  val USE_HEADER_KEY = "useHeader"
+  val TREAT_EMPTY_VALUES_AS_NULL_KEY = "treatEmptyValuesAsNulls"
+  val INFER_SCHEMA_KEY = "inferSchema"
+  val ADD_COLOR_COLUMNS_KEY = "addColorColumns"
+  val START_COLUMN_KEY = "startColumn"
+  val END_COLUMN_KEY = "endColumn"
 
   implicit class RichRow(val row: Row) extends AnyVal {
 
