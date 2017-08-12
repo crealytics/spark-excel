@@ -6,8 +6,8 @@ import org.apache.spark.sql.types.StructType
 import com.crealytics.spark.excel.ExcelRelation
 import com.crealytics.spark.excel.ParameterExtractor
 
-class DefaultSource 
-  extends SchemaRelationProvider 
+class DefaultSource
+  extends SchemaRelationProvider
   with ParameterExtractor{
 
   /**
@@ -20,5 +20,5 @@ class DefaultSource
     implicit def context = sqlContext
     implicit def schemaOpt: Option[StructType] = Some(schema)
     ExcelRelation.createExcelRelation(parameters)
-  }  
+  }
 }

@@ -120,7 +120,7 @@ extends BaseRelation with TableScan with PrunedScan {
   private def dataRows = sheet.rowIterator.asScala.drop(if (useHeader) 1 else 0)
   private def parallelize[T: scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
   private def inferSchema: StructType = {
-    if(schemaOpt.isDefined) {
+    if (schemaOpt.isDefined){
       schemaOpt.get
     } else {
       val header = firstRowWithData.zipWithIndex.map {
@@ -152,7 +152,7 @@ extends BaseRelation with TableScan with PrunedScan {
 
 object ExcelRelation extends ParameterExtractor{
   def createExcelRelation(parameters: Map[String, String])
-    (implicit sqlContext: SQLContext,  schema: Option[StructType]): ExcelRelation = {
+    (implicit sqlContext: SQLContext, schema: Option[StructType]): ExcelRelation = {
     ExcelRelation(
       location = checkParameter(parameters, LOCATION_KEY),
       sheetName = parameters.get(SHEET_NAME_KEY),
