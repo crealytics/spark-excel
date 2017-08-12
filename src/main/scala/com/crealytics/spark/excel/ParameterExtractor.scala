@@ -2,7 +2,7 @@ package com.crealytics.spark.excel
 
 trait ParameterExtractor {
     // Forces a Parameter to exist, otherwise an exception is thrown.
-  def checkParameter(map: Map[String, String], param: String) = {
+  def checkParameter(map: Map[String, String], param: String): String = {
     if (!map.contains(param)) {
       throw new IllegalArgumentException(s"Parameter ${'"'}$param${'"'} is missing in options.")
     } else {
@@ -11,7 +11,7 @@ trait ParameterExtractor {
   }
 
   // Gets the Parameter if it exists, otherwise returns the default argument
-  def parameterOrDefault(map: Map[String, String], param: String, default: String) =
+  def parameterOrDefault(map: Map[String, String], param: String, default: String): String =
     map.getOrElse(param, default)
 
 }
