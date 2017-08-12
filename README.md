@@ -55,11 +55,29 @@ val df = sqlContext.read
     .option("sheetName", "Daily")
     .option("useHeader", "true")
     .option("treatEmptyValuesAsNulls", "true")
-    .option("userSchema", StructType(???)) // Optional
     .option("inferSchema", "true")
     .option("addColorColumns", "true")
     .option("startColumn", 0) // Optional
     .option("endColumn", 99) // Optional
+    .load()
+```
+
+Create a DataFrame from an Excel file with an external schema:
+```scala
+import org.apache.spark.sql.SQLContext
+
+val sqlContext = new SQLContext(sc)
+val df = sqlContext.read
+    .format("com.crealytics.spark.excel.schema")
+    .option("location", "Worktime.xlsx")
+    .option("sheetName", "Daily")
+    .option("useHeader", "true")
+    .option("treatEmptyValuesAsNulls", "true")
+    .option("inferSchema", "true")
+    .option("addColorColumns", "true")
+    .option("startColumn", 0) // Optional
+    .option("endColumn", 99) // Optional
+    .schema(externalSchema) // External schema as StructType
     .load()
 ```
 
