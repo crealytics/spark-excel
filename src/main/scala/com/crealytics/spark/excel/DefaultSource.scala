@@ -6,7 +6,7 @@ import org.apache.spark.sql.types.StructType
 
 
 class DefaultSource
-  extends RelationProvider 
+  extends RelationProvider
   with ParameterExtractor{
 
   /**
