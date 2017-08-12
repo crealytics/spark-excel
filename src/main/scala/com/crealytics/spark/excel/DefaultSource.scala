@@ -1,12 +1,12 @@
 package com.crealytics.spark.excel
 
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.sources.RelationProvider
+import org.apache.spark.sql.sources.SchemaRelationProvider
 import org.apache.spark.sql.types.StructType
 
 
 class DefaultSource
-  extends RelationProvider
+  extends SchemaRelationProvider
   with ParameterExtractor{
 
   /**
@@ -14,9 +14,11 @@ class DefaultSource
     */
   override def createRelation(
                                sqlContext: SQLContext,
-                               parameters: Map[String, String]): ExcelRelation = {
+                               parameters: Map[String, String],
+                               schema: StructType): ExcelRelation = {
     implicit def context = sqlContext
-    implicit def schemaOpt: Option[StructType] = None
+    implicit def schemaOpt: Option[StructType] =
+      if (schema == null) None else Some(schema)
     ExcelRelation.createExcelRelation(parameters)
   }
 

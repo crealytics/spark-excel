@@ -68,7 +68,7 @@ import org.apache.spark.sql.SQLContext
 
 val sqlContext = new SQLContext(sc)
 val df = sqlContext.read
-    .format("com.crealytics.spark.excel.schema")
+    .format("com.crealytics.spark.excel")
     .option("location", "Worktime.xlsx")
     .option("sheetName", "Daily")
     .option("useHeader", "true")
