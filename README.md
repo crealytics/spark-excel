@@ -55,11 +55,11 @@ val df = sqlContext.read
     .option("sheetName", "Daily")
     .option("useHeader", "true")
     .option("treatEmptyValuesAsNulls", "true")
-    .option("userSchema", StructType(???)) // Optional
     .option("inferSchema", "true")
     .option("addColorColumns", "true")
     .option("startColumn", 0) // Optional
     .option("endColumn", 99) // Optional
+    .schema(myCustomSchema) // Optional
     .load()
 ```
 
