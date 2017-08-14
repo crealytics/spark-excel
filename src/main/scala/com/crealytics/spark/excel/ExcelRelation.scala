@@ -22,7 +22,7 @@ case class ExcelRelation(
   treatEmptyValuesAsNulls: Boolean,
   inferSheetSchema: Boolean,
   addColorColumns: Boolean = true,
-  userSchema: StructType = null,
+  userSchema: Option[StructType] = None,
   startColumn: Int = 0,
   endColumn: Int = Int.MaxValue
   )
@@ -119,10 +119,8 @@ extends BaseRelation with TableScan with PrunedScan {
 
   private def dataRows = sheet.rowIterator.asScala.drop(if (useHeader) 1 else 0)
   private def parallelize[T: scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
-  private def inferSchema: StructType = {
-    if (this.userSchema != null) {
-      userSchema
-    } else {
+  private def inferSchema: StructType =
+    this.userSchema.getOrElse {
       val header = firstRowWithData.zipWithIndex.map {
         case (Some(value), _) if useHeader => value.getStringCellValue
         case (_, index) => s"C$index"
@@ -147,5 +145,4 @@ extends BaseRelation with TableScan with PrunedScan {
         baseSchema
       }
     }
-  }
 }
