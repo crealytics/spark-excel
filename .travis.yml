@@ -5,42 +5,15 @@ cache:
     - $HOME/.ivy2
 matrix:
   include:
-    # Spark 1.3.0
-    - jdk: openjdk6
-      scala: 2.10.6
-      env: TEST_SPARK_VERSION="1.3.0"
-    - jdk: openjdk6
-      scala: 2.11.11
-      env: TEST_SPARK_VERSION="1.3.0"
-    # Spark 1.4.1
-    - jdk: openjdk6
-      scala: 2.11.11
-      env: TEST_SPARK_VERSION="1.4.1"
-    - jdk: openjdk7
-      scala: 2.11.11
-      env: TEST_SPARK_VERSION="1.4.1"
-    # Spark 1.5.0
-    - jdk: openjdk7
-      scala: 2.10.6
-      env: TEST_SPARK_VERSION="1.5.2"
-    - jdk: openjdk7
-      scala: 2.11.11
-      env: TEST_SPARK_VERSION="1.5.2"
-    # Spark 1.6.2
-    - jdk: openjdk7
-      scala: 2.10.6
-      env: TEST_SPARK_VERSION="1.6.2"
-    - jdk: openjdk7
-      scala: 2.11.8
-      env: TEST_SPARK_VERSION="1.6.2"
-    # Spark 2.0.0
-    - jdk: openjdk7
+    - jdk: oraclejdk8
       scala: 2.11.11
       env: TEST_SPARK_VERSION="2.0.0"
-    # Spark 2.1.1
-    - jdk: openjdk7
-      scala: 2.11.8
+    - jdk: oraclejdk8
+      scala: 2.11.11
       env: TEST_SPARK_VERSION="2.1.1"
+    - jdk: oraclejdk8
+      scala: 2.11.11
+      env: TEST_SPARK_VERSION="2.2.0"
 script:
   - sbt -Dspark.testVersion=$TEST_SPARK_VERSION ++$TRAVIS_SCALA_VERSION compile
   - sbt ++$TRAVIS_SCALA_VERSION test
