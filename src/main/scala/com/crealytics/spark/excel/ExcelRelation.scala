@@ -22,11 +22,11 @@ case class ExcelRelation(
   treatEmptyValuesAsNulls: Boolean,
   inferSheetSchema: Boolean,
   addColorColumns: Boolean = true,
-  userSchema: StructType = null,
   startColumn: Int = 0,
   endColumn: Int = Int.MaxValue
   )
   (@transient val sqlContext: SQLContext)
+  (@transient val schemaOpt: Option[StructType] = None)
 extends BaseRelation with TableScan with PrunedScan {
   private val path = new Path(location)
   private val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
@@ -120,8 +120,8 @@ extends BaseRelation with TableScan with PrunedScan {
   private def dataRows = sheet.rowIterator.asScala.drop(if (useHeader) 1 else 0)
   private def parallelize[T: scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
   private def inferSchema: StructType = {
-    if (this.userSchema != null) {
-      userSchema
+    if (schemaOpt.isDefined){
+      schemaOpt.get
     } else {
       val header = firstRowWithData.zipWithIndex.map {
         case (Some(value), _) if useHeader => value.getStringCellValue
@@ -147,5 +147,21 @@ extends BaseRelation with TableScan with PrunedScan {
         baseSchema
       }
     }
+  }
+}
+
+object ExcelRelation extends ParameterExtractor{
+  def createExcelRelation(parameters: Map[String, String])
+    (implicit sqlContext: SQLContext, schema: Option[StructType]): ExcelRelation = {
+    ExcelRelation(
+      location = checkParameter(parameters, LOCATION_KEY),
+      sheetName = parameters.get(SHEET_NAME_KEY),
+      useHeader = checkParameter(parameters, USE_HEADER_KEY).toBoolean,
+      treatEmptyValuesAsNulls = checkParameter(parameters, TREAT_EMPTY_VALUES_AS_NULL_KEY).toBoolean,
+      inferSheetSchema = checkParameter(parameters, INFER_SCHEMA_KEY).toBoolean,
+      addColorColumns = checkParameter(parameters, ADD_COLOR_COLUMNS_KEY).toBoolean,
+      startColumn = parameters.get(START_COLUMN_KEY).fold(0)(_.toInt),
+      endColumn = parameters.get(END_COLUMN_KEY).fold(Int.MaxValue)(_.toInt)
+    )(sqlContext)(schema)
   }
 }
