@@ -10,13 +10,13 @@ scalaVersion := crossScalaVersions.value.head
 
 spName := "crealytics/spark-excel"
 
-sparkVersion := "2.1.1"
+sparkVersion := "2.2.0"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
 testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.value)
 
-sparkComponents := Seq("core", "sql")
+sparkComponents := Seq("core", "sql", "hive")
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
@@ -26,8 +26,15 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.1" % Test,
   "org.scalacheck" %% "scalacheck" % "1.13.4" % Test,
+  "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.6" % Test,
+  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
+  "com.norbitltd" %% "spoiwo" % "1.2.0" % Test,
   "org.scalamock" %% "scalamock-scalatest-support" % "3.5.0" % Test
 )
+
+fork in Test := true
+parallelExecution in Test := false
+javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
 
 publishMavenStyle := true
 
