@@ -1,0 +1,1 @@
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
