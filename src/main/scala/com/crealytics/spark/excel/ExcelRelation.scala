@@ -6,7 +6,8 @@ import java.text.NumberFormat
 import java.util.Locale
 
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.poi.ss.usermodel.{Cell, DataFormatter, Sheet, Workbook, WorkbookFactory, Row => SheetRow}
+import org.apache.poi.hssf.usermodel.HSSFDateUtil
+import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil, Sheet, Workbook, WorkbookFactory, Row => SheetRow}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.sources._
@@ -58,16 +59,7 @@ extends BaseRelation with TableScan with PrunedScan {
       val columnIndex = schema.indexWhere(_.name == columnName)
 
       val cellExtractor: Cell => Any = if (isColor == null) {
-        { cell: Cell =>
-          val value = cell.getCellType match {
-            case Cell.CELL_TYPE_NUMERIC => cell.getNumericCellValue.toString
-            case Cell.CELL_TYPE_BOOLEAN => cell.getBooleanCellValue.toString
-            case Cell.CELL_TYPE_STRING => cell.getStringCellValue.toString
-            case Cell.CELL_TYPE_BLANK => null
-            case t => throw new RuntimeException(s"Unknown cell type $t for $cell")
-          }
-          castTo(value, schema(columnIndex).dataType)
-        }
+          castTo(_, schema(columnIndex).dataType)
       } else {
         _.getCellStyle.getFillForegroundColorColor match {
           case null => ""
@@ -90,26 +82,27 @@ extends BaseRelation with TableScan with PrunedScan {
     sqlContext.sparkContext.parallelize(result.map(Row.fromSeq))
   }
 
-  // Cast a String to a Spark Data Type
-  private def castTo(datum: String, castType: DataType): Any = {
-    if (datum == null) {
+  private def castTo(cell: Cell, castType: DataType): Any = {
+    if (cell.getCellTypeEnum == CellType.BLANK) {
       return null
     }
+    val dataFormatter = new DataFormatter()
+    lazy val stringValue = dataFormatter.formatCellValue(cell)
+    lazy val numericValue = cell.getNumericCellValue
+    lazy val bigDecimal = new BigDecimal(stringValue.replaceAll(",", ""))
     castType match {
-      case _: ByteType => datum.toByte
-      case _: ShortType => datum.toShort
-      case _: IntegerType => datum.toInt
-      case _: LongType => datum.toLong
-      case _: FloatType => Try(datum.toFloat)
-        .getOrElse(NumberFormat.getInstance(Locale.getDefault).parse(datum).floatValue())
-      case _: DoubleType => Try(datum.toDouble)
-        .getOrElse(NumberFormat.getInstance(Locale.getDefault).parse(datum).doubleValue())
-      case _: BooleanType => datum.toBoolean
-      case _: DecimalType => new BigDecimal(datum.replaceAll(",", ""))
-      case _: TimestampType => Timestamp.valueOf(datum)
-      case _: DateType => Date.valueOf(datum)
-      case _: StringType => datum
-      case _ => throw new RuntimeException(s"Unsupported type: ${castType.typeName}")
+      case _: ByteType => numericValue.toByte
+      case _: ShortType => numericValue.toShort
+      case _: IntegerType => numericValue.toInt
+      case _: LongType => numericValue.toLong
+      case _: FloatType => numericValue.toFloat
+      case _: DoubleType => numericValue
+      case _: BooleanType => cell.getBooleanCellValue
+      case _: DecimalType => bigDecimal
+      case _: TimestampType => Timestamp.valueOf(stringValue)
+      case _: DateType => new java.sql.Date(DateUtil.getJavaDate(numericValue).getTime)
+      case _: StringType => stringValue
+      case t => throw new RuntimeException(s"Unsupported cast from $cell to $t")
     }
   }
 
