@@ -11,12 +11,6 @@ This library requires Spark 1.4+
 ## Linking
 You can link against this library in your program at the following coordinates:
 
-### Scala 2.10
-```
-groupId: com.crealytics
-artifactId: spark-excel_2.10
-version: 0.8.5
-```
 ### Scala 2.11
 ```
 groupId: com.crealytics
@@ -32,16 +26,11 @@ This package can be added to  Spark using the `--packages` command line option. 
 $SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:0.8.5
 ```
 
-### Spark compiled with Scala 2.10
-```
-$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.10:0.8.5
-```
-
 ## Features
 This package allows querying Excel spreadsheets as [Spark DataFrames](https://spark.apache.org/docs/latest/sql-programming-guide.html).
 
 ### Scala API
-__Spark 1.4+:__
+__Spark 2.0+:__
 
 
 Create a DataFrame from an Excel file:
@@ -66,4 +55,4 @@ val df = sqlContext.read
 ## Building From Source
 This library is built with [SBT](http://www.scala-sbt.org/0.13/docs/Command-Line-Reference.html).
 To build a JAR file simply run `sbt assembly` from the project root.
-The build configuration includes support for both Scala 2.10 and 2.11.
+The build configuration includes support for Scala 2.11.
