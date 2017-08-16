@@ -40,8 +40,6 @@ import org.apache.spark.sql.SQLContext
 val sqlContext = new SQLContext(sc)
 val df = sqlContext.read
     .format("com.crealytics.spark.excel")
-    .option("location", "Worktime.xlsx")
-    .load()
     .option("sheetName", "Daily") // Required
     .option("useHeader", "true") // Required
     .option("treatEmptyValuesAsNulls", "false") // Optional, default: true
@@ -50,6 +48,7 @@ val df = sqlContext.read
     .option("startColumn", 0) // Optional, default: 0
     .option("endColumn", 99) // Optional, default: Int.MaxValue
     .schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
+    .load("Worktime.xlsx")
 ```
 
 ## Building From Source

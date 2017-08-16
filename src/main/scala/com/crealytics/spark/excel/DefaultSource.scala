@@ -28,7 +28,7 @@ class DefaultSource
     schema: StructType
   ): ExcelRelation = {
     ExcelRelation(
-      location = checkParameter(parameters, "location"),
+      location = checkParameter(parameters, "path"),
       sheetName = parameters.get("sheetName"),
       useHeader = checkParameter(parameters, "useHeader").toBoolean,
       treatEmptyValuesAsNulls = parameters.get("treatEmptyValuesAsNulls").fold(true)(_.toBoolean),

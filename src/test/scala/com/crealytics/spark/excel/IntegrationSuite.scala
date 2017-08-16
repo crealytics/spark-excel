@@ -95,8 +95,8 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
         .option("inferSchema", "false")
         .option("addColorColumns", "false")
         .schema(exampleDataSchema)
-        .load()
       val expected = spark.createDataset(rows).toDF
+        .load(fileName)
       assertDataFrameEquals(expected, result)
     }
   }
