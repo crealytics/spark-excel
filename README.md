@@ -41,15 +41,15 @@ val sqlContext = new SQLContext(sc)
 val df = sqlContext.read
     .format("com.crealytics.spark.excel")
     .option("location", "Worktime.xlsx")
-    .option("sheetName", "Daily")
-    .option("useHeader", "true")
-    .option("treatEmptyValuesAsNulls", "true")
-    .option("inferSchema", "true")
-    .option("addColorColumns", "true")
-    .option("startColumn", 0) // Optional
-    .option("endColumn", 99) // Optional
-    .schema(myCustomSchema) // Optional
     .load()
+    .option("sheetName", "Daily") // Required
+    .option("useHeader", "true") // Required
+    .option("treatEmptyValuesAsNulls", "false") // Optional, default: true
+    .option("inferSchema", "false") // Optional, default: false
+    .option("addColorColumns", "true") // Optional, default: false
+    .option("startColumn", 0) // Optional, default: 0
+    .option("endColumn", 99) // Optional, default: Int.MaxValue
+    .schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
 ```
 
 ## Building From Source

@@ -31,17 +31,17 @@ class DefaultSource
       location = checkParameter(parameters, "location"),
       sheetName = parameters.get("sheetName"),
       useHeader = checkParameter(parameters, "useHeader").toBoolean,
-      treatEmptyValuesAsNulls = checkParameter(parameters, "treatEmptyValuesAsNulls").toBoolean,
+      treatEmptyValuesAsNulls = parameters.get("treatEmptyValuesAsNulls").fold(true)(_.toBoolean),
       userSchema = Option(schema),
-      inferSheetSchema = checkParameter(parameters, "inferSchema").toBoolean,
-      addColorColumns = checkParameter(parameters, "addColorColumns").toBoolean,
+      inferSheetSchema = parameters.get("inferSchema").fold(false)(_.toBoolean),
+      addColorColumns = parameters.get("addColorColumns").fold(false)(_.toBoolean),
       startColumn = parameters.get("startColumn").fold(0)(_.toInt),
       endColumn = parameters.get("endColumn").fold(Int.MaxValue)(_.toInt)
     )(sqlContext)
   }
 
   // Forces a Parameter to exist, otherwise an exception is thrown.
-  private def checkParameter(map: Map[String, String], param: String) = {
+  private def checkParameter(map: Map[String, String], param: String): String = {
     if (!map.contains(param)) {
       throw new IllegalArgumentException(s"Parameter ${'"'}$param${'"'} is missing in options.")
     } else {
