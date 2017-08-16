@@ -7,9 +7,8 @@ import Arbitrary.{arbLong => _, arbString => _, _}
 import org.scalacheck.ScalacheckShapeless._
 import org.scalatest.FunSuite
 import org.scalatest.prop.PropertyChecks
-import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
-import com.norbitltd.spoiwo.model._
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types._
 
@@ -55,48 +54,32 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
 
   implicit def shrinkOnlyNumberOfRows[A]: Shrink[List[A]] = Shrink.shrinkContainer[List, A]
 
+  val PackageName = "com.crealytics.spark.excel"
   val sheetName = "test sheet"
-  val tempFile: File = File.createTempFile("spark_excel_integration_test", ".xlsx")
 
-  val fileName = tempFile.getAbsolutePath
-
-  def toCell(a: Any): Cell = a match {
-    case d: java.sql.Date => Cell(
-      new java.util.Date(d.getTime),
-      style = CellStyle(dataFormat = CellDataFormat("m/d/yy h:mm"))
-    )
-    case s: String => Cell(s)
-    case d: Double => Cell(d)
-    case b: Boolean => Cell(b)
-    case b: Byte => Cell(b.toInt)
-    case s: Short => Cell(s.toInt)
-    case i: Int => Cell(i)
-    case l: Long => Cell(l)
-  }
-
-  def createSheet(rows: List[ExampleData]) {
-    Sheet(name = sheetName,
-      rows =
-        Row(exampleDataSchema.map(f => Cell(f.name))) ::
-        rows.map { row =>
-          Row(row.productIterator.map(toCell).to[Seq])
-        }
-    ).saveAsXlsx(fileName)
-  }
 
   test("parses known datatypes correctly") {
     forAll(rowsGen, MinSuccessful(20)) { rows =>
-      createSheet(rows)
-      val result = spark.read.format("com.crealytics.spark.excel")
-        .option("location", fileName)
+      val expected = spark.createDataset(rows).toDF
+
+      val tempFile: File = File.createTempFile("spark_excel_integration_test_", ".xlsx")
+      val fileName = tempFile.getAbsolutePath
+      expected.write
+        .format(PackageName)
+        .option("sheetName", sheetName)
+        .option("useHeader", "true")
+        .mode("overwrite")
+        .save(fileName)
+
+      val result = spark.read.format(PackageName)
         .option("sheetName", sheetName)
         .option("useHeader", "true")
         .option("treatEmptyValuesAsNulls", "true")
         .option("inferSchema", "false")
         .option("addColorColumns", "false")
         .schema(exampleDataSchema)
-      val expected = spark.createDataset(rows).toDF
         .load(fileName)
+
       assertDataFrameEquals(expected, result)
     }
   }

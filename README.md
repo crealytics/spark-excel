@@ -33,7 +33,7 @@ This package allows querying Excel spreadsheets as [Spark DataFrames](https://sp
 __Spark 2.0+:__
 
 
-Create a DataFrame from an Excel file:
+#### Create a DataFrame from an Excel file
 ```scala
 import org.apache.spark.sql.SQLContext
 
@@ -49,6 +49,16 @@ val df = sqlContext.read
     .option("endColumn", 99) // Optional, default: Int.MaxValue
     .schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
     .load("Worktime.xlsx")
+```
+
+#### Write a DataFrame to an Excel file
+```scala
+df.write
+  .format("com.crealytics.spark.excel")
+  .option("sheetName", "Daily")
+  .option("useHeader", "true")
+  .mode("overwrite")
+  .save("Worktime2.xlsx")
 ```
 
 ## Building From Source

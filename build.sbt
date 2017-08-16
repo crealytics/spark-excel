@@ -18,7 +18,8 @@ sparkComponents := Seq("core", "sql", "hive")
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
-  "org.apache.poi" % "poi-ooxml" % "3.16"
+  "org.apache.poi" % "poi-ooxml" % "3.16",
+  "com.norbitltd" %% "spoiwo" % "1.2.0"
 )
 
 libraryDependencies ++= Seq(
@@ -26,7 +27,6 @@ libraryDependencies ++= Seq(
   "org.scalacheck" %% "scalacheck" % "1.13.4" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.6" % Test,
   "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
-  "com.norbitltd" %% "spoiwo" % "1.2.0" % Test,
   "org.scalamock" %% "scalamock-scalatest-support" % "3.5.0" % Test
 )
 
