@@ -88,8 +88,15 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
   test("handles null values correctly") {
     forAll(rowsGen, MinSuccessful(20)) { rows =>
       val expected = spark.createDataset(rows).toDF
+
+      // We need two dataframes, one with null values, one with empty strings, this is because we want ExcelFileSaver to
+      // write an empty string, if there's a null in that column. expectedWithEmptyStr is what the dataframe should look
+      // like when the Excel spreadsheet is saved
       val expectedWithNull = expected.withColumn("aString", lit(null: String))
-      expectedWithNull.show()
+      // Generate the same DataFrame but with empty strings
+      val expectedWithEmptyStr = expected.withColumn("aString", lit("": String))
+      // Set the schema so that aString is nullable
+      expectedWithEmptyStr.schema.fields.update(6, new StructField("aString", DataTypes.StringType, true))
 
       val tempFile: File = File.createTempFile("spark_excel_null_test_", ".xlsx")
       val fileName = tempFile.getAbsolutePath
@@ -100,6 +107,17 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
         .option("useHeader", "true")
         .mode("overwrite")
         .save(fileName)
+
+      val result = spark.read.format(PackageName)
+        .option("sheetName", sheetName)
+        .option("useHeader", "true")
+        .option("treatEmptyValuesAsNulls", "true")
+        .option("inferSchema", "false")
+        .option("addColorColumns", "false")
+        .schema(exampleDataSchema)
+        .load(fileName)
+
+      assertDataFrameEquals(expectedWithEmptyStr, result)
     }
   }
 }
