@@ -11,6 +11,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.functions.lit
 
 object IntegrationSuite {
 
@@ -81,6 +82,24 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
         .load(fileName)
 
       assertDataFrameEquals(expected, result)
+    }
+  }
+
+  test("handles null values correctly") {
+    forAll(rowsGen, MinSuccessful(20)) { rows =>
+      val expected = spark.createDataset(rows).toDF
+      val expectedWithNull = expected.withColumn("aString", lit(null: String))
+      expectedWithNull.show()
+
+      val tempFile: File = File.createTempFile("spark_excel_null_test_", ".xlsx")
+      val fileName = tempFile.getAbsolutePath
+
+      expectedWithNull.write
+        .format(PackageName)
+        .option("sheetName", sheetName)
+        .option("useHeader", "true")
+        .mode("overwrite")
+        .save(fileName)
     }
   }
 }
