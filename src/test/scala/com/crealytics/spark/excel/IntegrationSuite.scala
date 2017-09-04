@@ -9,6 +9,7 @@ import org.scalatest.FunSuite
 import org.scalatest.prop.PropertyChecks
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions.lit
@@ -58,30 +59,31 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
   val PackageName = "com.crealytics.spark.excel"
   val sheetName = "test sheet"
 
+  def writeThenRead(df: DataFrame): DataFrame = {
+    val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
+
+    df.write
+      .format(PackageName)
+      .option("sheetName", sheetName)
+      .option("useHeader", "true")
+      .mode("overwrite")
+      .save(fileName)
+
+    spark.read.format(PackageName)
+      .option("sheetName", sheetName)
+      .option("useHeader", "true")
+      .option("treatEmptyValuesAsNulls", "true")
+      .option("inferSchema", "false")
+      .option("addColorColumns", "false")
+      .schema(exampleDataSchema)
+      .load(fileName)
+  }
 
   test("parses known datatypes correctly") {
     forAll(rowsGen, MinSuccessful(20)) { rows =>
       val expected = spark.createDataset(rows).toDF
 
-      val tempFile: File = File.createTempFile("spark_excel_integration_test_", ".xlsx")
-      val fileName = tempFile.getAbsolutePath
-      expected.write
-        .format(PackageName)
-        .option("sheetName", sheetName)
-        .option("useHeader", "true")
-        .mode("overwrite")
-        .save(fileName)
-
-      val result = spark.read.format(PackageName)
-        .option("sheetName", sheetName)
-        .option("useHeader", "true")
-        .option("treatEmptyValuesAsNulls", "true")
-        .option("inferSchema", "false")
-        .option("addColorColumns", "false")
-        .schema(exampleDataSchema)
-        .load(fileName)
-
-      assertDataFrameEquals(expected, result)
+      assertDataFrameEquals(expected, writeThenRead(expected))
     }
   }
 
@@ -96,28 +98,9 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
       // Generate the same DataFrame but with empty strings
       val expectedWithEmptyStr = expected.withColumn("aString", lit("": String))
       // Set the schema so that aString is nullable
-      expectedWithEmptyStr.schema.fields.update(6, new StructField("aString", DataTypes.StringType, true))
+      expectedWithEmptyStr.schema.fields.update(6, StructField("aString", DataTypes.StringType, true))
 
-      val tempFile: File = File.createTempFile("spark_excel_null_test_", ".xlsx")
-      val fileName = tempFile.getAbsolutePath
-
-      expectedWithNull.write
-        .format(PackageName)
-        .option("sheetName", sheetName)
-        .option("useHeader", "true")
-        .mode("overwrite")
-        .save(fileName)
-
-      val result = spark.read.format(PackageName)
-        .option("sheetName", sheetName)
-        .option("useHeader", "true")
-        .option("treatEmptyValuesAsNulls", "true")
-        .option("inferSchema", "false")
-        .option("addColorColumns", "false")
-        .schema(exampleDataSchema)
-        .load(fileName)
-
-      assertDataFrameEquals(expectedWithEmptyStr, result)
+      assertDataFrameEquals(expectedWithEmptyStr, writeThenRead(expectedWithNull))
     }
   }
 }
