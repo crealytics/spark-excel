@@ -15,3 +15,5 @@ addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.9")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.3")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.6")
+
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
