@@ -44,10 +44,11 @@ extends BaseRelation with TableScan with PrunedScan {
   override val schema: StructType = inferSchema
   val dataFormatter = new DataFormatter()
 
-  val timestampParser = if (timestampFormat.isDefined)
+  val timestampParser = if (timestampFormat.isDefined) {
     Some(new SimpleDateFormat(timestampFormat.get))
-  else
+  } else {
     None
+  }
 
   private def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet = {
     sheetName.map { sn =>
