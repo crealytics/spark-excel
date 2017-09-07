@@ -47,6 +47,7 @@ val df = sqlContext.read
     .option("addColorColumns", "true") // Optional, default: false
     .option("startColumn", 0) // Optional, default: 0
     .option("endColumn", 99) // Optional, default: Int.MaxValue
+    .option("timestampFormat", "hh:mm:ss:SSS") // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
     .schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
     .load("Worktime.xlsx")
 ```
