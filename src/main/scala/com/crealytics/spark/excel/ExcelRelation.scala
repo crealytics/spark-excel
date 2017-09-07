@@ -44,6 +44,11 @@ extends BaseRelation with TableScan with PrunedScan {
   override val schema: StructType = inferSchema
   val dataFormatter = new DataFormatter()
 
+  val timestampParser = if (timestampFormat.isDefined)
+    Some(new SimpleDateFormat(timestampFormat.get))
+  else
+    None
+
   private def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet = {
     sheetName.map { sn =>
       Option(workBook.getSheet(sn)).getOrElse(
@@ -111,15 +116,9 @@ extends BaseRelation with TableScan with PrunedScan {
     parallelize(sheet.rowIterator().asScala.toSeq)
   }
 
-  private def parseTimestamp(stringValue: String, pattern: String): Timestamp = {
-    val format = new SimpleDateFormat(pattern)
-    val parsedDate = format.parse(stringValue)
-    new Timestamp(parsedDate.getTime)
-  }
-
   private def parseTimestamp(stringValue: String): Timestamp = {
-    timestampFormat match {
-      case Some(pattern) => parseTimestamp(stringValue, pattern)
+    timestampParser match {
+      case Some(parser) => new Timestamp(parser.parse(stringValue).getTime)
       case None => Timestamp.valueOf(stringValue)
     }
   }
