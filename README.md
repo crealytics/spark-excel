@@ -58,6 +58,7 @@ df.write
   .format("com.crealytics.spark.excel")
   .option("sheetName", "Daily")
   .option("useHeader", "true")
+  .option("timestampFormat", "HH:mm:ss") // Optional, default: yyyy-MM-dd HH:mm:ss.SSS
   .mode("overwrite")
   .save("Worktime2.xlsx")
 ```
