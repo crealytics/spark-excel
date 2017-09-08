@@ -2,7 +2,7 @@ package com.crealytics.spark.excel
 
 import java.math.BigDecimal
 import java.sql.{Date, Timestamp}
-import java.text.NumberFormat
+import java.text.{NumberFormat, SimpleDateFormat}
 import java.util.Locale
 
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -25,7 +25,8 @@ case class ExcelRelation(
   addColorColumns: Boolean = true,
   userSchema: Option[StructType] = None,
   startColumn: Int = 0,
-  endColumn: Int = Int.MaxValue
+  endColumn: Int = Int.MaxValue,
+  timestampFormat: Option[String] = None
   )
   (@transient val sqlContext: SQLContext)
 extends BaseRelation with TableScan with PrunedScan {
@@ -42,6 +43,12 @@ extends BaseRelation with TableScan with PrunedScan {
 
   override val schema: StructType = inferSchema
   val dataFormatter = new DataFormatter()
+
+  val timestampParser = if (timestampFormat.isDefined) {
+    Some(new SimpleDateFormat(timestampFormat.get))
+  } else {
+    None
+  }
 
   private def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet = {
     sheetName.map { sn =>
@@ -99,7 +106,7 @@ extends BaseRelation with TableScan with PrunedScan {
       case _: DoubleType => numericValue
       case _: BooleanType => cell.getBooleanCellValue
       case _: DecimalType => bigDecimal
-      case _: TimestampType => Timestamp.valueOf(stringValue)
+      case _: TimestampType => parseTimestamp(stringValue)
       case _: DateType => new java.sql.Date(DateUtil.getJavaDate(numericValue).getTime)
       case _: StringType => stringValue
       case t => throw new RuntimeException(s"Unsupported cast from $cell to $t")
@@ -108,6 +115,13 @@ extends BaseRelation with TableScan with PrunedScan {
 
   private def rowsRdd: RDD[SheetRow] = {
     parallelize(sheet.rowIterator().asScala.toSeq)
+  }
+
+  private def parseTimestamp(stringValue: String): Timestamp = {
+    timestampParser match {
+      case Some(parser) => new Timestamp(parser.parse(stringValue).getTime)
+      case None => Timestamp.valueOf(stringValue)
+    }
   }
 
   private def dataRows = sheet.rowIterator.asScala.drop(if (useHeader) 1 else 0)

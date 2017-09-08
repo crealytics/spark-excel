@@ -1,6 +1,7 @@
 package com.crealytics.spark.excel
 
 import java.io.File
+import java.sql.Timestamp
 
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import Arbitrary.{arbLong => _, arbString => _, _}
@@ -24,6 +25,7 @@ object IntegrationSuite {
     aLong: Long,
     aDouble: Double,
     aString: String,
+    aTimestamp: java.sql.Timestamp,
     aDate: java.sql.Date
   )
 
@@ -33,6 +35,12 @@ object IntegrationSuite {
     Gen
       .chooseNum[Long](0L, (new java.util.Date).getTime + 1000000)
       .map(new java.sql.Date(_))
+  )
+
+  implicit val arbitraryTimestamp = Arbitrary[java.sql.Timestamp](
+    Gen
+      .chooseNum[Long](0L, (new java.util.Date).getTime + 1000000)
+      .map(new java.sql.Timestamp(_))
   )
 
   // Unfortunately we're losing some precision when parsing Longs
