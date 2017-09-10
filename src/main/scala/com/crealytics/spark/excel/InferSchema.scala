@@ -33,7 +33,7 @@ private[excel] object InferSchema {
       header: Array[String]): StructType = {
     val startType: Array[DataType] = Array.fill[DataType](header.length)(NullType)
     val rootTypes: Array[DataType] = rowsRDD.aggregate(startType)(
-      inferRowType _,
+      inferRowType,
       mergeRowTypes)
 
     val structFields = header.zip(rootTypes).map { case (thisHeader, rootType) =>

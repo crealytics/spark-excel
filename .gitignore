@@ -4,3 +4,4 @@ project/target/
 .ensime*
 *.swp
 .idea
+*.log

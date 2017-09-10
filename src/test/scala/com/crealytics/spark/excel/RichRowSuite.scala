@@ -26,7 +26,7 @@ trait RowGenerator extends MockFactory {
 }
 
 class RichRowSuite extends FunSuite with PropertyChecks with RowGenerator {
-
+  import com.crealytics.spark.excel.RichRow._
   test("Invalid cell range should throw an error") {
     forAll(rowGen) { g =>
       (g.start > g.end) ==> Try {
