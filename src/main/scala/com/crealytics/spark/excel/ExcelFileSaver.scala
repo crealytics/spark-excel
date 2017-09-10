@@ -12,8 +12,8 @@ import scala.collection.JavaConverters._
 
 object ExcelFileSaver {
   final val DEFAULT_SHEET_NAME = "Sheet1"
-  final val EXCEL_DATE_FORMAT = "yy-m-d h:mm"
-  final val DEFAULT_TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS"
+  final val DEFAULT_DATE_FORMAT = "yy-m-d h:mm"
+  final val DEFAULT_TIMESTAMP_FORMAT = "yyyy-mm-dd hh:mm:ss.000"
 }
 
 class ExcelFileSaver(fs: FileSystem) {
@@ -23,12 +23,12 @@ class ExcelFileSaver(fs: FileSystem) {
     dataFrame: DataFrame,
     sheetName: String = DEFAULT_SHEET_NAME,
     useHeader: Boolean = true,
+    dateFormat: String = DEFAULT_DATE_FORMAT,
     timestampFormat: String = DEFAULT_TIMESTAMP_FORMAT
   ): Unit = {
     val headerRow = Row(dataFrame.schema.fields.map(f => Cell(f.name)))
-    val timestampFormatter = new SimpleDateFormat(timestampFormat)
     val dataRows = dataFrame.toLocalIterator().asScala.map { row =>
-        Row(row.toSeq.map(toCell(_, timestampFormatter)))
+        Row(row.toSeq.map(toCell(_, dateFormat, timestampFormat)))
       }.toList
     val rows = if (useHeader) headerRow :: dataRows else dataRows
     val workbook = Sheet(name = sheetName, rows = rows).convertAsXlsx
@@ -37,12 +37,12 @@ class ExcelFileSaver(fs: FileSystem) {
     outputStream.hflush()
     outputStream.close()
   }
-  def toCell(a: Any, timestampFormatter: SimpleDateFormat): Cell = a match {
-    case t: java.sql.Timestamp => Cell(timestampFormatter.format(t))
-    case d: java.sql.Date => Cell(
-      new java.util.Date(d.getTime),
-      style = CellStyle(dataFormat = CellDataFormat(EXCEL_DATE_FORMAT))
-    )
+  def dateCell(time: Long, format: String): Cell = {
+    Cell(new java.util.Date(time), style = CellStyle(dataFormat = CellDataFormat(format)))
+  }
+  def toCell(a: Any, dateFormat: String, timestampFormat: String): Cell = a match {
+    case t: java.sql.Timestamp => dateCell(t.getTime, timestampFormat)
+    case d: java.sql.Date => dateCell(d.getTime, dateFormat)
     case s: String => Cell(s)
     case d: Double => Cell(d)
     case b: Boolean => Cell(b)

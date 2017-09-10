@@ -47,7 +47,7 @@ val df = sqlContext.read
     .option("addColorColumns", "true") // Optional, default: false
     .option("startColumn", 0) // Optional, default: 0
     .option("endColumn", 99) // Optional, default: Int.MaxValue
-    .option("timestampFormat", "hh:mm:ss:SSS") // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
+    .option("timestampFormat", "MM-dd-yyyy HH:mm:ss") // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
     .schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
     .load("Worktime.xlsx")
 ```
@@ -58,7 +58,8 @@ df.write
   .format("com.crealytics.spark.excel")
   .option("sheetName", "Daily")
   .option("useHeader", "true")
-  .option("timestampFormat", "HH:mm:ss") // Optional, default: yyyy-MM-dd HH:mm:ss.SSS
+  .option("dateFormat", "yy-mmm-d") // Optional, default: yy-m-d h:mm
+  .option("timestampFormat", "mm-dd-yyyy hh:mm:ss") // Optional, default: yyyy-mm-dd hh:mm:ss.000
   .mode("overwrite")
   .save("Worktime2.xlsx")
 ```
