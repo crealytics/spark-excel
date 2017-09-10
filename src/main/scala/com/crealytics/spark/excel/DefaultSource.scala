@@ -51,6 +51,7 @@ class DefaultSource
     val path = checkParameter(parameters, "path")
     val sheetName = parameters.getOrElse("sheetName", "Sheet1")
     val useHeader = checkParameter(parameters, "useHeader").toBoolean
+    val dateFormat = parameters.getOrElse("dateFormat", ExcelFileSaver.DEFAULT_DATE_FORMAT)
     val timestampFormat = parameters.getOrElse("timestampFormat", ExcelFileSaver.DEFAULT_TIMESTAMP_FORMAT)
     val filesystemPath = new Path(path)
     val fs = filesystemPath.getFileSystem(sqlContext.sparkContext.hadoopConfiguration)
@@ -75,6 +76,7 @@ class DefaultSource
         data,
         sheetName = sheetName,
         useHeader = useHeader,
+        dateFormat = dateFormat,
         timestampFormat = timestampFormat
       )
     }
