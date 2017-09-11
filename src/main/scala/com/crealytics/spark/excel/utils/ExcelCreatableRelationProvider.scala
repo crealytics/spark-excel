@@ -15,6 +15,7 @@ trait ExcelCreatableRelationProvider extends CreatableRelationProvider with
     val path = ParameterChecker.check(parameters, "path")
     val sheetName = parameters.getOrElse("sheetName", "Sheet1")
     val useHeader = ParameterChecker.check(parameters, "useHeader").toBoolean
+    val dateFormat = parameters.getOrElse("dateFormat", ExcelFileSaver.DEFAULT_DATE_FORMAT)
     val timestampFormat = parameters.getOrElse("timestampFormat", ExcelFileSaver.DEFAULT_TIMESTAMP_FORMAT)
     val filesystemPath = new Path(path)
     val fs = filesystemPath.getFileSystem(sqlContext.sparkContext.hadoopConfiguration)
@@ -39,6 +40,7 @@ trait ExcelCreatableRelationProvider extends CreatableRelationProvider with
         data,
         sheetName = sheetName,
         useHeader = useHeader,
+        dateFormat = dateFormat,
         timestampFormat = timestampFormat
       )
     }

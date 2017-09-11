@@ -16,7 +16,8 @@ case class ExcelExecutorRelation(
                                   treatEmptyValuesAsNulls: Boolean,
                                   schema: StructType,
                                   startColumn: Int = 0,
-                                  endColumn: Int = Int.MaxValue
+                                  endColumn: Int = Int.MaxValue,
+                                  timestampFormat: Option[String] = None
                                 )
                                 (@transient val sqlContext: SQLContext)
   extends BaseRelation with TableScan with PrunedScan {
@@ -36,7 +37,8 @@ case class ExcelExecutorRelation(
             inputStream,
             sheetName,
             startColumn,
-            endColumn).extract(schema, requiredColumns)
+            endColumn,
+            timestampFormat).extract(schema, requiredColumns)
       }
       rows.map(Row.fromSeq)
     }

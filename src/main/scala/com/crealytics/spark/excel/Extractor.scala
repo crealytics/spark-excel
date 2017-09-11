@@ -19,8 +19,6 @@ case class Extractor(useHeader: Boolean,
   private lazy val workbook = WorkbookFactory.create(inputStream)
   private lazy val sheet = findSheet(workbook, sheetName)
 
-  import com.crealytics.spark.excel.utils.RichRow._
-
   private val timestampParser = timestampFormat.map(d => new SimpleDateFormat(d))
 
   private def parseTimestamp(stringValue: String): Timestamp = {
