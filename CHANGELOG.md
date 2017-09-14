@@ -1,3 +1,7 @@
+0.9.2 & 0.9.3
+=============
+- Feature: Reading and writing timestamps
+
 0.9.1
 =====
 - Bugfix: `null` values in DataFrames are serialized as empty Strings. Thanks to @slehan
