@@ -12,7 +12,6 @@ import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
 
 import scala.collection.JavaConverters._
-import scala.util.{Failure, Success, Try}
 
 case class ExcelRelation(
   location: String,
