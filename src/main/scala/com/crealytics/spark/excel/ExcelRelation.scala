@@ -1,12 +1,10 @@
 package com.crealytics.spark.excel
 
 import java.math.BigDecimal
-import java.sql.{Date, Timestamp}
-import java.text.{NumberFormat, SimpleDateFormat}
-import java.util.Locale
+import java.sql.Timestamp
+import java.text.SimpleDateFormat
 
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.poi.hssf.usermodel.HSSFDateUtil
 import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil, Sheet, Workbook, WorkbookFactory, Row => SheetRow}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
@@ -14,7 +12,6 @@ import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
 
 import scala.collection.JavaConverters._
-import scala.util.Try
 
 case class ExcelRelation(
   location: String,
@@ -90,7 +87,8 @@ extends BaseRelation with TableScan with PrunedScan {
   }
 
   private def castTo(cell: Cell, castType: DataType): Any = {
-    if (cell.getCellTypeEnum == CellType.BLANK) {
+    val cellType = cell.getCellTypeEnum
+    if (cellType == CellType.BLANK) {
       return null
     }
     val dataFormatter = new DataFormatter()
@@ -106,7 +104,10 @@ extends BaseRelation with TableScan with PrunedScan {
       case _: DoubleType => numericValue
       case _: BooleanType => cell.getBooleanCellValue
       case _: DecimalType => bigDecimal
-      case _: TimestampType => parseTimestamp(stringValue)
+      case _: TimestampType => cellType match {
+        case CellType.NUMERIC => new Timestamp(DateUtil.getJavaDate(numericValue).getTime)
+        case _ => parseTimestamp(stringValue)
+      }
       case _: DateType => new java.sql.Date(DateUtil.getJavaDate(numericValue).getTime)
       case _: StringType => stringValue
       case t => throw new RuntimeException(s"Unsupported cast from $cell to $t")
