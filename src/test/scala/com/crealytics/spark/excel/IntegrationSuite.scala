@@ -18,16 +18,16 @@ import org.apache.spark.sql.functions.lit
 object IntegrationSuite {
 
   case class ExampleData(
-    aBoolean: Boolean,
-    aByte: Byte,
-    aShort: Short,
-    anInt: Int,
-    aLong: Long,
-    aDouble: Double,
-    aString: String,
-    aTimestamp: java.sql.Timestamp,
-    aDate: java.sql.Date
-  )
+                          aBoolean: Boolean,
+                          aByte: Byte,
+                          aShort: Short,
+                          anInt: Int,
+                          aLong: Long,
+                          aDouble: Double,
+                          aString: String,
+                          aTimestamp: java.sql.Timestamp,
+                          aDate: java.sql.Date
+                        )
 
   val exampleDataSchema = ScalaReflection.schemaFor[ExampleData].dataType.asInstanceOf[StructType]
 
@@ -67,7 +67,7 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
   val PackageName = "com.crealytics.spark.excel"
   val sheetName = "test sheet"
 
-  def writeThenRead(df: DataFrame): DataFrame = {
+  def writeThenRead(df: DataFrame, schema: Option[StructType] = Some(exampleDataSchema)): DataFrame = {
     val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
 
     df.write
@@ -77,14 +77,17 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
       .mode("overwrite")
       .save(fileName)
 
-    spark.read.format(PackageName)
+    val reader = spark.read.format(PackageName)
       .option("sheetName", sheetName)
       .option("useHeader", "true")
       .option("treatEmptyValuesAsNulls", "true")
-      .option("inferSchema", "false")
       .option("addColorColumns", "false")
-      .schema(exampleDataSchema)
-      .load(fileName)
+
+    if (schema.isDefined) {
+      reader.option("inferSchema", false).schema(schema.get).load(fileName)
+    } else {
+      reader.option("inferSchema", true).load(fileName)
+    }
   }
 
   test("parses known datatypes correctly") {
@@ -109,6 +112,23 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
       expectedWithEmptyStr.schema.fields.update(6, StructField("aString", DataTypes.StringType, true))
 
       assertDataFrameEquals(expectedWithEmptyStr, writeThenRead(expectedWithNull))
+    }
+  }
+
+  test("infers schema correctly") {
+    forAll(rowsGen, MinSuccessful(20)) { rows =>
+      val df = spark.createDataset(rows).toDF
+      val inferred = writeThenRead(df, schema = None)
+
+      assert(if (df.count() > 0) BooleanType else StringType, inferred.schema.fields(0).dataType)
+      assert(if (df.count() > 0) DoubleType else StringType, inferred.schema.fields(1).dataType)
+      assert(if (df.count() > 0) DoubleType else StringType, inferred.schema.fields(2).dataType)
+      assert(if (df.count() > 0) DoubleType else StringType, inferred.schema.fields(3).dataType)
+      assert(if (df.count() > 0) DoubleType else StringType, inferred.schema.fields(4).dataType)
+      assert(if (df.count() > 0) DoubleType else StringType, inferred.schema.fields(5).dataType)
+      assert(if (df.count() > 0) StringType else StringType, inferred.schema.fields(6).dataType)
+      assert(if (df.count() > 0) TimestampType else StringType, inferred.schema.fields(7).dataType)
+      assert(if (df.count() > 0) TimestampType else StringType, inferred.schema.fields(8).dataType)
     }
   }
 }
