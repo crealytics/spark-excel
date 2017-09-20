@@ -5,20 +5,12 @@ import org.apache.spark.sql.{DataFrame, SQLContext, SaveMode}
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
 
-
-class DefaultSource
-  extends RelationProvider
-  with SchemaRelationProvider
-  with CreatableRelationProvider
-{
+class DefaultSource extends RelationProvider with SchemaRelationProvider with CreatableRelationProvider {
 
   /**
     * Creates a new relation for retrieving data from an Excel file
     */
-  override def createRelation(
-    sqlContext: SQLContext,
-    parameters: Map[String, String]
-  ): ExcelRelation =
+  override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): ExcelRelation =
     createRelation(sqlContext, parameters, null)
 
   /**
@@ -47,7 +39,8 @@ class DefaultSource
     sqlContext: SQLContext,
     mode: SaveMode,
     parameters: Map[String, String],
-    data: DataFrame): BaseRelation = {
+    data: DataFrame
+  ): BaseRelation = {
     val path = checkParameter(parameters, "path")
     val sheetName = parameters.getOrElse("sheetName", "Sheet1")
     val useHeader = checkParameter(parameters, "useHeader").toBoolean

@@ -5,7 +5,16 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil, Sheet, Workbook, WorkbookFactory, Row => SheetRow}
+import org.apache.poi.ss.usermodel.{
+  Cell,
+  CellType,
+  DataFormatter,
+  DateUtil,
+  Sheet,
+  Workbook,
+  WorkbookFactory,
+  Row => SheetRow
+}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.sources._
@@ -24,15 +33,15 @@ case class ExcelRelation(
   startColumn: Int = 0,
   endColumn: Int = Int.MaxValue,
   timestampFormat: Option[String] = None
-  )
-  (@transient val sqlContext: SQLContext)
-extends BaseRelation with TableScan with PrunedScan {
+)(@transient val sqlContext: SQLContext)
+    extends BaseRelation
+    with TableScan
+    with PrunedScan {
   private val path = new Path(location)
   private val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
   private val workbook = WorkbookFactory.create(inputStream)
   private val sheet = findSheet(workbook, sheetName)
-  private lazy val firstRowWithData = sheet
-    .asScala
+  private lazy val firstRowWithData = sheet.asScala
     .find(_ != null)
     .getOrElse(throw new RuntimeException(s"Sheet $sheet doesn't seem to contain any data"))
     .eachCellIterator(startColumn, endColumn)
@@ -48,38 +57,40 @@ extends BaseRelation with TableScan with PrunedScan {
   }
 
   private def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet = {
-    sheetName.map { sn =>
-      Option(workBook.getSheet(sn)).getOrElse(
-        throw new IllegalArgumentException(s"Unknown sheet $sn")
-      )
-    }.getOrElse(workBook.sheetIterator.next)
+    sheetName
+      .map { sn =>
+        Option(workBook.getSheet(sn)).getOrElse(throw new IllegalArgumentException(s"Unknown sheet $sn"))
+      }
+      .getOrElse(workBook.sheetIterator.next)
   }
   override def buildScan: RDD[Row] = buildScan(schema.map(_.name).toArray)
 
   override def buildScan(requiredColumns: Array[String]): RDD[Row] = {
-    val lookups = requiredColumns.map {c =>
-      val columnNameRegex = s"(.*?)(_color)?".r
-      val columnNameRegex(columnName, isColor) = c
-      val columnIndex = schema.indexWhere(_.name == columnName)
+    val lookups = requiredColumns
+      .map { c =>
+        val columnNameRegex = s"(.*?)(_color)?".r
+        val columnNameRegex(columnName, isColor) = c
+        val columnIndex = schema.indexWhere(_.name == columnName)
 
-      val cellExtractor: Cell => Any = if (isColor == null) {
+        val cellExtractor: Cell => Any = if (isColor == null) {
           castTo(_, schema(columnIndex).dataType)
-      } else {
-        _.getCellStyle.getFillForegroundColorColor match {
-          case null => ""
-          case c: org.apache.poi.xssf.usermodel.XSSFColor => c.getARGBHex
-          case c => throw new RuntimeException(s"Unknown color type $c: ${c.getClass}")
-        }
-      }
-      { row: SheetRow =>
-        val cell = row.getCell(columnIndex + startColumn)
-        if (cell == null) {
-          null
         } else {
-          cellExtractor(cell)
+          _.getCellStyle.getFillForegroundColorColor match {
+            case null => ""
+            case c: org.apache.poi.xssf.usermodel.XSSFColor => c.getARGBHex
+            case c => throw new RuntimeException(s"Unknown color type $c: ${c.getClass}")
+          }
+        }
+        { row: SheetRow =>
+          val cell = row.getCell(columnIndex + startColumn)
+          if (cell == null) {
+            null
+          } else {
+            cellExtractor(cell)
+          }
         }
       }
-    }.to[Vector]
+      .to[Vector]
     val rows = dataRows.map(row => lookups.map(l => l(row)))
     val result = rows.to[Vector]
 
@@ -104,10 +115,11 @@ extends BaseRelation with TableScan with PrunedScan {
       case _: DoubleType => numericValue
       case _: BooleanType => cell.getBooleanCellValue
       case _: DecimalType => bigDecimal
-      case _: TimestampType => cellType match {
-        case CellType.NUMERIC => new Timestamp(DateUtil.getJavaDate(numericValue).getTime)
-        case _ => parseTimestamp(stringValue)
-      }
+      case _: TimestampType =>
+        cellType match {
+          case CellType.NUMERIC => new Timestamp(DateUtil.getJavaDate(numericValue).getTime)
+          case _ => parseTimestamp(stringValue)
+        }
       case _: DateType => new java.sql.Date(DateUtil.getJavaDate(numericValue).getTime)
       case _: StringType => stringValue
       case t => throw new RuntimeException(s"Unsupported cast from $cell to $t")
@@ -127,18 +139,19 @@ extends BaseRelation with TableScan with PrunedScan {
 
   private def getSparkType(cell: Option[Cell]): DataType = {
     cell match {
-      case Some(c) => c.getCellType match {
-        case Cell.CELL_TYPE_STRING => StringType
-        case Cell.CELL_TYPE_BOOLEAN => BooleanType
-        case Cell.CELL_TYPE_NUMERIC => if (DateUtil.isCellDateFormatted(c)) TimestampType else DoubleType
-        case Cell.CELL_TYPE_BLANK => NullType
-      }
+      case Some(c) =>
+        c.getCellType match {
+          case Cell.CELL_TYPE_STRING => StringType
+          case Cell.CELL_TYPE_BOOLEAN => BooleanType
+          case Cell.CELL_TYPE_NUMERIC => if (DateUtil.isCellDateFormatted(c)) TimestampType else DoubleType
+          case Cell.CELL_TYPE_BLANK => NullType
+        }
       case None => NullType
     }
   }
 
   private def dataRows = sheet.rowIterator.asScala.drop(if (useHeader) 1 else 0)
-  private def parallelize[T: scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
+  private def parallelize[T : scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
   private def inferSchema: StructType =
     this.userSchema.getOrElse {
       val header = firstRowWithData.zipWithIndex.map {
@@ -147,7 +160,12 @@ extends BaseRelation with TableScan with PrunedScan {
       }
       val baseSchema = if (this.inferSheetSchema) {
         val stringsAndCellTypes = dataRows.map { row =>
-          row.eachCellIterator(startColumn, endColumn).map { cell => getSparkType(cell) }.toVector
+          row
+            .eachCellIterator(startColumn, endColumn)
+            .map { cell =>
+              getSparkType(cell)
+            }
+            .toVector
         }.toVector
         InferSchema(parallelize(stringsAndCellTypes), header.toArray)
       } else {
@@ -158,7 +176,9 @@ extends BaseRelation with TableScan with PrunedScan {
         StructType(schemaFields)
       }
       if (addColorColumns) {
-        header.foldLeft(baseSchema) {(schema, header) => schema.add(s"${header}_color", StringType, nullable = true)}
+        header.foldLeft(baseSchema) { (schema, header) =>
+          schema.add(s"${header}_color", StringType, nullable = true)
+        }
       } else {
         baseSchema
       }

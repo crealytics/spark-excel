@@ -57,16 +57,18 @@ object IntegrationSuite {
   val rowsGen: Gen[List[ExampleData]] = Gen.listOf(rowGen)
 
   // inferring the schema will not match the original types exactly
-  val expectedInferredDataTypes = Array(
-    BooleanType,
-    DoubleType,
-    DoubleType,
-    DoubleType,
-    DoubleType,
-    DoubleType,
-    StringType,
-    TimestampType,
-    TimestampType)
+  val expectedInferredDataTypes =
+    Array(
+      BooleanType,
+      DoubleType,
+      DoubleType,
+      DoubleType,
+      DoubleType,
+      DoubleType,
+      StringType,
+      TimestampType,
+      TimestampType
+    )
 }
 
 class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteBase {
@@ -89,7 +91,8 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
       .mode("overwrite")
       .save(fileName)
 
-    val reader = spark.read.format(PackageName)
+    val reader = spark.read
+      .format(PackageName)
       .option("sheetName", sheetName)
       .option("useHeader", "true")
       .option("treatEmptyValuesAsNulls", "true")

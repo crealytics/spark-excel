@@ -17,3 +17,8 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.3")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.6")
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
+
+addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-RC12")
+
+addSbtPlugin("com.lucidchart" % "sbt-scalafmt-coursier" % "1.11")
+

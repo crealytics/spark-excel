@@ -17,7 +17,8 @@ package object excel {
       override def hasNext: Boolean = nextCol <= endCol && nextCol <= lastCellInclusive
 
       override def next(): Option[Cell] = {
-        val next = if (nextCol > endCol) throw new NoSuchElementException(s"column index = $nextCol")
+        val next =
+          if (nextCol > endCol) throw new NoSuchElementException(s"column index = $nextCol")
           else Option(row.getCell(nextCol, MissingCellPolicy.RETURN_NULL_AND_BLANK))
         nextCol += 1
         next

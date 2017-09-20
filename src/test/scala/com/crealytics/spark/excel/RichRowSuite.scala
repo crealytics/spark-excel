@@ -20,7 +20,7 @@ trait RowGenerator extends MockFactory {
     lastCellNum <- Gen.choose(0, MAX_WIDTH - 1)
     row = stub[Row]
     _ = (row.getCell(_: Int)).when(*) returns stub[Cell]
-    _ = row.getLastCellNum _ when() returns lastCellNum.toShort
+    _ = row.getLastCellNum _ when () returns lastCellNum.toShort
 
   } yield GeneratedRow(startColumn, endColumn, lastCellNum, row)
 }
