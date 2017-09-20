@@ -55,6 +55,18 @@ object IntegrationSuite {
 
   val rowGen: Gen[ExampleData] = arbitrary[ExampleData]
   val rowsGen: Gen[List[ExampleData]] = Gen.listOf(rowGen)
+
+  // inferring the schema will not match the original types exactly
+  val expectedInferredDataTypes = Array(
+    BooleanType,
+    DoubleType,
+    DoubleType,
+    DoubleType,
+    DoubleType,
+    DoubleType,
+    StringType,
+    TimestampType,
+    TimestampType)
 }
 
 class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteBase {
@@ -67,7 +79,7 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
   val PackageName = "com.crealytics.spark.excel"
   val sheetName = "test sheet"
 
-  def writeThenRead(df: DataFrame): DataFrame = {
+  def writeThenRead(df: DataFrame, schema: Option[StructType] = Some(exampleDataSchema)): DataFrame = {
     val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
 
     df.write
@@ -77,14 +89,17 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
       .mode("overwrite")
       .save(fileName)
 
-    spark.read.format(PackageName)
+    val reader = spark.read.format(PackageName)
       .option("sheetName", sheetName)
       .option("useHeader", "true")
       .option("treatEmptyValuesAsNulls", "true")
-      .option("inferSchema", "false")
       .option("addColorColumns", "false")
-      .schema(exampleDataSchema)
-      .load(fileName)
+
+    if (schema.isDefined) {
+      reader.option("inferSchema", false).schema(schema.get).load(fileName)
+    } else {
+      reader.option("inferSchema", true).load(fileName)
+    }
   }
 
   test("parses known datatypes correctly") {
@@ -109,6 +124,20 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
       expectedWithEmptyStr.schema.fields.update(6, StructField("aString", DataTypes.StringType, true))
 
       assertDataFrameEquals(expectedWithEmptyStr, writeThenRead(expectedWithNull))
+    }
+  }
+
+  test("infers schema correctly") {
+    forAll(rowsGen, MinSuccessful(20)) { rows =>
+      val df = spark.createDataset(rows).toDF
+      val inferred = writeThenRead(df, schema = None)
+
+      if (df.count() == 0) {
+        // Without actual data, we assume everything is a StringType
+        assert(inferred.schema.fields.forall(_.dataType == StringType))
+      } else {
+        assert(inferred.schema.fields.map(_.dataType), expectedInferredDataTypes)
+      }
     }
   }
 }

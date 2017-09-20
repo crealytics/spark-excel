@@ -17,7 +17,7 @@ package com.crealytics.spark.excel
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
-import org.apache.poi.ss.usermodel.Cell
+
 private[excel] object InferSchema {
 
   type CellType = Int
@@ -29,7 +29,7 @@ private[excel] object InferSchema {
    *     3. Replace any null types with string type
    */
   def apply(
-    rowsRDD: RDD[Seq[CellType]],
+    rowsRDD: RDD[Seq[DataType]],
       header: Array[String]): StructType = {
     val startType: Array[DataType] = Array.fill[DataType](header.length)(NullType)
     val rootTypes: Array[DataType] = rowsRDD.aggregate(startType)(
@@ -46,7 +46,7 @@ private[excel] object InferSchema {
     StructType(structFields)
   }
 
-  private def inferRowType(rowSoFar: Array[DataType], next: Seq[CellType]): Array[DataType] = {
+  private def inferRowType(rowSoFar: Array[DataType], next: Seq[DataType]): Array[DataType] = {
     var i = 0
     while (i < math.min(rowSoFar.length, next.size)) {  // May have columns on right missing.
       rowSoFar(i) = inferField(rowSoFar(i), next(i))
@@ -63,18 +63,13 @@ private[excel] object InferSchema {
     }
   }
 
-  val SPARK_TYPE_FOR_EXCEL_CELL_TYPE = Map(
-    Cell.CELL_TYPE_STRING -> StringType,
-    Cell.CELL_TYPE_BOOLEAN -> BooleanType,
-    Cell.CELL_TYPE_NUMERIC -> DoubleType
-  )
   /**
    * Infer type of string field. Given known type Double, and a string "1", there is no
    * point checking if it is an Int, as the final type must be Double or higher.
    */
   private[excel] def inferField(
     typeSoFar: DataType,
-    field: CellType): DataType = {
+    field: DataType): DataType = {
     // Defining a function to return the StringType constant is necessary in order to work around
     // a Scala compiler issue which leads to runtime incompatibilities with certain Spark versions;
     // see issue #128 for more details.
@@ -82,15 +77,14 @@ private[excel] object InferSchema {
       StringType
     }
 
-    if (field == Cell.CELL_TYPE_BLANK) {
+    if (field == NullType) {
       typeSoFar
     } else {
       (typeSoFar, field) match {
-        case (NullType, ct) => SPARK_TYPE_FOR_EXCEL_CELL_TYPE(ct)
-        // case (IntegerType, _) => tryParseInteger(field)
-        // case (LongType, _) => tryParseLong(field)
-        case (DoubleType, Cell.CELL_TYPE_NUMERIC) => DoubleType
-        case (BooleanType, Cell.CELL_TYPE_BOOLEAN) => BooleanType
+        case (NullType, ct) => ct
+        case (DoubleType, DoubleType) => DoubleType
+        case (BooleanType, BooleanType) => BooleanType
+        case (TimestampType, TimestampType) => TimestampType
         case (StringType, _) => stringType()
         case (_, _) => stringType()
       }
