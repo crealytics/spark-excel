@@ -18,16 +18,16 @@ import org.apache.spark.sql.functions.lit
 object IntegrationSuite {
 
   case class ExampleData(
-                          aBoolean: Boolean,
-                          aByte: Byte,
-                          aShort: Short,
-                          anInt: Int,
-                          aLong: Long,
-                          aDouble: Double,
-                          aString: String,
-                          aTimestamp: java.sql.Timestamp,
-                          aDate: java.sql.Date
-                        )
+    aBoolean: Boolean,
+    aByte: Byte,
+    aShort: Short,
+    anInt: Int,
+    aLong: Long,
+    aDouble: Double,
+    aString: String,
+    aTimestamp: java.sql.Timestamp,
+    aDate: java.sql.Date
+  )
 
   val exampleDataSchema = ScalaReflection.schemaFor[ExampleData].dataType.asInstanceOf[StructType]
 
@@ -55,6 +55,18 @@ object IntegrationSuite {
 
   val rowGen: Gen[ExampleData] = arbitrary[ExampleData]
   val rowsGen: Gen[List[ExampleData]] = Gen.listOf(rowGen)
+
+  // inferring the schema will not match the original types exactly
+  val expectedInferredDataTypes = Array(
+    BooleanType,
+    DoubleType,
+    DoubleType,
+    DoubleType,
+    DoubleType,
+    DoubleType,
+    StringType,
+    TimestampType,
+    TimestampType)
 }
 
 class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteBase {
@@ -120,15 +132,12 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
       val df = spark.createDataset(rows).toDF
       val inferred = writeThenRead(df, schema = None)
 
-      assert(if (df.count() > 0) BooleanType else StringType, inferred.schema.fields(0).dataType)
-      assert(if (df.count() > 0) DoubleType else StringType, inferred.schema.fields(1).dataType)
-      assert(if (df.count() > 0) DoubleType else StringType, inferred.schema.fields(2).dataType)
-      assert(if (df.count() > 0) DoubleType else StringType, inferred.schema.fields(3).dataType)
-      assert(if (df.count() > 0) DoubleType else StringType, inferred.schema.fields(4).dataType)
-      assert(if (df.count() > 0) DoubleType else StringType, inferred.schema.fields(5).dataType)
-      assert(if (df.count() > 0) StringType else StringType, inferred.schema.fields(6).dataType)
-      assert(if (df.count() > 0) TimestampType else StringType, inferred.schema.fields(7).dataType)
-      assert(if (df.count() > 0) TimestampType else StringType, inferred.schema.fields(8).dataType)
+      if (df.count() == 0) {
+        // Without actual data, we assume everything is a StringType
+        assert(inferred.schema.fields.forall(_.dataType == StringType))
+      } else {
+        assert(inferred.schema.fields.map(_.dataType), expectedInferredDataTypes)
+      }
     }
   }
 }
