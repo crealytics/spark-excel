@@ -1,3 +1,11 @@
+0.9.5
+=====
+
+0.9.4
+=====
+- Feature: Detect date formatted columns when inferring schema #28
+- Internal: Use scalafmt for code formatting
+
 0.9.2 & 0.9.3
 =============
 - Feature: Reading and writing timestamps
