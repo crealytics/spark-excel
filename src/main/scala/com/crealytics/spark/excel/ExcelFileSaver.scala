@@ -54,6 +54,8 @@ class ExcelFileSaver(fs: FileSystem) {
     case s: Short => Cell(s.toInt)
     case i: Int => Cell(i)
     case l: Long => Cell(l)
+    case b: BigDecimal => Cell(b)
+    case b: java.math.BigDecimal => Cell(BigDecimal(b))
     case null => Cell.Empty
   }
 }

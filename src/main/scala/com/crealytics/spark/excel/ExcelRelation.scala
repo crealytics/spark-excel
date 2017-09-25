@@ -102,9 +102,15 @@ case class ExcelRelation(
     if (cellType == CellType.BLANK) {
       return null
     }
+
     val dataFormatter = new DataFormatter()
     lazy val stringValue = dataFormatter.formatCellValue(cell)
-    lazy val numericValue = cell.getNumericCellValue
+    lazy val numericValue =
+      cell.getCellTypeEnum match {
+        case CellType.NUMERIC => cell.getNumericCellValue
+        case CellType.STRING if cell.getStringCellValue != "" => cell.getStringCellValue.toDouble
+        case CellType.STRING => Double.NaN
+      }
     lazy val bigDecimal = new BigDecimal(stringValue.replaceAll(",", ""))
     castType match {
       case _: ByteType => numericValue.toByte
@@ -114,7 +120,7 @@ case class ExcelRelation(
       case _: FloatType => numericValue.toFloat
       case _: DoubleType => numericValue
       case _: BooleanType => cell.getBooleanCellValue
-      case _: DecimalType => bigDecimal
+      case _: DecimalType => if (cellType == CellType.STRING && cell.getStringCellValue == "") null else bigDecimal
       case _: TimestampType =>
         cellType match {
           case CellType.NUMERIC => new Timestamp(DateUtil.getJavaDate(numericValue).getTime)
@@ -140,11 +146,12 @@ case class ExcelRelation(
   private def getSparkType(cell: Option[Cell]): DataType = {
     cell match {
       case Some(c) =>
-        c.getCellType match {
-          case Cell.CELL_TYPE_STRING => StringType
-          case Cell.CELL_TYPE_BOOLEAN => BooleanType
-          case Cell.CELL_TYPE_NUMERIC => if (DateUtil.isCellDateFormatted(c)) TimestampType else DoubleType
-          case Cell.CELL_TYPE_BLANK => NullType
+        c.getCellTypeEnum match {
+          case CellType.STRING if c.getStringCellValue == "" => NullType
+          case CellType.STRING => StringType
+          case CellType.BOOLEAN => BooleanType
+          case CellType.NUMERIC => if (DateUtil.isCellDateFormatted(c)) TimestampType else DoubleType
+          case CellType.BLANK => NullType
         }
       case None => NullType
     }
@@ -162,9 +169,7 @@ case class ExcelRelation(
         val stringsAndCellTypes = dataRows.map { row =>
           row
             .eachCellIterator(startColumn, endColumn)
-            .map { cell =>
-              getSparkType(cell)
-            }
+            .map(getSparkType)
             .toVector
         }.toVector
         InferSchema(parallelize(stringsAndCellTypes), header.toArray)

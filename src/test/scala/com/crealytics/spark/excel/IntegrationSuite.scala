@@ -4,7 +4,7 @@ import java.io.File
 import java.sql.Timestamp
 
 import org.scalacheck.{Arbitrary, Gen, Shrink}
-import Arbitrary.{arbLong => _, arbString => _, _}
+import Arbitrary.{arbLong => _, arbString => _, arbBigDecimal => _, _}
 import org.scalacheck.ScalacheckShapeless._
 import org.scalatest.FunSuite
 import org.scalatest.prop.PropertyChecks
@@ -24,6 +24,8 @@ object IntegrationSuite {
     anInt: Int,
     aLong: Long,
     aDouble: Double,
+    aBigDecimal: BigDecimal,
+    aJavaBigDecimal: java.math.BigDecimal,
     aString: String,
     aTimestamp: java.sql.Timestamp,
     aDate: java.sql.Date
@@ -32,11 +34,24 @@ object IntegrationSuite {
   val exampleDataSchema = ScalaReflection.schemaFor[ExampleData].dataType.asInstanceOf[StructType]
 
   // inferring the schema will not match the original types exactly
-  val expectedInferredDataTypes =
-    exampleDataSchema.map(_.dataType).map {
-      case (LongType | IntegerType | ByteType | ShortType) => DoubleType
-      case DateType => TimestampType
-      case t => t
+  val expectedInferredDataTypes: Seq[Function[Seq[Any], DataType]] =
+    exampleDataSchema.map(_.dataType).map { dt =>
+      val pf: Function[Seq[Any], DataType] = dt match {
+        case _: DecimalType => {
+          case values: Seq[Any] if values.distinct == Seq("") => StringType
+          case _ => DoubleType
+        }
+        case _: NumericType => {
+          case _: Seq[Any] => DoubleType
+        }
+        case DateType => {
+          case _: Seq[Any] => TimestampType
+        }
+        case t: DataType => {
+          case _: Seq[Any] => t
+        }
+      }
+      pf
     }
 
   implicit val arbitraryDateFourDigits = Arbitrary[java.sql.Date](
@@ -51,12 +66,20 @@ object IntegrationSuite {
       .map(new java.sql.Timestamp(_))
   )
 
+  implicit val arbitraryBigDecimal =
+    Arbitrary[BigDecimal](Gen.chooseNum[Double](Double.MinValue, Double.MaxValue).map(BigDecimal.apply))
+
+  implicit val arbitraryJavaBigDecimal =
+    Arbitrary[java.math.BigDecimal](arbitraryBigDecimal.arbitrary.map(_.bigDecimal))
+
   // Unfortunately we're losing some precision when parsing Longs
   // due to the fact that we have to read them as Doubles and then cast.
   // We're restricting our tests to Int-sized Longs in order not to fail
   // because of this issue.
   implicit val arbitraryLongWithLosslessDoubleConvertability: Arbitrary[Long] =
-    Arbitrary[Long] { arbitrary[Int].map(_.toLong) }
+    Arbitrary[Long] {
+      arbitrary[Int].map(_.toLong)
+    }
 
   implicit val arbitraryStringWithoutUnicodeCharacters: Arbitrary[String] =
     Arbitrary[String](Gen.alphaNumStr)
@@ -136,7 +159,16 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
         // Without actual data, we assume everything is a StringType
         assert(inferred.schema.fields.forall(_.dataType == StringType))
       } else {
-        assert(inferred.schema.fields.map(_.dataType), expectedInferredDataTypes)
+        val expectedDataTypes = expectedInferredDataTypes
+          .to[List]
+          .zip(inferred.schema)
+          .map {
+            case (f, sf) =>
+              val values = inferred.select(sf.name).collect().map(_.get(0))
+              f(values)
+          }
+        val actualDataTypes = inferred.schema.fields.map(_.dataType).to[List]
+        assert(actualDataTypes, expectedDataTypes)
       }
     }
   }
