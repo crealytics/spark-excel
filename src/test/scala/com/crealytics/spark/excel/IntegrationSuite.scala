@@ -31,6 +31,14 @@ object IntegrationSuite {
 
   val exampleDataSchema = ScalaReflection.schemaFor[ExampleData].dataType.asInstanceOf[StructType]
 
+  // inferring the schema will not match the original types exactly
+  val expectedInferredDataTypes =
+    exampleDataSchema.map(_.dataType).map {
+      case (LongType | IntegerType | ByteType | ShortType) => DoubleType
+      case DateType => TimestampType
+      case t => t
+    }
+
   implicit val arbitraryDateFourDigits = Arbitrary[java.sql.Date](
     Gen
       .chooseNum[Long](0L, (new java.util.Date).getTime + 1000000)
@@ -56,22 +64,10 @@ object IntegrationSuite {
   val rowGen: Gen[ExampleData] = arbitrary[ExampleData]
   val rowsGen: Gen[List[ExampleData]] = Gen.listOf(rowGen)
 
-  // inferring the schema will not match the original types exactly
-  val expectedInferredDataTypes =
-    Array(
-      BooleanType,
-      DoubleType,
-      DoubleType,
-      DoubleType,
-      DoubleType,
-      DoubleType,
-      StringType,
-      TimestampType,
-      TimestampType
-    )
 }
 
 class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteBase {
+
   import IntegrationSuite._
 
   import spark.implicits._
@@ -124,7 +120,8 @@ class IntegrationSuite extends FunSuite with PropertyChecks with DataFrameSuiteB
       // Generate the same DataFrame but with empty strings
       val expectedWithEmptyStr = expected.withColumn("aString", lit("": String))
       // Set the schema so that aString is nullable
-      expectedWithEmptyStr.schema.fields.update(6, StructField("aString", DataTypes.StringType, true))
+      val fields = expectedWithEmptyStr.schema.fields
+      fields.update(fields.indexWhere(_.name == "aString"), StructField("aString", DataTypes.StringType, true))
 
       assertDataFrameEquals(expectedWithEmptyStr, writeThenRead(expectedWithNull))
     }
