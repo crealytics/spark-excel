@@ -151,11 +151,25 @@ case class ExcelRelation(
     }
 
     val dataFormatter = new DataFormatter()
-    lazy val stringValue = dataFormatter.formatCellValue(cell)
+    lazy val stringValue =
+      cell.getCellTypeEnum match {
+        case CellType.FORMULA =>
+          cell.getCachedFormulaResultTypeEnum match {
+            case CellType.STRING => cell.getRichStringCellValue.getString
+            case CellType.NUMERIC => cell.getNumericCellValue.toString
+            case _ => dataFormatter.formatCellValue(cell)
+          }
+        case _ => dataFormatter.formatCellValue(cell)
+      }
     lazy val numericValue =
       cell.getCellTypeEnum match {
         case CellType.NUMERIC => cell.getNumericCellValue
         case CellType.STRING => stringToDouble(cell.getStringCellValue)
+        case CellType.FORMULA =>
+          cell.getCachedFormulaResultTypeEnum match {
+            case CellType.NUMERIC => cell.getNumericCellValue
+            case CellType.STRING => stringToDouble(cell.getRichStringCellValue.getString)
+          }
       }
     lazy val bigDecimal = new BigDecimal(numericValue)
     castType match {
