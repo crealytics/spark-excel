@@ -67,7 +67,7 @@ object IntegrationSuite {
   )
 
   implicit val arbitraryBigDecimal =
-    Arbitrary[BigDecimal](Gen.chooseNum[Double](Double.MinValue, Double.MaxValue).map(BigDecimal.apply))
+    Arbitrary[BigDecimal](Gen.chooseNum[Double](-1.0e15, 1.0e15).map(BigDecimal.apply))
 
   implicit val arbitraryJavaBigDecimal =
     Arbitrary[java.math.BigDecimal](arbitraryBigDecimal.arbitrary.map(_.bigDecimal))
