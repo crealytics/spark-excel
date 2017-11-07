@@ -1,5 +1,6 @@
 0.9.6
 =====
+- Feature: Read file using streaming by specifying `maxRowsInMemory`
 
 0.9.5
 =====

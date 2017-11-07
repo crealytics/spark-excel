@@ -31,7 +31,8 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
       addColorColumns = parameters.get("addColorColumns").fold(false)(_.toBoolean),
       startColumn = parameters.get("startColumn").fold(0)(_.toInt),
       endColumn = parameters.get("endColumn").fold(Int.MaxValue)(_.toInt),
-      timestampFormat = parameters.get("timestampFormat")
+      timestampFormat = parameters.get("timestampFormat"),
+      maxRowsInMemory = parameters.get("maxRowsInMemory").map(_.toInt)
     )(sqlContext)
   }
 
