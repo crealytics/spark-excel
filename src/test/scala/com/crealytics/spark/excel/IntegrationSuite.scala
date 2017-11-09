@@ -148,9 +148,11 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         forAll(rowsGen, MinSuccessful(20)) { rows =>
           val expected = spark.createDataset(rows).toDF
 
-          // We need two dataframes, one with null values, one with empty strings, this is because we want ExcelFileSaver to
-          // write an empty string, if there's a null in that column. expectedWithEmptyStr is what the dataframe should look
-          // like when the Excel spreadsheet is saved
+          // We need two dataframes, one with null values, one with empty strings.
+          // This is because we want ExcelFileSaver to write an empty string
+          // if there's a null in that column.
+          // expectedWithEmptyStr is what the dataframe should look
+          // like when the Excel spreadsheet is saved.
           val expectedWithNull = expected.withColumn("aString", lit(null: String))
           // Generate the same DataFrame but with empty strings
           val expectedWithEmptyStr = expected.withColumn("aString", lit("": String))
