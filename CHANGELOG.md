@@ -1,3 +1,7 @@
+0.9.7
+=====
+- Feature: `excerptSize` option determines how many rows to read when inferring schema
+
 0.9.6
 =====
 - Feature: Read file using streaming by specifying `maxRowsInMemory`
