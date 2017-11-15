@@ -6,7 +6,7 @@ A library for querying Excel files with Apache Spark, for Spark SQL and DataFram
 
 ## Requirements
 
-This library requires Spark 1.4+
+This library requires Spark 2.0+
 
 ## Linking
 You can link against this library in your program at the following coordinates:
@@ -15,7 +15,7 @@ You can link against this library in your program at the following coordinates:
 ```
 groupId: com.crealytics
 artifactId: spark-excel_2.11
-version: 0.9.5
+version: 0.9.6
 ```
 
 ## Using with Spark shell
@@ -23,7 +23,7 @@ This package can be added to  Spark using the `--packages` command line option. 
 
 ### Spark compiled with Scala 2.11
 ```
-$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:0.9.5
+$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:0.9.6
 ```
 
 ## Features
