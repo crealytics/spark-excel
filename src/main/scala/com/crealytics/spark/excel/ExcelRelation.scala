@@ -22,6 +22,7 @@ import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
 
 import scala.collection.JavaConverters._
+import scala.util.{Failure, Success, Try}
 
 case class ExcelRelation(
   location: String,
@@ -34,7 +35,8 @@ case class ExcelRelation(
   startColumn: Int = 0,
   endColumn: Int = Int.MaxValue,
   timestampFormat: Option[String] = None,
-  maxRowsInMemory: Option[Int] = None
+  maxRowsInMemory: Option[Int] = None,
+  excerptSize: Int = 10
 )(@transient val sqlContext: SQLContext)
     extends BaseRelation
     with TableScan
@@ -56,8 +58,6 @@ case class ExcelRelation(
       .getOrElse(WorkbookFactory.create(inputStream))
     findSheet(workbook, sheetName)
   }
-
-  val excerptSize = 10
 
   private lazy val (firstRowWithData, excerpt) = {
     val sheetIterator = sheet.iterator.asScala
@@ -137,6 +137,13 @@ case class ExcelRelation(
     sqlContext.sparkContext.parallelize(result.map(Row.fromSeq))
   }
 
+  private def stringToDouble(value: String): Double = {
+    Try(value.toDouble) match {
+      case Success(d) => d
+      case Failure(_) => Double.NaN
+    }
+  }
+
   private def castTo(cell: Cell, castType: DataType): Any = {
     val cellType = cell.getCellTypeEnum
     if (cellType == CellType.BLANK) {
@@ -148,8 +155,7 @@ case class ExcelRelation(
     lazy val numericValue =
       cell.getCellTypeEnum match {
         case CellType.NUMERIC => cell.getNumericCellValue
-        case CellType.STRING if cell.getStringCellValue != "" => cell.getStringCellValue.toDouble
-        case CellType.STRING => Double.NaN
+        case CellType.STRING => stringToDouble(cell.getStringCellValue)
       }
     lazy val bigDecimal = new BigDecimal(numericValue)
     castType match {

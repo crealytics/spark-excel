@@ -49,6 +49,7 @@ val df = sqlContext.read
     .option("endColumn", 99) // Optional, default: Int.MaxValue
     .option("timestampFormat", "MM-dd-yyyy HH:mm:ss") // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
     .option("maxRowsInMemory", 20) // Optional, default None. If set, uses a streaming reader which can help with big files
+    .option("excerptSize", 10) // Optional, default: 10. If set and if schema inferred, number of rows to infer schema from
     .schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
     .load("Worktime.xlsx")
 ```
