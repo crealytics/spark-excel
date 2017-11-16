@@ -37,6 +37,10 @@ libraryDependencies ++= Seq(
   "org.scalamock" %% "scalamock-scalatest-support" % "3.5.0" % Test
 )
 
+assemblyShadeRules in assembly := Seq(
+  ShadeRule.rename("com.fasterxml.jackson.**" -> "shadeio.@1").inAll
+)
+
 fork in Test := true
 parallelExecution in Test := false
 javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
