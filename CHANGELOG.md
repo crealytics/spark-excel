@@ -1,3 +1,7 @@
+0.9.8
+=====
+- Bugfix: Shade Jackson dependency to avoid version conflicts
+
 0.9.7
 =====
 - Feature: `excerptSize` option determines how many rows to read when inferring schema
