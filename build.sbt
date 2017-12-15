@@ -16,18 +16,29 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 
 sparkComponents := Seq("core", "sql", "hive")
 
-libraryDependencies ++= Seq(
-  "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
-  "org.apache.poi" % "poi-ooxml" % "3.16",
-  "com.norbitltd" %% "spoiwo" % "1.2.0"
+resolvers ++= Seq(
+   "jitpack" at "https://jitpack.io"
 )
 
 libraryDependencies ++= Seq(
+  "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
+  "org.apache.poi" % "poi-ooxml" % "3.17",
+  "com.norbitltd" %% "spoiwo" % "1.2.0",
+  "com.monitorjbl" % "xlsx-streamer" % "1.2.0" excludeAll ExclusionRule(organization = "org.apache.poi", name = "ooxml-schemas")
+).map(_.excludeAll(ExclusionRule(organization = "stax")))
+
+libraryDependencies ++= Seq(
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.8" % Test,
   "org.scalatest" %% "scalatest" % "3.0.1" % Test,
   "org.scalacheck" %% "scalacheck" % "1.13.4" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.6" % Test,
-  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
+  "com.github.nightscape" % "spark-testing-base" % "c6ac5d3b0629440f5fe13cf8830fdb17535c8513" % Test,
+//  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
   "org.scalamock" %% "scalamock-scalatest-support" % "3.5.0" % Test
+)
+
+assemblyShadeRules in assembly := Seq(
+  ShadeRule.rename("com.fasterxml.jackson.**" -> "shadeio.@1").inAll
 )
 
 fork in Test := true

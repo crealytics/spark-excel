@@ -6,7 +6,7 @@ A library for querying Excel files with Apache Spark, for Spark SQL and DataFram
 
 ## Requirements
 
-This library requires Spark 1.4+
+This library requires Spark 2.0+
 
 ## Linking
 You can link against this library in your program at the following coordinates:
@@ -15,7 +15,7 @@ You can link against this library in your program at the following coordinates:
 ```
 groupId: com.crealytics
 artifactId: spark-excel_2.11
-version: 0.9.5
+version: 0.9.8
 ```
 
 ## Using with Spark shell
@@ -23,7 +23,7 @@ This package can be added to  Spark using the `--packages` command line option. 
 
 ### Spark compiled with Scala 2.11
 ```
-$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:0.9.5
+$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:0.9.8
 ```
 
 ## Features
@@ -48,6 +48,8 @@ val df = sqlContext.read
     .option("startColumn", 0) // Optional, default: 0
     .option("endColumn", 99) // Optional, default: Int.MaxValue
     .option("timestampFormat", "MM-dd-yyyy HH:mm:ss") // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
+    .option("maxRowsInMemory", 20) // Optional, default None. If set, uses a streaming reader which can help with big files
+    .option("excerptSize", 10) // Optional, default: 10. If set and if schema inferred, number of rows to infer schema from
     .schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
     .load("Worktime.xlsx")
 ```

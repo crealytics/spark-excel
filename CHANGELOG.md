@@ -1,5 +1,14 @@
+0.9.8
+=====
+- Bugfix: Shade Jackson dependency to avoid version conflicts
+
+0.9.7
+=====
+- Feature: `excerptSize` option determines how many rows to read when inferring schema
+
 0.9.6
 =====
+- Feature: Read file using streaming by specifying `maxRowsInMemory`
 
 0.9.5
 =====

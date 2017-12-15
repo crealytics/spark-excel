@@ -4,6 +4,7 @@ import java.math.BigDecimal
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
+import com.monitorjbl.xlsx.StreamingReader
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.poi.ss.usermodel.{
   Cell,
@@ -21,6 +22,7 @@ import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
 
 import scala.collection.JavaConverters._
+import scala.util.{Failure, Success, Try}
 
 case class ExcelRelation(
   location: String,
@@ -32,20 +34,59 @@ case class ExcelRelation(
   userSchema: Option[StructType] = None,
   startColumn: Int = 0,
   endColumn: Int = Int.MaxValue,
-  timestampFormat: Option[String] = None
+  timestampFormat: Option[String] = None,
+  maxRowsInMemory: Option[Int] = None,
+  excerptSize: Int = 10
 )(@transient val sqlContext: SQLContext)
     extends BaseRelation
     with TableScan
     with PrunedScan {
   private val path = new Path(location)
-  private val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
-  private val workbook = WorkbookFactory.create(inputStream)
-  private val sheet = findSheet(workbook, sheetName)
-  private lazy val firstRowWithData = sheet.asScala
-    .find(_ != null)
-    .getOrElse(throw new RuntimeException(s"Sheet $sheet doesn't seem to contain any data"))
-    .eachCellIterator(startColumn, endColumn)
-    .to[Vector]
+  def extractCells(row: org.apache.poi.ss.usermodel.Row): Vector[Option[Cell]] =
+    row.eachCellIterator(startColumn, endColumn).to[Vector]
+
+  private def sheet = {
+    val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
+    val workbook = maxRowsInMemory
+      .map { maxRowsInMem =>
+        StreamingReader
+          .builder()
+          .rowCacheSize(maxRowsInMem)
+          .bufferSize(maxRowsInMem * 1024)
+          .open(inputStream)
+      }
+      .getOrElse(WorkbookFactory.create(inputStream))
+    findSheet(workbook, sheetName)
+  }
+
+  private lazy val (firstRowWithData, excerpt) = {
+    val sheetIterator = sheet.iterator.asScala
+    var currentRow: org.apache.poi.ss.usermodel.Row = null
+    while (sheetIterator.hasNext && currentRow == null) {
+      currentRow = sheetIterator.next
+    }
+    if (currentRow == null) {
+      throw new RuntimeException(s"Sheet $sheetName in $path doesn't seem to contain any data")
+    }
+    val firstRow = currentRow
+    var counter = 0
+    val excerpt = new Array[org.apache.poi.ss.usermodel.Row](excerptSize)
+    while (sheetIterator.hasNext && counter < excerptSize) {
+      excerpt(counter) = sheetIterator.next
+      counter += 1
+    }
+    (firstRow, excerpt.take(counter).to[List])
+  }
+
+  private def restIterator = {
+    val i = sheet.iterator.asScala
+    i.drop(excerpt.size + 1)
+    i
+  }
+  private def dataIterator = {
+    val init = if (useHeader) excerpt else firstRowWithData :: excerpt
+    init.iterator ++ restIterator
+  }
 
   override val schema: StructType = inferSchema
   val dataFormatter = new DataFormatter()
@@ -91,10 +132,16 @@ case class ExcelRelation(
         }
       }
       .to[Vector]
-    val rows = dataRows.map(row => lookups.map(l => l(row)))
+    val rows = dataIterator.map(row => lookups.map(l => l(row)))
     val result = rows.to[Vector]
-
     sqlContext.sparkContext.parallelize(result.map(Row.fromSeq))
+  }
+
+  private def stringToDouble(value: String): Double = {
+    Try(value.toDouble) match {
+      case Success(d) => d
+      case Failure(_) => Double.NaN
+    }
   }
 
   private def castTo(cell: Cell, castType: DataType): Any = {
@@ -117,17 +164,14 @@ case class ExcelRelation(
     lazy val numericValue =
       cell.getCellTypeEnum match {
         case CellType.NUMERIC => cell.getNumericCellValue
-        case CellType.STRING if cell.getStringCellValue != "" => cell.getStringCellValue.toDouble
-        case CellType.STRING => Double.NaN
+        case CellType.STRING => stringToDouble(cell.getStringCellValue)
         case CellType.FORMULA =>
           cell.getCachedFormulaResultTypeEnum match {
             case CellType.NUMERIC => cell.getNumericCellValue
-            case CellType.STRING if cell.getRichStringCellValue.getString != "" =>
-              cell.getRichStringCellValue.getString.toDouble
-            case CellType.STRING => Double.NaN
+            case CellType.STRING =>  stringToDouble(cell.getRichStringCellValue.getString)
           }
       }
-    lazy val bigDecimal = new BigDecimal(stringValue.replaceAll(",", ""))
+    lazy val bigDecimal = new BigDecimal(numericValue)
     castType match {
       case _: ByteType => numericValue.toByte
       case _: ShortType => numericValue.toShort
@@ -146,10 +190,6 @@ case class ExcelRelation(
       case _: StringType => stringValue
       case t => throw new RuntimeException(s"Unsupported cast from $cell to $t")
     }
-  }
-
-  private def rowsRdd: RDD[SheetRow] = {
-    parallelize(sheet.rowIterator().asScala.toSeq)
   }
 
   private def parseTimestamp(stringValue: String): Timestamp = {
@@ -173,21 +213,16 @@ case class ExcelRelation(
     }
   }
 
-  private def dataRows = sheet.rowIterator.asScala.drop(if (useHeader) 1 else 0)
   private def parallelize[T : scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
   private def inferSchema: StructType =
     this.userSchema.getOrElse {
-      val header = firstRowWithData.zipWithIndex.map {
+      val header = extractCells(firstRowWithData).zipWithIndex.map {
         case (Some(value), _) if useHeader => value.getStringCellValue
         case (_, index) => s"C$index"
       }
       val baseSchema = if (this.inferSheetSchema) {
-        val stringsAndCellTypes = dataRows.map { row =>
-          row
-            .eachCellIterator(startColumn, endColumn)
-            .map(getSparkType)
-            .toVector
-        }.toVector
+        val stringsAndCellTypes = excerpt
+          .map(r => extractCells(r).map(getSparkType))
         InferSchema(parallelize(stringsAndCellTypes), header.toArray)
       } else {
         // By default fields are assumed to be StringType
