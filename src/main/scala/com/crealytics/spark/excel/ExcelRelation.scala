@@ -45,9 +45,9 @@ case class ExcelRelation(
   def extractCells(row: org.apache.poi.ss.usermodel.Row): Vector[Option[Cell]] =
     row.eachCellIterator(startColumn, endColumn).to[Vector]
 
-  private def sheet = {
+  private def openWorkbook(): Workbook = {
     val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
-    val workbook = maxRowsInMemory
+    maxRowsInMemory
       .map { maxRowsInMem =>
         StreamingReader
           .builder()
@@ -56,10 +56,10 @@ case class ExcelRelation(
           .open(inputStream)
       }
       .getOrElse(WorkbookFactory.create(inputStream))
-    findSheet(workbook, sheetName)
   }
 
-  private lazy val (firstRowWithData, excerpt) = {
+  private def getFirstRowAndExcerpt(workbook: Workbook): (SheetRow, List[SheetRow]) = {
+    val sheet = findSheet(workbook, sheetName)
     val sheetIterator = sheet.iterator.asScala
     var currentRow: org.apache.poi.ss.usermodel.Row = null
     while (sheetIterator.hasNext && currentRow == null) {
@@ -78,14 +78,17 @@ case class ExcelRelation(
     (firstRow, excerpt.take(counter).to[List])
   }
 
-  private def restIterator = {
+  private def restIterator(workbook: Workbook, excerpt: List[SheetRow]) = {
+    val sheet = findSheet(workbook, sheetName)
     val i = sheet.iterator.asScala
     i.drop(excerpt.size + 1)
     i
   }
-  private def dataIterator = {
+
+  private def dataIterator(workbook: Workbook) = {
+    val (firstRowWithData, excerpt) = getFirstRowAndExcerpt(workbook)
     val init = if (useHeader) excerpt else firstRowWithData :: excerpt
-    init.iterator ++ restIterator
+    init.iterator ++ restIterator(workbook, excerpt)
   }
 
   override val schema: StructType = inferSchema
@@ -132,9 +135,12 @@ case class ExcelRelation(
         }
       }
       .to[Vector]
-    val rows = dataIterator.map(row => lookups.map(l => l(row)))
+    val workbook = openWorkbook()
+    val rows = dataIterator(workbook).map(row => lookups.map(l => l(row)))
     val result = rows.to[Vector]
-    sqlContext.sparkContext.parallelize(result.map(Row.fromSeq))
+    val rdd = sqlContext.sparkContext.parallelize(result.map(Row.fromSeq))
+    workbook.close()
+    rdd
   }
 
   private def stringToDouble(value: String): Double = {
@@ -214,29 +220,31 @@ case class ExcelRelation(
   }
 
   private def parallelize[T : scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
-  private def inferSchema: StructType =
-    this.userSchema.getOrElse {
-      val header = extractCells(firstRowWithData).zipWithIndex.map {
-        case (Some(value), _) if useHeader => value.getStringCellValue
-        case (_, index) => s"C$index"
-      }
-      val baseSchema = if (this.inferSheetSchema) {
-        val stringsAndCellTypes = excerpt
-          .map(r => extractCells(r).map(getSparkType))
-        InferSchema(parallelize(stringsAndCellTypes), header.toArray)
-      } else {
-        // By default fields are assumed to be StringType
-        val schemaFields = header.map { fieldName =>
-          StructField(fieldName.toString, StringType, nullable = true)
-        }
-        StructType(schemaFields)
-      }
-      if (addColorColumns) {
-        header.foldLeft(baseSchema) { (schema, header) =>
-          schema.add(s"${header}_color", StringType, nullable = true)
-        }
-      } else {
-        baseSchema
-      }
+  private def inferSchema(): StructType = this.userSchema.getOrElse {
+    val workbook = openWorkbook()
+    val (firstRowWithData, excerpt) = getFirstRowAndExcerpt(workbook)
+    workbook.close()
+    val header = extractCells(firstRowWithData).zipWithIndex.map {
+      case (Some(value), _) if useHeader => value.getStringCellValue
+      case (_, index) => s"C$index"
     }
+    val baseSchema = if (this.inferSheetSchema) {
+      val stringsAndCellTypes = excerpt
+        .map(r => extractCells(r).map(getSparkType))
+      InferSchema(parallelize(stringsAndCellTypes), header.toArray)
+    } else {
+      // By default fields are assumed to be StringType
+      val schemaFields = header.map { fieldName =>
+        StructField(fieldName.toString, StringType, nullable = true)
+      }
+      StructType(schemaFields)
+    }
+    if (addColorColumns) {
+      header.foldLeft(baseSchema) { (schema, header) =>
+        schema.add(s"${header}_color", StringType, nullable = true)
+      }
+    } else {
+      baseSchema
+    }
+  }
 }
