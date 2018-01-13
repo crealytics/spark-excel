@@ -41,7 +41,9 @@ case class ExcelRelation(
     extends BaseRelation
     with TableScan
     with PrunedScan {
+
   private val path = new Path(location)
+
   def extractCells(row: org.apache.poi.ss.usermodel.Row): Vector[Option[Cell]] =
     row.eachCellIterator(startColumn, endColumn).to[Vector]
 
@@ -58,7 +60,8 @@ case class ExcelRelation(
       .getOrElse(WorkbookFactory.create(inputStream))
   }
 
-  private def getFirstRowAndExcerpt(workbook: Workbook): (SheetRow, List[SheetRow]) = {
+  private def getExcerpt(): (SheetRow, List[SheetRow]) = {
+    val workbook = openWorkbook()
     val sheet = findSheet(workbook, sheetName)
     val sheetIterator = sheet.iterator.asScala
     var currentRow: org.apache.poi.ss.usermodel.Row = null
@@ -66,6 +69,7 @@ case class ExcelRelation(
       currentRow = sheetIterator.next
     }
     if (currentRow == null) {
+      workbook.close()
       throw new RuntimeException(s"Sheet $sheetName in $path doesn't seem to contain any data")
     }
     val firstRow = currentRow
@@ -75,23 +79,24 @@ case class ExcelRelation(
       excerpt(counter) = sheetIterator.next
       counter += 1
     }
+    workbook.close()
     (firstRow, excerpt.take(counter).to[List])
   }
 
-  private def restIterator(workbook: Workbook, excerpt: List[SheetRow]) = {
-    val sheet = findSheet(workbook, sheetName)
+  private def restIterator(wb: Workbook, excerptSize: Int) = {
+    val sheet = findSheet(wb, sheetName)
     val i = sheet.iterator.asScala
-    i.drop(excerpt.size + 1)
+    i.drop(excerptSize + 1)
     i
   }
 
-  private def dataIterator(workbook: Workbook) = {
-    val (firstRowWithData, excerpt) = getFirstRowAndExcerpt(workbook)
+  private def dataIterator(workbook: Workbook, firstRowWithData: SheetRow, excerpt: List[SheetRow]) = {
     val init = if (useHeader) excerpt else firstRowWithData :: excerpt
-    init.iterator ++ restIterator(workbook, excerpt)
+    init.iterator ++ restIterator(workbook, excerpt.size)
   }
 
   override val schema: StructType = inferSchema
+
   val dataFormatter = new DataFormatter()
 
   val timestampParser = if (timestampFormat.isDefined) {
@@ -107,6 +112,7 @@ case class ExcelRelation(
       }
       .getOrElse(workBook.sheetIterator.next)
   }
+
   override def buildScan: RDD[Row] = buildScan(schema.map(_.name).toArray)
 
   override def buildScan(requiredColumns: Array[String]): RDD[Row] = {
@@ -135,8 +141,9 @@ case class ExcelRelation(
         }
       }
       .to[Vector]
+    val (firstRowWithData, excerpt) = getExcerpt()
     val workbook = openWorkbook()
-    val rows = dataIterator(workbook).map(row => lookups.map(l => l(row)))
+    val rows = dataIterator(workbook, firstRowWithData, excerpt).map(row => lookups.map(l => l(row)))
     val result = rows.to[Vector]
     val rdd = sqlContext.sparkContext.parallelize(result.map(Row.fromSeq))
     workbook.close()
@@ -220,10 +227,9 @@ case class ExcelRelation(
   }
 
   private def parallelize[T : scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
+
   private def inferSchema(): StructType = this.userSchema.getOrElse {
-    val workbook = openWorkbook()
-    val (firstRowWithData, excerpt) = getFirstRowAndExcerpt(workbook)
-    workbook.close()
+    val (firstRowWithData, excerpt) = getExcerpt()
     val header = extractCells(firstRowWithData).zipWithIndex.map {
       case (Some(value), _) if useHeader => value.getStringCellValue
       case (_, index) => s"C$index"
