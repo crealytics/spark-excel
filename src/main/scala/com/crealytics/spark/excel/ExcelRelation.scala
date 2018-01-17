@@ -216,6 +216,12 @@ case class ExcelRelation(
     cell match {
       case Some(c) =>
         c.getCellTypeEnum match {
+          case CellType.FORMULA =>
+            c.getCachedFormulaResultTypeEnum match {
+              case CellType.STRING => StringType
+              case CellType.NUMERIC => DoubleType
+              case _ => NullType
+            }
           case CellType.STRING if c.getStringCellValue == "" => NullType
           case CellType.STRING => StringType
           case CellType.BOOLEAN => BooleanType
