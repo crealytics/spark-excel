@@ -1,3 +1,7 @@
+0.9.11
+=====
+- Bugfix: Infer schema for FORMULA cells
+
 0.9.10
 =====
 - Bugfix: Make sure files are closed after reading
