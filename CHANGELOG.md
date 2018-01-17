@@ -1,3 +1,11 @@
+0.9.10
+=====
+- Bugfix: Make sure files are closed after reading
+
+0.9.9
+=====
+- Feature: Added support for FORMULA cells when typing to String or Numeric types
+
 0.9.8
 =====
 - Bugfix: Shade Jackson dependency to avoid version conflicts
