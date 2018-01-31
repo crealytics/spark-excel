@@ -234,12 +234,49 @@ case class ExcelRelation(
 
   private def parallelize[T : scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
 
+  /**
+    * Generates a header from the given row which is null-safe and duplicate-safe.
+    */
+  protected def makeSafeHeader(row: Array[String]): Array[String] = {
+    if (useHeader) {
+      val duplicates = {
+        val headerNames = row
+          .filter(_ != null)
+        headerNames.diff(headerNames.distinct).distinct
+      }
+
+      row.zipWithIndex.map {
+        case (value, index) =>
+          if (value == null || value.isEmpty) {
+            // When there are empty strings or the, put the index as the suffix.
+            s"_c$index"
+          } else if (duplicates.contains(value)) {
+            // When there are duplicates, put the index as the suffix.
+            s"$value$index"
+          } else {
+            value
+          }
+      }
+    } else {
+      row.zipWithIndex.map {
+        case (_, index) =>
+          // Uses default column names, "_c#" where # is its position of fields
+          // when header option is disabled.
+          s"_c$index"
+      }
+    }
+  }
+
   private def inferSchema(): StructType = this.userSchema.getOrElse {
     val (firstRowWithData, excerpt) = getExcerpt()
-    val header = extractCells(firstRowWithData).zipWithIndex.map {
-      case (Some(value), _) if useHeader => value.getStringCellValue
-      case (_, index) => s"C$index"
-    }
+
+    val rawHeader = extractCells(firstRowWithData).map {
+      case Some(value) => value.getStringCellValue
+      case _ => ""
+    }.toArray
+
+    val header = makeSafeHeader(rawHeader)
+
     val baseSchema = if (this.inferSheetSchema) {
       val stringsAndCellTypes = excerpt
         .map(r => extractCells(r).map(getSparkType))
