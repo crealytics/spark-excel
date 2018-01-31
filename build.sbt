@@ -24,7 +24,7 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
   "org.apache.poi" % "poi-ooxml" % "3.17",
   "com.norbitltd" %% "spoiwo" % "1.2.0",
-  "com.monitorjbl" % "xlsx-streamer" % "1.2.0" excludeAll ExclusionRule(organization = "org.apache.poi", name = "ooxml-schemas")
+  "com.monitorjbl" % "xlsx-streamer" % "1.2.1" excludeAll ExclusionRule(organization = "org.apache.poi", name = "ooxml-schemas")
 ).map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 libraryDependencies ++= Seq(

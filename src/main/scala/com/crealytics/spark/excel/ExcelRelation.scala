@@ -163,7 +163,7 @@ case class ExcelRelation(
       return null
     }
 
-    val dataFormatter = new DataFormatter()
+    lazy val dataFormatter = new DataFormatter()
     lazy val stringValue =
       cell.getCellTypeEnum match {
         case CellType.FORMULA =>
