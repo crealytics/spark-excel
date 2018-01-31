@@ -1,3 +1,7 @@
+0.9.12
+=====
+- Feature: Improve performance by upgrading dependencies and instantiating date formatting lazily
+
 0.9.11
 =====
 - Bugfix: Infer schema for FORMULA cells
