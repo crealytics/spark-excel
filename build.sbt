@@ -16,15 +16,16 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 
 sparkComponents := Seq("core", "sql", "hive")
 
-resolvers ++= Seq(
-   "jitpack" at "https://jitpack.io"
-)
+resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
   "org.apache.poi" % "poi-ooxml" % "3.17",
   "com.norbitltd" %% "spoiwo" % "1.2.0",
-  "com.monitorjbl" % "xlsx-streamer" % "1.2.1" excludeAll ExclusionRule(organization = "org.apache.poi", name = "ooxml-schemas")
+  "com.monitorjbl" % "xlsx-streamer" % "1.2.1" excludeAll ExclusionRule(
+    organization = "org.apache.poi",
+    name = "ooxml-schemas"
+  )
 ).map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 libraryDependencies ++= Seq(
@@ -37,9 +38,7 @@ libraryDependencies ++= Seq(
   "org.scalamock" %% "scalamock-scalatest-support" % "3.5.0" % Test
 )
 
-assemblyShadeRules in assembly := Seq(
-  ShadeRule.rename("com.fasterxml.jackson.**" -> "shadeio.@1").inAll
-)
+assemblyShadeRules in assembly := Seq(ShadeRule.rename("com.fasterxml.jackson.**" -> "shadeio.@1").inAll)
 
 fork in Test := true
 parallelExecution in Test := false
@@ -56,7 +55,7 @@ publishTo := {
   if (version.value.endsWith("SNAPSHOT"))
     Some("snapshots" at nexus + "content/repositories/snapshots")
   else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
 
 pomExtra :=
@@ -83,8 +82,7 @@ pomExtra :=
 // Skip tests during assembly
 test in assembly := {}
 
-addArtifact(artifact in(Compile, assembly), assembly)
-
+addArtifact(artifact in (Compile, assembly), assembly)
 
 initialCommands += """
   import org.apache.spark.{SparkConf, SparkContext}
@@ -104,12 +102,5 @@ fork := true
 
 // -- MiMa binary compatibility checks ------------------------------------------------------------
 
-import com.typesafe.tools.mima.plugin.MimaKeys.{binaryIssueFilters, previousArtifact}
-import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-
-mimaDefaultSettings ++ Seq(
-  previousArtifact := Some("com.crealytics" %% "spark-excel" % "0.0.1"),
-  binaryIssueFilters ++= Seq(
-  )
-)
+mimaPreviousArtifacts := Set("com.crealytics" %% "spark-excel" % "0.0.1")
 // ------------------------------------------------------------------------------------------------

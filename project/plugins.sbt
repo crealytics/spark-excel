@@ -1,24 +1,23 @@
-resolvers += "Spark Package Main Repo" at "https://dl.bintray.com/spark-packages/maven"
+resolvers += Resolver.bintrayIvyRepo("s22s", "sbt-plugins")
 
-addSbtPlugin("org.spark-packages" % "sbt-spark-package" % "0.2.6")
+addSbtPlugin("org.spark-packages" % "sbt-spark-package" % "0.2.7-astraea.1")
 
-addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.7.0" excludeAll(
+addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0" excludeAll(
   ExclusionRule(organization = "com.danieltrinh")))
-libraryDependencies += "org.scalariform" %% "scalariform" % "0.1.7"
+addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.8.2")
 
-addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.3.3")
+addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.1")
 
-addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.18")
 
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.9")
-
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.3")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.6")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.6")
 
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.1")
 
-addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-RC12")
+addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0")
 
-addSbtPlugin("com.lucidchart" % "sbt-scalafmt-coursier" % "1.11")
+addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.1-M1")
 
+addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.4.0")
