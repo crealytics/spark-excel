@@ -199,11 +199,8 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
       it("writes data with legal disclaimer") {
         val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
 
-        val df = Seq(
-          (1, "1", "2", "3"),
-          (2, "4", "5", "6"),
-          (3, "7", "8", "9")
-        ).toDF("id", "column1", "column2", "column3")
+        val df =
+          Seq((1, "1", "2", "3"), (2, "4", "5", "6"), (3, "7", "8", "9")).toDF("id", "column1", "column2", "column3")
 
         df.write
           .format(PackageName)
@@ -227,9 +224,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         val legalDisclaimerResult = firstRowReader.load(fileName).limit(1).cache()
         legalDisclaimerResult.show()
 
-        legalDisclaimerResult.collect() should contain theSameElementsAs Array(
-          Row("All rights reserved")
-        )
+        legalDisclaimerResult.collect() should contain theSameElementsAs Array(Row("All rights reserved"))
 
         val dataResult = dataReader.load(fileName).cache()
         dataResult.show()
