@@ -52,11 +52,11 @@ spAppendScalaVersion := true
 spIncludeMaven := true
 
 publishTo := {
-  val nexus = "https://oss.sonatype.org/"
+  val artifactory = "https://onef.jfrog.io/onef/"
   if (version.value.endsWith("SNAPSHOT"))
-    Some("snapshots" at nexus + "content/repositories/snapshots")
+    Some("Artifactory Realm" at artifactory + "dl-private-snapshots;build.timestamp=" + System.currentTimeMillis())
   else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    Some("Artifactory Realm" at artifactory + "dl-private-releases")
 }
 
 pomExtra :=
