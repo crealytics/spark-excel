@@ -25,8 +25,10 @@ class ExcelFileSaver(fs: FileSystem) {
     sheetName: String = DEFAULT_SHEET_NAME,
     useHeader: Boolean = true,
     dateFormat: String = DEFAULT_DATE_FORMAT,
-    timestampFormat: String = DEFAULT_TIMESTAMP_FORMAT
+    timestampFormat: String = DEFAULT_TIMESTAMP_FORMAT,
+    preHeader: Option[String]
   ): Unit = {
+    val preHeaderRow = preHeader.toList.flatMap(_.split("\\R", -1).map(s => Row(Cell(s))))
     val headerRow = Row(dataFrame.schema.fields.map(f => Cell(f.name)))
     val dataRows = dataFrame
       .toLocalIterator()
@@ -35,7 +37,7 @@ class ExcelFileSaver(fs: FileSystem) {
         Row(row.toSeq.map(toCell(_, dateFormat, timestampFormat)))
       }
       .toList
-    val rows = if (useHeader) headerRow :: dataRows else dataRows
+    val rows = preHeaderRow ++ (if (useHeader) headerRow :: dataRows else dataRows)
     val workbook = Sheet(name = sheetName, rows = rows).convertAsXlsx
     autoClose(new BufferedOutputStream(fs.create(location)))(workbook.write)
   }

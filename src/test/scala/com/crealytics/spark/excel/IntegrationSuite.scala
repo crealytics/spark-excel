@@ -1,9 +1,19 @@
 package com.crealytics.spark.excel
 
 import java.io.File
+import java.lang.Math.sqrt
+import java.sql.Timestamp
 
+import org.scalacheck.{Arbitrary, Gen, Shrink}
+import Arbitrary.{arbBigDecimal => _, arbLong => _, arbString => _, _}
+import org.scalacheck.ScalacheckShapeless._
+import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.prop.PropertyChecks
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
+import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types._
@@ -12,6 +22,8 @@ import org.scalacheck.ScalacheckShapeless._
 import org.scalacheck.{ Arbitrary, Gen, Shrink }
 import org.scalatest.FunSpec
 import org.scalatest.prop.PropertyChecks
+
+import scala.util.Random
 
 object IntegrationSuite {
 
@@ -98,7 +110,7 @@ object IntegrationSuite {
 
 }
 
-class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBase {
+class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBase with Matchers {
 
   import IntegrationSuite._
 
@@ -111,15 +123,24 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
 
   def runTests(maxRowsInMemory: Option[Int]) {
 
-    def writeThenRead(df: DataFrame, schema: Option[StructType] = Some(exampleDataSchema)): DataFrame = {
-      val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
+    def writeThenRead(
+      df: DataFrame,
+      schema: Option[StructType] = Some(exampleDataSchema),
+      preHeader: Option[String] = None,
+      fileName: Option[String] = None
+    ): DataFrame = {
+      val theFileName = fileName.getOrElse(File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath)
 
-      df.write
+      val writer = df.write
         .format(PackageName)
         .option("sheetName", sheetName)
         .option("useHeader", "true")
         .mode("overwrite")
-        .save(fileName)
+      val withPreHeader = preHeader.foldLeft(writer) {
+        case (wri, pre) =>
+          wri.option("preHeader", pre)
+      }
+      withPreHeader.save(theFileName)
 
       val reader = spark.read
         .format(PackageName)
@@ -127,11 +148,28 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         .option("useHeader", "true")
         .option("treatEmptyValuesAsNulls", "true")
         .option("addColorColumns", "false")
-      val withSchema = schema.foldLeft(reader.option("inferSchema", schema.isEmpty))(_ schema _)
+      val withPreHeaderSkip = preHeader.foldLeft(reader) {
+        case (reader, preHeader) =>
+          val skipRows = preHeader.count(_ == '\n') + 1
+          reader.option("skipFirstRows", skipRows)
+      }
+      val withSchema = schema.foldLeft(withPreHeaderSkip.option("inferSchema", schema.isEmpty))(_ schema _)
       val withStreaming = maxRowsInMemory.foldLeft(withSchema) {
         case (reader, maxRowsInMem) => reader.option("maxRowsInMemory", maxRowsInMem)
       }
-      withStreaming.load(fileName)
+      withStreaming.load(theFileName)
+    }
+
+    def assertEqualAfterInferringTypes(original: DataFrame, inferred: DataFrame) = {
+      val originalWithInferredColumnTypes =
+        original.schema
+          .zip(expectedDataTypes(inferred))
+          .foldLeft(original) {
+            case (df, (field, dataType)) =>
+              df.withColumn(field.name, df(field.name).cast(dataType))
+          }
+      val expected = spark.createDataFrame(originalWithInferredColumnTypes.rdd, inferred.schema)
+      assertDataFrameEquals(expected, inferred)
     }
 
     describe(s"with maxRowsInMemory = $maxRowsInMemory") {
@@ -182,20 +220,40 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         forAll(rowsGen.filter(!_.isEmpty), MinSuccessful(20)) { rows =>
           val original = spark.createDataset(rows).toDF
           val inferred = writeThenRead(original, schema = None)
-          val originalWithInferredColumnTypes =
-            original.schema
-              .zip(expectedDataTypes(inferred))
-              .foldLeft(original) {
-                case (df, (field, dataType)) =>
-                  df.withColumn(field.name, df(field.name).cast(dataType))
-              }
-          val expected = spark.createDataFrame(originalWithInferredColumnTypes.rdd, inferred.schema)
-          assertDataFrameEquals(expected, inferred)
+          assertEqualAfterInferringTypes(original, inferred)
         }
+      }
+
+      val preHeaderGen: Gen[String] = for {
+        string <- arbitrary[String].filterNot(_.isEmpty)
+        numNewLines <- Gen.posNum[Int]
+      } yield Random.shuffle(("\n" * numNewLines ++ string): Seq[Char]).mkString
+
+      it("correctly writes and skips the preHeader") {
+        forAll(rowsGen.filter(!_.isEmpty), preHeaderGen, MinSuccessful(20)) {
+          case (rows, preHeader) =>
+            val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
+            val original = spark.createDataset(rows).toDF
+            val inferred =
+              writeThenRead(original, schema = None, preHeader = Some(preHeader), fileName = Some(fileName))
+
+            val preHeaderLines = preHeader.split("\\R", -1)
+            val firstRowsDf = spark.read
+              .format(PackageName)
+              .option("sheetName", sheetName)
+              .option("useHeader", "false")
+              .load(fileName)
+            val actualHeaders = firstRowsDf.limit(preHeaderLines.length).collect().map(_.get(0))
+            actualHeaders should contain theSameElementsInOrderAs preHeaderLines
+
+            assertEqualAfterInferringTypes(original, inferred)
+        }
+
       }
 
     }
   }
+
   runTests(maxRowsInMemory = None)
   runTests(maxRowsInMemory = Some(20))
 }
