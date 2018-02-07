@@ -1,16 +1,17 @@
 package com.crealytics.spark.excel
 
 import java.io.File
+import java.lang.Math.sqrt
 import java.sql.Timestamp
 
 import org.scalacheck.{Arbitrary, Gen, Shrink}
-import Arbitrary.{arbLong => _, arbString => _, arbBigDecimal => _, _}
+import Arbitrary.{arbBigDecimal => _, arbLong => _, arbString => _, _}
 import org.scalacheck.ScalacheckShapeless._
-import org.scalatest.FunSpec
+import org.scalatest.{FunSpec, Matchers}
 import org.scalatest.prop.PropertyChecks
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions.lit
@@ -99,7 +100,7 @@ object IntegrationSuite {
 
 }
 
-class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBase {
+class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBase with Matchers {
 
   import IntegrationSuite._
 
@@ -193,6 +194,53 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
           val expected = spark.createDataFrame(originalWithInferredColumnTypes.rdd, inferred.schema)
           assertDataFrameEquals(expected, inferred)
         }
+      }
+
+      it("writes data with legal disclaimer") {
+        val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
+
+        val df = Seq(
+          (1, "1", "2", "3"),
+          (2, "4", "5", "6"),
+          (3, "7", "8", "9")
+        ).toDF("id", "column1", "column2", "column3")
+
+        df.write
+          .format(PackageName)
+          .option("sheetName", sheetName)
+          .option("useHeader", "true")
+          .option("legalDisclaimer", "All rights reserved")
+          .mode("overwrite")
+          .save(fileName)
+
+        val firstRowReader = spark.read
+          .format(PackageName)
+          .option("sheetName", sheetName)
+          .option("useHeader", "false")
+
+        val dataReader = spark.read
+          .format(PackageName)
+          .option("sheetName", sheetName)
+          .option("useHeader", "true")
+          .option("skipFirstRows", "1")
+
+        val legalDisclaimerResult = firstRowReader.load(fileName).limit(1).cache()
+        legalDisclaimerResult.show()
+
+        legalDisclaimerResult.collect() should contain theSameElementsAs Array(
+          Row("All rights reserved")
+        )
+
+        val dataResult = dataReader.load(fileName).cache()
+        dataResult.show()
+
+        dataResult.schema.fields.map(_.name) should contain theSameElementsAs
+          Array("id", "column1", "column2", "column3")
+        dataResult.collect() should contain theSameElementsAs Array(
+          Row("1", "1", "2", "3"),
+          Row("2", "4", "5", "6"),
+          Row("3", "7", "8", "9")
+        )
       }
 
     }

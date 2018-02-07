@@ -36,7 +36,8 @@ case class ExcelRelation(
   endColumn: Int = Int.MaxValue,
   timestampFormat: Option[String] = None,
   maxRowsInMemory: Option[Int] = None,
-  excerptSize: Int = 10
+  excerptSize: Int = 10,
+  skipFirstRows: Option[Int] = None
 )(@transient val sqlContext: SQLContext)
     extends BaseRelation
     with TableScan
@@ -64,6 +65,7 @@ case class ExcelRelation(
     val workbook = openWorkbook()
     val sheet = findSheet(workbook, sheetName)
     val sheetIterator = sheet.iterator.asScala
+    skipFirstRows.foreach(n => sheetIterator.drop(n))
     var currentRow: org.apache.poi.ss.usermodel.Row = null
     while (sheetIterator.hasNext && currentRow == null) {
       currentRow = sheetIterator.next
@@ -92,7 +94,7 @@ case class ExcelRelation(
 
   private def dataIterator(workbook: Workbook, firstRowWithData: SheetRow, excerpt: List[SheetRow]) = {
     val init = if (useHeader) excerpt else firstRowWithData :: excerpt
-    init.iterator ++ restIterator(workbook, excerpt.size)
+    init.iterator ++ restIterator(workbook, excerpt.size + skipFirstRows.getOrElse(0))
   }
 
   override val schema: StructType = inferSchema
