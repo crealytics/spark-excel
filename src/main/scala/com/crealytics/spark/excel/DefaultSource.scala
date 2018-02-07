@@ -33,7 +33,8 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
       endColumn = parameters.get("endColumn").fold(Int.MaxValue)(_.toInt),
       timestampFormat = parameters.get("timestampFormat"),
       maxRowsInMemory = parameters.get("maxRowsInMemory").map(_.toInt),
-      excerptSize = parameters.get("excerptSize").fold(10)(_.toInt)
+      excerptSize = parameters.get("excerptSize").fold(10)(_.toInt),
+      skipFirstRows = parameters.get("skipFirstRows").map(_.toInt)
     )(sqlContext)
   }
 
@@ -48,6 +49,7 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
     val useHeader = checkParameter(parameters, "useHeader").toBoolean
     val dateFormat = parameters.getOrElse("dateFormat", ExcelFileSaver.DEFAULT_DATE_FORMAT)
     val timestampFormat = parameters.getOrElse("timestampFormat", ExcelFileSaver.DEFAULT_TIMESTAMP_FORMAT)
+    val preHeader = parameters.get("preHeader")
     val filesystemPath = new Path(path)
     val fs = filesystemPath.getFileSystem(sqlContext.sparkContext.hadoopConfiguration)
     val doSave = if (fs.exists(filesystemPath)) {
@@ -72,7 +74,8 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
         sheetName = sheetName,
         useHeader = useHeader,
         dateFormat = dateFormat,
-        timestampFormat = timestampFormat
+        timestampFormat = timestampFormat,
+        preHeader = preHeader
       )
     }
 

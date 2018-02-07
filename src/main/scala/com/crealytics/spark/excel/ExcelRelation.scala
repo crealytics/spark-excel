@@ -36,7 +36,8 @@ case class ExcelRelation(
   endColumn: Int = Int.MaxValue,
   timestampFormat: Option[String] = None,
   maxRowsInMemory: Option[Int] = None,
-  excerptSize: Int = 10
+  excerptSize: Int = 10,
+  skipFirstRows: Option[Int] = None
 )(@transient val sqlContext: SQLContext)
     extends BaseRelation
     with TableScan
@@ -64,6 +65,7 @@ case class ExcelRelation(
     val workbook = openWorkbook()
     val sheet = findSheet(workbook, sheetName)
     val sheetIterator = sheet.iterator.asScala
+    skipFirstRows.foreach(n => sheetIterator.drop(n))
     var currentRow: org.apache.poi.ss.usermodel.Row = null
     while (sheetIterator.hasNext && currentRow == null) {
       currentRow = sheetIterator.next
@@ -92,7 +94,7 @@ case class ExcelRelation(
 
   private def dataIterator(workbook: Workbook, firstRowWithData: SheetRow, excerpt: List[SheetRow]) = {
     val init = if (useHeader) excerpt else firstRowWithData :: excerpt
-    init.iterator ++ restIterator(workbook, excerpt.size)
+    init.iterator ++ restIterator(workbook, excerpt.size + skipFirstRows.getOrElse(0))
   }
 
   override val schema: StructType = inferSchema
@@ -115,35 +117,35 @@ case class ExcelRelation(
 
   override def buildScan: RDD[Row] = buildScan(schema.map(_.name).toArray)
 
-  override def buildScan(requiredColumns: Array[String]): RDD[Row] = {
-    val lookups = requiredColumns
-      .map { c =>
-        val columnNameRegex = s"(.*?)(_color)?".r
-        val columnNameRegex(columnName, isColor) = c
-        val columnIndex = schema.indexWhere(_.name == columnName)
+  val columnNameRegex = s"(.*?)(_color)?".r
+  private def columnExtractor(column: String): SheetRow => Any = {
+    val columnNameRegex(columnName, isColor) = column
+    val columnIndex = schema.indexWhere(_.name == columnName)
 
-        val cellExtractor: Cell => Any = if (isColor == null) {
-          castTo(_, schema(columnIndex).dataType)
-        } else {
-          _.getCellStyle.getFillForegroundColorColor match {
-            case null => ""
-            case c: org.apache.poi.xssf.usermodel.XSSFColor => c.getARGBHex
-            case c => throw new RuntimeException(s"Unknown color type $c: ${c.getClass}")
-          }
-        }
-        { row: SheetRow =>
-          val cell = row.getCell(columnIndex + startColumn)
-          if (cell == null) {
-            null
-          } else {
-            cellExtractor(cell)
-          }
-        }
+    val cellExtractor: Cell => Any = if (isColor == null) {
+      castTo(_, schema(columnIndex).dataType)
+    } else {
+      _.getCellStyle.getFillForegroundColorColor match {
+        case null => ""
+        case c: org.apache.poi.xssf.usermodel.XSSFColor => c.getARGBHex
+        case c => throw new RuntimeException(s"Unknown color type $c: ${c.getClass}")
       }
-      .to[Vector]
+    }
+    { row: SheetRow =>
+      val cell = row.getCell(columnIndex + startColumn)
+      if (cell == null) {
+        null
+      } else {
+        cellExtractor(cell)
+      }
+    }
+  }
+
+  override def buildScan(requiredColumns: Array[String]): RDD[Row] = {
+    val lookups = requiredColumns.map(columnExtractor).to[Vector]
     val (firstRowWithData, excerpt) = getExcerpt()
     val workbook = openWorkbook()
-    val rows = dataIterator(workbook, firstRowWithData, excerpt).map(row => lookups.map(l => l(row)))
+    val rows = dataIterator(workbook, firstRowWithData, excerpt).flatMap(row => Try(lookups.map(l => l(row))).toOption)
     val result = rows.to[Vector]
     val rdd = sqlContext.sparkContext.parallelize(result.map(Row.fromSeq))
     workbook.close()
