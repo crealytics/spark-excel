@@ -1,5 +1,6 @@
 package com.crealytics.spark.excel
 
+import java.io.BufferedOutputStream
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
@@ -38,10 +39,7 @@ class ExcelFileSaver(fs: FileSystem) {
       .toList
     val rows = legalDisclaimerRow ++ (if (useHeader) headerRow :: dataRows else dataRows)
     val workbook = Sheet(name = sheetName, rows = rows).convertAsXlsx
-    val outputStream = fs.create(location)
-    workbook.write(outputStream)
-    outputStream.hflush()
-    outputStream.close()
+    autoClose(new BufferedOutputStream(fs.create(location)))(workbook.write)
   }
   def dateCell(time: Long, format: String): Cell = {
     Cell(new java.util.Date(time), style = CellStyle(dataFormat = CellDataFormat(format)))
@@ -59,5 +57,12 @@ class ExcelFileSaver(fs: FileSystem) {
     case b: BigDecimal => Cell(b)
     case b: java.math.BigDecimal => Cell(BigDecimal(b))
     case null => Cell.Empty
+  }
+  def autoClose[A <: AutoCloseable, B](closeable: A)(fun: (A) => B): B = {
+    try {
+      fun(closeable)
+    } finally {
+      closeable.close()
+    }
   }
 }
