@@ -83,7 +83,7 @@ pomExtra :=
 // Skip tests during assembly
 test in assembly := {}
 
-addArtifact(artifact in(Compile, assembly), assembly)
+//addArtifact(artifact in(Compile, assembly), assembly)
 
 
 initialCommands += """
