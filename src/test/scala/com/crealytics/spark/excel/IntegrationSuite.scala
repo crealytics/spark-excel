@@ -1,7 +1,7 @@
 package com.crealytics.spark.excel
 
 import java.io.File
-import java.lang.Math.sqrt
+import java.nio.file.Files
 import java.sql.Timestamp
 
 import org.scalacheck.{Arbitrary, Gen, Shrink}
@@ -236,6 +236,43 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
           Row("2", "4", "5", "6"),
           Row("3", "7", "8", "9")
         )
+      }
+
+      it("writes specified file inside path and reads back") {
+        val dir = Files.createTempDirectory("spark_excel_test")
+        val dirName = dir.toString
+        val fileName = "spark_excel_test.xlsx"
+
+        val df =
+          Seq((1, "1", "2", "3"), (2, "4", "5", "6"), (3, "7", "8", "9")).toDF("id", "column1", "column2", "column3")
+
+        df.write
+          .format(PackageName)
+          .option("sheetName", sheetName)
+          .option("useHeader", "true")
+          .option("writeToFile", fileName)
+          .mode("overwrite")
+          .save(dirName)
+
+        val result = spark.read
+          .format(PackageName)
+          .option("sheetName", sheetName)
+          .option("useHeader", "true")
+          .option("readFromFile", fileName)
+          .load(dirName)
+          .cache()
+
+        result.show()
+
+        result.schema.fields.map(_.name) should contain theSameElementsAs
+          Array("id", "column1", "column2", "column3")
+        result.collect() should contain theSameElementsAs Array(
+          Row("1", "1", "2", "3"),
+          Row("2", "4", "5", "6"),
+          Row("3", "7", "8", "9")
+        )
+
+        new File(dir.toFile, "_SUCCESS").exists() shouldBe true
       }
 
     }

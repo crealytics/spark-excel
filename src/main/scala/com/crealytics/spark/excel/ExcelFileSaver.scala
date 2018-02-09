@@ -21,6 +21,7 @@ class ExcelFileSaver(fs: FileSystem) {
   import ExcelFileSaver._
   def save(
     location: Path,
+    writeToFile: Option[String],
     dataFrame: DataFrame,
     sheetName: String = DEFAULT_SHEET_NAME,
     useHeader: Boolean = true,
@@ -39,7 +40,19 @@ class ExcelFileSaver(fs: FileSystem) {
       .toList
     val rows = legalDisclaimerRow ++ (if (useHeader) headerRow :: dataRows else dataRows)
     val workbook = Sheet(name = sheetName, rows = rows).convertAsXlsx
-    autoClose(new BufferedOutputStream(fs.create(location)))(workbook.write)
+
+    val outputLocation = writeToFile
+      .map { file =>
+        fs.mkdirs(location)
+        new Path(location, file)
+      }
+      .getOrElse(location)
+
+    autoClose(new BufferedOutputStream(fs.create(outputLocation)))(workbook.write)
+
+    writeToFile.foreach { _ =>
+      fs.createNewFile(new Path(location, "_SUCCESS"))
+    }
   }
   def dateCell(time: Long, format: String): Cell = {
     Cell(new java.util.Date(time), style = CellStyle(dataFormat = CellDataFormat(format)))

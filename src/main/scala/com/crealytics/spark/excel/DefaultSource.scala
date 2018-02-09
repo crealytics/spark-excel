@@ -23,6 +23,7 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
   ): ExcelRelation = {
     ExcelRelation(
       location = checkParameter(parameters, "path"),
+      readFromFile = parameters.get("readFromFile"),
       sheetName = parameters.get("sheetName"),
       useHeader = checkParameter(parameters, "useHeader").toBoolean,
       treatEmptyValuesAsNulls = parameters.get("treatEmptyValuesAsNulls").fold(true)(_.toBoolean),
@@ -45,6 +46,7 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
     data: DataFrame
   ): BaseRelation = {
     val path = checkParameter(parameters, "path")
+    val writeToFile = parameters.get("writeToFile")
     val sheetName = parameters.getOrElse("sheetName", "Sheet1")
     val useHeader = checkParameter(parameters, "useHeader").toBoolean
     val dateFormat = parameters.getOrElse("dateFormat", ExcelFileSaver.DEFAULT_DATE_FORMAT)
@@ -70,6 +72,7 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
       // Only save data when the save mode is not ignore.
       (new ExcelFileSaver(fs)).save(
         filesystemPath,
+        writeToFile,
         data,
         sheetName = sheetName,
         useHeader = useHeader,
