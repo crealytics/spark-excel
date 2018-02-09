@@ -26,6 +26,7 @@ import scala.util.{Failure, Success, Try}
 
 case class ExcelRelation(
   location: String,
+  readFromFile: Option[String],
   sheetName: Option[String],
   useHeader: Boolean,
   treatEmptyValuesAsNulls: Boolean,
@@ -42,7 +43,7 @@ case class ExcelRelation(
     with TableScan
     with PrunedScan {
 
-  private val path = new Path(location)
+  private val path = readFromFile.map(new Path(location, _)).getOrElse(new Path(location))
 
   def extractCells(row: org.apache.poi.ss.usermodel.Row): Vector[Option[Cell]] =
     row.eachCellIterator(startColumn, endColumn).to[Vector]
