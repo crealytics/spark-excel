@@ -1,3 +1,6 @@
+0.9.15
+=====
+- Feature: Add handling of floats
 0.9.12
 =====
 - Feature: Improve performance by upgrading dependencies and instantiating date formatting lazily
