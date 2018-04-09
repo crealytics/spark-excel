@@ -46,6 +46,7 @@ class ExcelFileSaver(fs: FileSystem) {
     case t: java.sql.Timestamp => dateCell(t.getTime, timestampFormat)
     case d: java.sql.Date => dateCell(d.getTime, dateFormat)
     case s: String => Cell(s)
+    case f: Float => Cell(f.toDouble)
     case d: Double => Cell(d)
     case b: Boolean => Cell(b)
     case b: Byte => Cell(b.toInt)

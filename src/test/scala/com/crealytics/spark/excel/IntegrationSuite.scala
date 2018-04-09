@@ -1,19 +1,17 @@
 package com.crealytics.spark.excel
 
 import java.io.File
-import java.sql.Timestamp
 
-import org.scalacheck.{Arbitrary, Gen, Shrink}
-import Arbitrary.{arbLong => _, arbString => _, arbBigDecimal => _, _}
-import org.scalacheck.ScalacheckShapeless._
-import org.scalatest.FunSpec
-import org.scalatest.prop.PropertyChecks
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.ScalaReflection
-import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.types._
+import org.scalacheck.Arbitrary.{ arbBigDecimal => _, arbLong => _, arbString => _, _ }
+import org.scalacheck.ScalacheckShapeless._
+import org.scalacheck.{ Arbitrary, Gen, Shrink }
+import org.scalatest.FunSpec
+import org.scalatest.prop.PropertyChecks
 
 object IntegrationSuite {
 
@@ -23,6 +21,7 @@ object IntegrationSuite {
     aShort: Short,
     anInt: Int,
     aLong: Long,
+    aFloat: Float,
     aDouble: Double,
     aBigDecimal: BigDecimal,
     aJavaBigDecimal: java.math.BigDecimal,
