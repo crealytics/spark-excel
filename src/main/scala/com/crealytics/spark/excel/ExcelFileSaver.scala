@@ -72,7 +72,6 @@ class ExcelFileSaver(fs: FileSystem) {
   def autoClose[A <: OutputStream, B](closeable: A)(func: (A) => B): Unit = {
     try {
       func(closeable)
-      closeable.flush()
     } finally {
       try {
         closeable.close()
