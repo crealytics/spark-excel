@@ -1,8 +1,6 @@
 package com.crealytics.spark.excel
 
-import java.io.{BufferedOutputStream, IOException}
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
+import java.io.{BufferedOutputStream, IOException, OutputStream}
 
 import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
 import com.norbitltd.spoiwo.model._
@@ -71,17 +69,25 @@ class ExcelFileSaver(fs: FileSystem) {
     case b: java.math.BigDecimal => Cell(BigDecimal(b))
     case null => Cell.Empty
   }
-  def autoClose[A <: AutoCloseable, B](closeable: A)(fun: (A) => B): Unit = {
+  def autoClose[A <: OutputStream, B](closeable: A)(func: (A) => B): Unit = {
     try {
-      fun(closeable)
-    } catch {
-      case e: IOException => {
-        e.printStackTrace()
-        sys.error("IOException in autoClose: " + e.getMessage)
-      }
-      case unknown => sys.error("Got this unknown exception: " + unknown)
+      func(closeable)
+      closeable.flush()
     } finally {
-      closeable.close()
+      try {
+        closeable.close()
+      } catch {
+        case e: IOException => {
+          // scalastyle:off println
+          println("IOException in autoClose: " + e.getMessage)
+          // scalastyle:on println
+        }
+        case other: Throwable => {
+          // scalastyle:off println
+          println("Got unknown exception in autoClose: " + other.getMessage)
+          // scalastyle:on println
+        }
+      }
     }
   }
 }
