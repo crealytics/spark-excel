@@ -1,6 +1,6 @@
 package com.crealytics.spark.excel
 
-import java.io.BufferedOutputStream
+import java.io.{BufferedOutputStream, IOException}
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
@@ -71,9 +71,15 @@ class ExcelFileSaver(fs: FileSystem) {
     case b: java.math.BigDecimal => Cell(BigDecimal(b))
     case null => Cell.Empty
   }
-  def autoClose[A <: AutoCloseable, B](closeable: A)(fun: (A) => B): B = {
+  def autoClose[A <: AutoCloseable, B](closeable: A)(fun: (A) => B): Unit = {
     try {
       fun(closeable)
+    } catch {
+      case e: IOException => {
+        e.printStackTrace()
+        sys.error("IOException in autoClose: " + e.getMessage)
+      }
+      case unknown => sys.error("Got this unknown exception: " + unknown)
     } finally {
       closeable.close()
     }
