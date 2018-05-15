@@ -76,15 +76,8 @@ class ExcelFileSaver(fs: FileSystem) {
       try {
         closeable.close()
       } catch {
-        case e: IOException => {
-          // scalastyle:off println
-          println("IOException in autoClose: " + e.getMessage)
-          // scalastyle:on println
-        }
-        case other: Throwable => {
-          // scalastyle:off println
-          println("Got unknown exception in autoClose: " + other.getMessage)
-          // scalastyle:on println
+        case e: Exception => {
+          e.printStackTrace()
         }
       }
     }
