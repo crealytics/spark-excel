@@ -30,12 +30,12 @@ libraryDependencies ++= Seq(
 
 libraryDependencies ++= Seq(
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.8" % Test,
-  "org.scalatest" %% "scalatest" % "3.0.1" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.13.4" % Test,
-  "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.6" % Test,
+  "org.scalatest" %% "scalatest" % "3.0.5" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.14.0" % Test,
+  "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.8" % Test,
   "com.github.nightscape" % "spark-testing-base" % "c6ac5d3b0629440f5fe13cf8830fdb17535c8513" % Test,
 //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
-  "org.scalamock" %% "scalamock-scalatest-support" % "3.5.0" % Test
+  "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % Test
 )
 
 assemblyShadeRules in assembly := Seq(ShadeRule.rename("com.fasterxml.jackson.**" -> "shadeio.@1").inAll)
