@@ -1,3 +1,8 @@
+0.9.16
+======
+- Bugfix: Improve handling of columns where the first row doesn't contain any data
+- Feature: Add `preHeader` option for writing rows/cells before the column headers
+- Feature: Add `skipFirstRows` option for skipping rows before the column headers
 0.9.15
 =====
 - Feature: Add handling of floats
