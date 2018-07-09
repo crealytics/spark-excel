@@ -258,6 +258,14 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
 
       }
 
+      it("handles multi-line column headers correctly") {
+        forAll(rowsGen.filter(!_.isEmpty), MinSuccessful(20)) { rows =>
+          val original = spark.createDataset(rows).toDF
+          val multiLineHeaders = original.withColumnRenamed("aString", "a\nString")
+          val inferred = writeThenRead(multiLineHeaders, schema = None)
+          assertEqualAfterInferringTypes(multiLineHeaders, inferred)
+        }
+      }
     }
   }
 

@@ -102,7 +102,7 @@ case class ExcelRelation(
 
   override def buildScan: RDD[Row] = buildScan(schema.map(_.name).toArray)
 
-  val columnNameRegex = s"(.*?)(_color)?".r
+  val columnNameRegex = s"(?s)^(.*?)(_color)?$$".r.unanchored
   private def columnExtractor(column: String): SheetRow => Any = {
     val columnNameRegex(columnName, isColor) = column
     val columnIndex = schema.indexWhere(_.name == columnName)
