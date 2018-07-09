@@ -61,28 +61,13 @@ case class ExcelRelation(
       .getOrElse(WorkbookFactory.create(inputStream))
   }
 
-  private def getExcerpt(): (SheetRow, List[SheetRow]) = {
+  lazy val excerpt: List[SheetRow] = {
     val workbook = openWorkbook()
     val sheet = findSheet(workbook, sheetName)
     val sheetIterator = sheet.iterator.asScala
-    skipFirstRows.foreach(n => sheetIterator.drop(n))
-    var currentRow: org.apache.poi.ss.usermodel.Row = null
-    while (sheetIterator.hasNext && currentRow == null) {
-      currentRow = sheetIterator.next
-    }
-    if (currentRow == null) {
-      workbook.close()
-      throw new RuntimeException(s"Sheet $sheetName in $path doesn't seem to contain any data")
-    }
-    val firstRow = currentRow
-    var counter = 0
-    val excerpt = new Array[org.apache.poi.ss.usermodel.Row](excerptSize)
-    while (sheetIterator.hasNext && counter < excerptSize) {
-      excerpt(counter) = sheetIterator.next
-      counter += 1
-    }
+    val rows = skipFirstRows.foldLeft(sheetIterator)(_ drop _).dropWhile(_ == null).take(excerptSize).to[List]
     workbook.close()
-    (firstRow, excerpt.take(counter).to[List])
+    rows
   }
 
   private def restIterator(wb: Workbook, excerptSize: Int) = {
@@ -143,9 +128,8 @@ case class ExcelRelation(
 
   override def buildScan(requiredColumns: Array[String]): RDD[Row] = {
     val lookups = requiredColumns.map(columnExtractor).to[Vector]
-    val (firstRowWithData, excerpt) = getExcerpt()
     val workbook = openWorkbook()
-    val rows = dataIterator(workbook, firstRowWithData, excerpt).flatMap(row => Try(lookups.map(l => l(row))).toOption)
+    val rows = dataIterator(workbook, excerpt.head, excerpt.tail).flatMap(row => Try(lookups.map(l => l(row))).toOption)
     val result = rows.to[Vector]
     val rdd = sqlContext.sparkContext.parallelize(result.map(Row.fromSeq))
     workbook.close()
@@ -239,7 +223,7 @@ case class ExcelRelation(
   /**
     * Generates a header from the given row which is null-safe and duplicate-safe.
     */
-  protected def makeSafeHeader(row: Array[String]): Array[String] = {
+  protected def makeSafeHeader(row: Array[String], dataTypes: Array[DataType]): Array[StructField] = {
     if (useHeader) {
       val duplicates = {
         val headerNames = row
@@ -247,7 +231,7 @@ case class ExcelRelation(
         headerNames.diff(headerNames.distinct).distinct
       }
 
-      row.zipWithIndex.map {
+      val headerNames = row.zipWithIndex.map {
         case (value, index) =>
           if (value == null || value.isEmpty) {
             // When there are empty strings or the, put the index as the suffix.
@@ -259,39 +243,37 @@ case class ExcelRelation(
             value
           }
       }
+      headerNames.zip(dataTypes).map { case (name, dt) => StructField(name, dt, nullable = true) }
     } else {
-      row.zipWithIndex.map {
-        case (_, index) =>
+      dataTypes.zipWithIndex.map {
+        case (dt, index) =>
           // Uses default column names, "_c#" where # is its position of fields
           // when header option is disabled.
-          s"_c$index"
+          StructField(s"_c$index", dt, nullable = true)
       }
     }
   }
 
   private def inferSchema(): StructType = this.userSchema.getOrElse {
-    val (firstRowWithData, excerpt) = getExcerpt()
-
-    val rawHeader = extractCells(firstRowWithData).map {
+    val rawHeader = extractCells(excerpt.head).map {
       case Some(value) => value.getStringCellValue
       case _ => ""
     }.toArray
 
-    val header = makeSafeHeader(rawHeader)
-
-    val baseSchema = if (this.inferSheetSchema) {
-      val stringsAndCellTypes = excerpt
+    val dataTypes = if (this.inferSheetSchema) {
+      val stringsAndCellTypes = excerpt.tail
         .map(r => extractCells(r).map(getSparkType))
-      InferSchema(parallelize(stringsAndCellTypes), header.toArray)
+      InferSchema(parallelize(stringsAndCellTypes))
     } else {
       // By default fields are assumed to be StringType
-      val schemaFields = header.map { fieldName =>
-        StructField(fieldName.toString, StringType, nullable = true)
-      }
-      StructType(schemaFields)
+      val maxCellsPerRow =
+        excerpt.map(_.cellIterator().asScala.size).reduce(math.max)
+      (0 until maxCellsPerRow).map(_ => StringType: DataType).toArray
     }
+    val fields = makeSafeHeader(rawHeader, dataTypes)
+    val baseSchema = StructType(fields)
     if (addColorColumns) {
-      header.foldLeft(baseSchema) { (schema, header) =>
+      fields.foldLeft(baseSchema) { (schema, header) =>
         schema.add(s"${header}_color", StringType, nullable = true)
       }
     } else {
