@@ -1,11 +1,17 @@
+0.9.17
+======
+- Bugfix: Handle multi-line column headers properly
+
 0.9.16
 ======
 - Bugfix: Improve handling of columns where the first row doesn't contain any data
 - Feature: Add `preHeader` option for writing rows/cells before the column headers
 - Feature: Add `skipFirstRows` option for skipping rows before the column headers
+
 0.9.15
 =====
 - Feature: Add handling of floats
+
 0.9.12
 =====
 - Feature: Improve performance by upgrading dependencies and instantiating date formatting lazily
