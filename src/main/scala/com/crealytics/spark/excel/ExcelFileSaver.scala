@@ -28,7 +28,7 @@ class ExcelFileSaver(fs: FileSystem) {
     timestampFormat: String = DEFAULT_TIMESTAMP_FORMAT,
     preHeader: Option[String]
   ): Unit = {
-    val preHeaderRow = preHeader.toList.flatMap(_.split("\\R", -1).map(s => Row(Cell(s))))
+    val preHeaderRow = preHeader.toList.flatMap(_.split("\\R", -1).map(s => Row(s.split("\t").map(Cell(_)))))
     val headerRow = Row(dataFrame.schema.fields.map(f => Cell(f.name)))
     val dataRows = dataFrame
       .toLocalIterator()
