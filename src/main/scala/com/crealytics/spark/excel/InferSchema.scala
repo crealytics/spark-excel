@@ -29,28 +29,22 @@ private[excel] object InferSchema {
     *     2. Merge row types to find common type
     *     3. Replace any null types with string type
     */
-  def apply(rowsRDD: RDD[Seq[DataType]], header: Array[String]): StructType = {
-    val startType: Array[DataType] = Array.fill[DataType](header.length)(NullType)
+  def apply(rowsRDD: RDD[Seq[DataType]]): Array[DataType] = {
+    val startType: Array[DataType] = Array.empty
     val rootTypes: Array[DataType] = rowsRDD.aggregate(startType)(inferRowType _, mergeRowTypes)
 
-    val structFields = header.zip(rootTypes).map {
-      case (thisHeader, rootType) =>
-        val dType = rootType match {
-          case z: NullType => StringType
-          case other => other
-        }
-        StructField(thisHeader, dType, nullable = true)
+    rootTypes.map {
+      case z: NullType => StringType
+      case other => other
     }
-    StructType(structFields)
   }
 
   private def inferRowType(rowSoFar: Array[DataType], next: Seq[DataType]): Array[DataType] = {
-    var i = 0
-    while (i < math.min(rowSoFar.length, next.size)) { // May have columns on right missing.
-      rowSoFar(i) = inferField(rowSoFar(i), next(i))
-      i += 1
-    }
-    rowSoFar
+    val maxLength = math.max(rowSoFar.size, next.size)
+    val defaultDataType: Int => DataType = (_ => NullType)
+    val filledRowSoFar = Array.tabulate(maxLength)(n => rowSoFar.applyOrElse[Int, DataType](n, defaultDataType))
+    val filledNext = Array.tabulate(maxLength)(n => next.applyOrElse[Int, DataType](n, defaultDataType))
+    filledRowSoFar.zip(filledNext).map { case (r, n) => inferField(r, n) }
   }
 
   private[excel] def mergeRowTypes(first: Array[DataType], second: Array[DataType]): Array[DataType] = {
