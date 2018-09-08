@@ -20,12 +20,9 @@ resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
-  "org.apache.poi" % "poi-ooxml" % "3.17",
+  "org.apache.poi" % "poi-ooxml" % "4.0.0",
   "com.norbitltd" %% "spoiwo" % "1.2.0",
-  "com.monitorjbl" % "xlsx-streamer" % "1.2.1" excludeAll ExclusionRule(
-    organization = "org.apache.poi",
-    name = "ooxml-schemas"
-  )
+  "com.github.pjfanning" % "excel-streaming-reader" % "2.0.0"
 ).map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 libraryDependencies ++= Seq(

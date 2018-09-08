@@ -4,8 +4,8 @@ import java.math.BigDecimal
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
-import com.monitorjbl.xlsx.StreamingReader
-import org.apache.hadoop.fs.{FileSystem, Path}
+import com.github.pjfanning.xlsx.StreamingReader
+import org.apache.hadoop.fs.{ FileSystem, Path }
 import org.apache.poi.ss.usermodel.{
   Cell,
   CellType,
@@ -22,7 +22,7 @@ import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
 
 import scala.collection.JavaConverters._
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 case class ExcelRelation(
   location: String,
@@ -37,11 +37,10 @@ case class ExcelRelation(
   timestampFormat: Option[String] = None,
   maxRowsInMemory: Option[Int] = None,
   excerptSize: Int = 10,
-  skipFirstRows: Option[Int] = None
-)(@transient val sqlContext: SQLContext)
-    extends BaseRelation
-    with TableScan
-    with PrunedScan {
+  skipFirstRows: Option[Int] = None)(@transient val sqlContext: SQLContext)
+  extends BaseRelation
+  with TableScan
+  with PrunedScan {
 
   private val path = new Path(location)
 
@@ -144,16 +143,16 @@ case class ExcelRelation(
   }
 
   private def castTo(cell: Cell, castType: DataType): Any = {
-    val cellType = cell.getCellTypeEnum
+    val cellType = cell.getCellType
     if (cellType == CellType.BLANK) {
       return null
     }
 
     lazy val dataFormatter = new DataFormatter()
     lazy val stringValue =
-      cell.getCellTypeEnum match {
+      cell.getCellType match {
         case CellType.FORMULA =>
-          cell.getCachedFormulaResultTypeEnum match {
+          cell.getCachedFormulaResultType match {
             case CellType.STRING => cell.getRichStringCellValue.getString
             case CellType.NUMERIC => cell.getNumericCellValue.toString
             case _ => dataFormatter.formatCellValue(cell)
@@ -161,11 +160,11 @@ case class ExcelRelation(
         case _ => dataFormatter.formatCellValue(cell)
       }
     lazy val numericValue =
-      cell.getCellTypeEnum match {
+      cell.getCellType match {
         case CellType.NUMERIC => cell.getNumericCellValue
         case CellType.STRING => stringToDouble(cell.getStringCellValue)
         case CellType.FORMULA =>
-          cell.getCachedFormulaResultTypeEnum match {
+          cell.getCachedFormulaResultType match {
             case CellType.NUMERIC => cell.getNumericCellValue
             case CellType.STRING => stringToDouble(cell.getRichStringCellValue.getString)
           }
@@ -218,11 +217,11 @@ case class ExcelRelation(
     }
   }
 
-  private def parallelize[T : scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
+  private def parallelize[T: scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
 
   /**
-    * Generates a header from the given row which is null-safe and duplicate-safe.
-    */
+   * Generates a header from the given row which is null-safe and duplicate-safe.
+   */
   protected def makeSafeHeader(row: Array[String], dataTypes: Array[DataType]): Array[StructField] = {
     if (useHeader) {
       val duplicates = {
