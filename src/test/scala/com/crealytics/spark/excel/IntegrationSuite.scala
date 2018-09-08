@@ -197,7 +197,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
           val fields = expectedWithEmptyStr.schema.fields
           fields.update(fields.indexWhere(_.name == "aString"), StructField("aString", DataTypes.StringType, true))
 
-          assertDataFrameApproximateEquals(expectedWithEmptyStr, writeThenRead(expectedWithNull), relTol = 1.0E-6)
+          assertDataFrameApproximateEquals(expectedWithEmptyStr, writeThenRead(expectedWithEmptyStr), relTol = 1.0E-6)
         }
       }
 

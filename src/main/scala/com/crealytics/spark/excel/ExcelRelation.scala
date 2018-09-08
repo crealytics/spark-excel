@@ -150,16 +150,16 @@ case class ExcelRelation(
   }
 
   private def castTo(cell: Cell, castType: DataType): Any = {
-    val cellType = cell.getCellTypeEnum
+    val cellType = cell.getCellType
     if (cellType == CellType.BLANK) {
       return null
     }
 
     lazy val dataFormatter = new DataFormatter()
     lazy val stringValue =
-      cell.getCellTypeEnum match {
+      cell.getCellType match {
         case CellType.FORMULA =>
-          cell.getCachedFormulaResultTypeEnum match {
+          cell.getCachedFormulaResultType match {
             case CellType.STRING => cell.getRichStringCellValue.getString
             case CellType.NUMERIC => cell.getNumericCellValue.toString
             case _ => dataFormatter.formatCellValue(cell)
@@ -167,11 +167,11 @@ case class ExcelRelation(
         case _ => dataFormatter.formatCellValue(cell)
       }
     lazy val numericValue =
-      cell.getCellTypeEnum match {
+      cell.getCellType match {
         case CellType.NUMERIC => cell.getNumericCellValue
         case CellType.STRING => stringToDouble(cell.getStringCellValue)
         case CellType.FORMULA =>
-          cell.getCachedFormulaResultTypeEnum match {
+          cell.getCachedFormulaResultType match {
             case CellType.NUMERIC => cell.getNumericCellValue
             case CellType.STRING => stringToDouble(cell.getRichStringCellValue.getString)
           }
