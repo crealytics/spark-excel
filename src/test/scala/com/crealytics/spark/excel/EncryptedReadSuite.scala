@@ -60,3 +60,4 @@ class EncryptedReadSuite extends FunSpec with DataFrameSuiteBase with Matchers {
     }
   }
 }
+
