@@ -5,7 +5,7 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
 import com.monitorjbl.xlsx.StreamingReader
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.{ FileSystem, Path }
 import org.apache.poi.ss.usermodel.{
   Cell,
   CellType,
@@ -22,7 +22,7 @@ import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
 
 import scala.collection.JavaConverters._
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 case class ExcelRelation(
   location: String,
@@ -37,11 +37,11 @@ case class ExcelRelation(
   timestampFormat: Option[String] = None,
   maxRowsInMemory: Option[Int] = None,
   excerptSize: Int = 10,
-  skipFirstRows: Option[Int] = None
-)(@transient val sqlContext: SQLContext)
-    extends BaseRelation
-    with TableScan
-    with PrunedScan {
+  skipFirstRows: Option[Int] = None,
+  workbookPassword: Option[String] = None)(@transient val sqlContext: SQLContext)
+  extends BaseRelation
+  with TableScan
+  with PrunedScan {
 
   private val path = new Path(location)
 
@@ -52,13 +52,15 @@ case class ExcelRelation(
     val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
     maxRowsInMemory
       .map { maxRowsInMem =>
-        StreamingReader
+        val builder = StreamingReader
           .builder()
           .rowCacheSize(maxRowsInMem)
           .bufferSize(maxRowsInMem * 1024)
+        workbookPassword
+          .fold(builder)(password => builder.password(password))
           .open(inputStream)
       }
-      .getOrElse(WorkbookFactory.create(inputStream))
+      .getOrElse(workbookPassword.fold(WorkbookFactory.create(inputStream))(password => WorkbookFactory.create(inputStream, password)))
   }
 
   lazy val excerpt: List[SheetRow] = {
@@ -218,11 +220,11 @@ case class ExcelRelation(
     }
   }
 
-  private def parallelize[T : scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
+  private def parallelize[T: scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
 
   /**
-    * Generates a header from the given row which is null-safe and duplicate-safe.
-    */
+   * Generates a header from the given row which is null-safe and duplicate-safe.
+   */
   protected def makeSafeHeader(row: Array[String], dataTypes: Array[DataType]): Array[StructField] = {
     if (useHeader) {
       val duplicates = {

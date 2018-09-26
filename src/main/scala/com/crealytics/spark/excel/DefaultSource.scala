@@ -1,26 +1,25 @@
 package com.crealytics.spark.excel
 
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.{DataFrame, SQLContext, SaveMode}
+import org.apache.spark.sql.{ DataFrame, SQLContext, SaveMode }
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
 
 class DefaultSource extends RelationProvider with SchemaRelationProvider with CreatableRelationProvider {
 
   /**
-    * Creates a new relation for retrieving data from an Excel file
-    */
+   * Creates a new relation for retrieving data from an Excel file
+   */
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): ExcelRelation =
     createRelation(sqlContext, parameters, null)
 
   /**
-    * Creates a new relation for retrieving data from an Excel file
-    */
+   * Creates a new relation for retrieving data from an Excel file
+   */
   override def createRelation(
     sqlContext: SQLContext,
     parameters: Map[String, String],
-    schema: StructType
-  ): ExcelRelation = {
+    schema: StructType): ExcelRelation = {
     ExcelRelation(
       location = checkParameter(parameters, "path"),
       sheetName = parameters.get("sheetName"),
@@ -34,16 +33,15 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
       timestampFormat = parameters.get("timestampFormat"),
       maxRowsInMemory = parameters.get("maxRowsInMemory").map(_.toInt),
       excerptSize = parameters.get("excerptSize").fold(10)(_.toInt),
-      skipFirstRows = parameters.get("skipFirstRows").map(_.toInt)
-    )(sqlContext)
+      skipFirstRows = parameters.get("skipFirstRows").map(_.toInt),
+      workbookPassword = parameters.get("workbookPassword"))(sqlContext)
   }
 
   override def createRelation(
     sqlContext: SQLContext,
     mode: SaveMode,
     parameters: Map[String, String],
-    data: DataFrame
-  ): BaseRelation = {
+    data: DataFrame): BaseRelation = {
     val path = checkParameter(parameters, "path")
     val sheetName = parameters.getOrElse("sheetName", "Sheet1")
     val useHeader = checkParameter(parameters, "useHeader").toBoolean
@@ -75,8 +73,7 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
         useHeader = useHeader,
         dateFormat = dateFormat,
         timestampFormat = timestampFormat,
-        preHeader = preHeader
-      )
+        preHeader = preHeader)
     }
 
     createRelation(sqlContext, parameters, data.schema)
