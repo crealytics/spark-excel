@@ -9,11 +9,14 @@ import scala.collection.JavaConverters._
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 
 object EncryptedReadSuite {
-  val simpleSchema = StructType(List(
-    StructField("A", DoubleType, true),
-    StructField("B", DoubleType, true),
-    StructField("C", DoubleType, true),
-    StructField("D", DoubleType, true)))
+  val simpleSchema = StructType(
+    List(
+      StructField("A", DoubleType, true),
+      StructField("B", DoubleType, true),
+      StructField("C", DoubleType, true),
+      StructField("D", DoubleType, true)
+    )
+  )
 
   val expectedData = List(Row(1.0d, 2.0d, 3.0d, 4.0d)).asJava
 
@@ -26,7 +29,7 @@ class EncryptedReadSuite extends FunSpec with DataFrameSuiteBase with Matchers {
 
   lazy val expected = spark.createDataFrame(expectedData, simpleSchema)
 
-  def readFromResources(path: String, password: String, maxRowsInMemory: Option[Int] = None) : DataFrame = {
+  def readFromResources(path: String, password: String, maxRowsInMemory: Option[Int] = None): DataFrame = {
     val url = getClass.getResource(path)
     val reader = spark.read
       .format(PackageName)
@@ -60,4 +63,3 @@ class EncryptedReadSuite extends FunSpec with DataFrameSuiteBase with Matchers {
     }
   }
 }
-
