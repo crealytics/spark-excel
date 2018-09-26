@@ -26,7 +26,7 @@ class EncryptedReadSuite extends FunSpec with DataFrameSuiteBase with Matchers {
 
   lazy val expected = spark.createDataFrame(expectedData, simpleSchema)
 
-  def readFromResources(path: String, password: String, maxRowsInMemory: Option[Int] = None) = {
+  def readFromResources(path: String, password: String, maxRowsInMemory: Option[Int] = None) : DataFrame = {
     val url = getClass.getResource(path)
     val reader = spark.read
       .format(PackageName)
