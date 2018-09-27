@@ -51,6 +51,7 @@ val df = sqlContext.read
     .option("maxRowsInMemory", 20) // Optional, default None. If set, uses a streaming reader which can help with big files
     .option("excerptSize", 10) // Optional, default: 10. If set and if schema inferred, number of rows to infer schema from
     .option("skipFirstRows", 5) // Optional, default None. If set skips the first n rows and checks for headers in row n+1
+    .option("workbookPassword", "pass") // Optional, default None. Requires unlimited strength JCE for older JVMs
     .schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
     .load("Worktime.xlsx")
 ```

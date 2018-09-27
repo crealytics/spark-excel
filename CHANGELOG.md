@@ -1,3 +1,7 @@
+0.9.18
+======
+- Feature: Add `workbookPassword` option for reading encrypted excel spreadsheets
+
 0.9.17
 ======
 - Bugfix: Handle multi-line column headers properly
