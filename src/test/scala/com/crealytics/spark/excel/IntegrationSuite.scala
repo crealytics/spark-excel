@@ -1,20 +1,26 @@
 package com.crealytics.spark.excel
 
-import java.io.File
-import java.sql.Date
+import java.io.{File, FileOutputStream}
+import java.sql.{Date, Timestamp}
 import java.time.temporal.ChronoUnit
 import java.time.{Instant, ZoneId, ZoneOffset}
 
+import cats.Monoid
+import cats.instances.all._
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import org.apache.spark.sql.DataFrame
+import com.norbitltd.spoiwo.model.{Cell, Sheet, Row => SRow}
+import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
+import org.apache.poi.ss.util.CellReference
 import org.apache.spark.sql.catalyst.ScalaReflection
-import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, SaveMode}
 import org.scalacheck.Arbitrary.{arbBigDecimal => _, arbLong => _, arbString => _, _}
 import org.scalacheck.ScalacheckShapeless._
 import org.scalacheck.{Arbitrary, Gen, Shrink}
-import org.scalatest.{FunSpec, Matchers}
+import org.scalactic.anyvals.PosInt
 import org.scalatest.prop.PropertyChecks
+import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.JavaConverters._
 import scala.util.Random
@@ -23,20 +29,32 @@ object IntegrationSuite {
 
   case class ExampleData(
     aBoolean: Boolean,
+    aBooleanOption: Option[Boolean],
     aByte: Byte,
+    aByteOption: Option[Byte],
     aShort: Short,
+    aShortOption: Option[Short],
     anInt: Int,
+    anIntOption: Option[Int],
     aLong: Long,
+    aLongOption: Option[Long],
     aFloat: Float,
+    aFloatOption: Option[Float],
     aDouble: Double,
+    aDoubleOption: Option[Double],
     aBigDecimal: BigDecimal,
+    aBigDecimalOption: Option[BigDecimal],
     aJavaBigDecimal: java.math.BigDecimal,
+    aJavaBigDecimalOption: Option[java.math.BigDecimal],
     aString: String,
+    aStringOption: Option[String],
     aTimestamp: java.sql.Timestamp,
-    aDate: java.sql.Date
+    aTimestampOption: Option[java.sql.Timestamp],
+    aDate: java.sql.Date,
+    aDateOption: Option[java.sql.Date]
   )
 
-  val exampleDataSchema = ScalaReflection.schemaFor[ExampleData].dataType.asInstanceOf[StructType]
+  private val exampleDataSchema = ScalaReflection.schemaFor[ExampleData].dataType.asInstanceOf[StructType]
 
   // inferring the schema will not match the original types exactly
   def inferredDataTypes(schema: StructType): Seq[Function[Seq[Any], DataType]] =
@@ -46,30 +64,20 @@ object IntegrationSuite {
           case values: Seq[Any] if values.distinct == Seq("") => StringType
           case _ => DoubleType
         }
-        case _: NumericType => {
-          case _: Seq[Any] => DoubleType
-        }
-        case DateType => {
-          case _: Seq[Any] => TimestampType
-        }
-        case t: DataType => {
-          case _: Seq[Any] => t
-        }
+        case _: NumericType => _: Seq[Any] => DoubleType
+        case DateType => _: Seq[Any] => TimestampType
+        case t: DataType => _: Seq[Any] => t
       }
       pf
     }
 
-  def expectedDataTypes(inferred: DataFrame): Seq[DataType] = {
+  def expectedDataTypes(inferred: DataFrame): Seq[(String, DataType)] = {
     val data = inferred.collect()
     inferredDataTypes(exampleDataSchema)
       .to[List]
       .zip(inferred.schema)
       .zipWithIndex
-      .map {
-        case ((f, sf), idx) =>
-          val values = data.map(_.get(idx))
-          f(values)
-      }
+      .map { case ((f, sf), idx) => sf.name -> f(data.map(_.get(idx))) }
   }
 
   val dstTransitionDays =
@@ -85,7 +93,7 @@ object IntegrationSuite {
       .filterNot(d => isDstTransitionDay(d.toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant))
   )
 
-  implicit val arbitraryTimestamp = Arbitrary[java.sql.Timestamp](
+  implicit val arbitraryTimestamp: Arbitrary[Timestamp] = Arbitrary[java.sql.Timestamp](
     Gen
       .chooseNum[Long](0L, (new java.util.Date).getTime + 1000000)
       .map(new java.sql.Timestamp(_))
@@ -93,10 +101,10 @@ object IntegrationSuite {
       .filterNot(d => isDstTransitionDay(d.toInstant))
   )
 
-  implicit val arbitraryBigDecimal =
+  implicit val arbitraryBigDecimal: Arbitrary[BigDecimal] =
     Arbitrary[BigDecimal](Gen.chooseNum[Double](-1.0e15, 1.0e15).map(BigDecimal.apply))
 
-  implicit val arbitraryJavaBigDecimal =
+  implicit val arbitraryJavaBigDecimal: Arbitrary[java.math.BigDecimal] =
     Arbitrary[java.math.BigDecimal](arbitraryBigDecimal.arbitrary.map(_.bigDecimal))
 
   // Unfortunately we're losing some precision when parsing Longs
@@ -111,7 +119,7 @@ object IntegrationSuite {
   implicit val arbitraryStringWithoutUnicodeCharacters: Arbitrary[String] =
     Arbitrary[String](Gen.alphaNumStr)
 
-  val rowGen: Gen[ExampleData] = arbitrary[ExampleData]
+  val rowGen: Gen[ExampleData] = arbitrary[ExampleData].map(d => if (d.aString.isEmpty) d.copy(aString = null) else d)
   val rowsGen: Gen[List[ExampleData]] = Gen.listOf(rowGen)
 
 }
@@ -122,7 +130,9 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
   import spark.implicits._
 
   implicit def shrinkOnlyNumberOfRows[A]: Shrink[List[A]] = Shrink.shrinkContainer[List, A]
-
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration = PropertyCheckConfiguration(
+    minSuccessful = PosInt.from(sys.env.getOrElse("EXAMPLES_PER_PROPERTY", "6").toInt).get
+  )
   val sheetName = "test sheet"
 
   def runTests(maxRowsInMemory: Option[Int]) {
@@ -131,37 +141,45 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
       df: DataFrame,
       schema: Option[StructType] = Some(exampleDataSchema),
       preHeader: Option[String] = None,
-      fileName: Option[String] = None
+      fileName: Option[String] = None,
+      saveMode: SaveMode = SaveMode.Overwrite,
+      dataAddress: Option[String] = None
     ): DataFrame = {
       val theFileName = fileName.getOrElse(File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath)
 
       val writer = df.write
         .excel(sheetName = sheetName, useHeader = true)
-        .mode("overwrite")
-      val withPreHeader = preHeader.foldLeft(writer) {
-        case (wri, pre) =>
-          wri.option("preHeader", pre)
-      }
-      withPreHeader.save(theFileName)
+        .mode(saveMode)
+      val configuredWriter =
+        Map("preHeader" -> preHeader, "dataAddress" -> dataAddress).foldLeft(writer) {
+          case (wri, (key, Some(value))) => wri.option(key, value)
+          case (wri, _) => wri
+        }
+      configuredWriter.save(theFileName)
 
       val reader = spark.read
         .excel(sheetName = sheetName, useHeader = true, treatEmptyValuesAsNulls = false, addColorColumns = false)
-      val withPreHeaderSkip = preHeader.foldLeft(reader) {
-        case (reader, preHeader) =>
-          val skipRows = preHeader.count(_ == '\n') + 1
-          reader.option("skipFirstRows", skipRows)
+      val skipRows = dataAddress
+        .map(a => AddressContainer(a).startRow)
+        .orElse(preHeader.map(h => h.count(_ == '\n') + 1))
+        .getOrElse(0)
+      val configuredReader = Map(
+        "maxRowsInMemory" -> maxRowsInMemory,
+        "inferSchema" -> Some(schema.isEmpty),
+        "excerptSize" -> Some(skipRows + 10),
+        "dataAddress" -> dataAddress.orElse(Some("A" + (skipRows + 1)))
+      ).foldLeft(reader) {
+        case (rdr, (key, Some(value))) => rdr.option(key, value.toString)
+        case (rdr, _) => rdr
       }
-      val withSchema = schema.foldLeft(withPreHeaderSkip.option("inferSchema", schema.isEmpty))(_ schema _)
-      val withStreaming = maxRowsInMemory.foldLeft(withSchema) {
-        case (reader, maxRowsInMem) => reader.option("maxRowsInMemory", maxRowsInMem)
-      }
-      withStreaming.load(theFileName)
+      val withSchema = schema.foldLeft(configuredReader)(_ schema _)
+      withSchema.load(theFileName)
     }
 
-    def assertEqualAfterInferringTypes(original: DataFrame, inferred: DataFrame) = {
+    def assertEqualAfterInferringTypes(original: DataFrame, inferred: DataFrame): Unit = {
       val originalWithInferredColumnTypes =
         original.schema
-          .zip(expectedDataTypes(inferred))
+          .zip(expectedDataTypes(inferred).map(_._2))
           .foldLeft(original) {
             case (df, (field, dataType)) =>
               df.withColumn(field.name, df(field.name).cast(dataType))
@@ -172,15 +190,15 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
 
     describe(s"with maxRowsInMemory = $maxRowsInMemory") {
       it("parses known datatypes correctly") {
-        forAll(rowsGen, MinSuccessful(20)) { rows =>
+        forAll(rowsGen) { rows =>
           val expected = spark.createDataset(rows).toDF
           val actual = writeThenRead(expected)
           assertDataFrameApproximateEquals(expected, actual, relTol = 1.0E-6)
         }
       }
 
-      it("handles null values correctly") {
-        forAll(rowsGen, MinSuccessful(20)) { rows =>
+      it("reads blank cells as null and empty string cells as \"\"") {
+        forAll(rowsGen) { rows =>
           val expected = spark.createDataset(rows).toDF
 
           // We need two dataframes, one with null values, one with empty strings.
@@ -200,22 +218,26 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
       }
 
       it("infers schema correctly") {
-        forAll(rowsGen, MinSuccessful(20)) { rows =>
+        forAll(rowsGen) { rows =>
           val df = spark.createDataset(rows).toDF
           val inferred = writeThenRead(df, schema = None)
 
-          if (df.count() == 0) {
-            // Without actual data, we assume everything is a StringType
-            assert(inferred.schema.fields.forall(_.dataType == StringType))
-          } else {
-            val actualDataTypes = inferred.schema.fields.map(_.dataType).to[List]
-            assert(actualDataTypes, expectedDataTypes(inferred))
-          }
+          val nonNullCounts: Array[Map[String, Int]] =
+            df.collect().map(r => df.schema.map(f => f.name -> (if (r.getAs[Any](f.name) != null) 1 else 0)).toMap)
+          val (inferableColumns, nonInferableColumns) = Monoid.combineAll(nonNullCounts).partition(_._2 > 0)
+          // Without actual data, we assume everything is a StringType
+          nonInferableColumns.keys.foreach(k => assert(inferred.schema(k).dataType == StringType))
+          val expectedTypeMap = expectedDataTypes(inferred).toMap
+          val (actualTypes, expTypes) =
+            inferableColumns.keys
+              .map(k => (inferred.schema(k).dataType, expectedTypeMap(k)))
+              .unzip
+          assert(actualTypes == expTypes)
         }
       }
 
       it("returns all data rows when inferring schema") {
-        forAll(rowsGen.filter(!_.isEmpty), MinSuccessful(20)) { rows =>
+        forAll(rowsGen.filter(_.nonEmpty)) { rows =>
           val original = spark.createDataset(rows).toDF
           val inferred = writeThenRead(original, schema = None)
           assertEqualAfterInferringTypes(original, inferred)
@@ -230,35 +252,122 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
       } yield Random.shuffle(newLines ++ tabs ++ words).mkString
 
       it("correctly writes and skips the preHeader") {
-        forAll(rowsGen.filter(!_.isEmpty), preHeaderGen, MinSuccessful(10)) {
+        forAll(rowsGen.filter(_.nonEmpty), preHeaderGen) {
           case (rows, preHeader) =>
             val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
             val original = spark.createDataset(rows).toDF
             val inferred =
               writeThenRead(original, schema = None, preHeader = Some(preHeader), fileName = Some(fileName))
 
-            val preHeaderLines = preHeader.split("\\R", -1).map(_.split("\t"))
+            def cleanStrings(strings: Seq[String]) = strings.reverse.dropWhile(_.isEmpty).reverse
+
+            val preHeaderLines = preHeader.split("\\R", -1).map(_.split("\t").toSeq).map(cleanStrings)
             val firstRowsDf = spark.read
               .excel(sheetName = sheetName, useHeader = false, excerptSize = preHeaderLines.size)
               .load(fileName)
             val actualHeaders = firstRowsDf
               .limit(preHeaderLines.length)
               .collect()
-              .map(_.toSeq.filter(_ != null))
+              .map(r => cleanStrings(r.toSeq.map(e => if (e == null) "" else e.toString)))
 
             actualHeaders should contain theSameElementsInOrderAs preHeaderLines
 
             assertEqualAfterInferringTypes(original, inferred)
         }
-
       }
 
       it("handles multi-line column headers correctly") {
-        forAll(rowsGen.filter(!_.isEmpty), MinSuccessful(20)) { rows =>
+        forAll(rowsGen.filter(_.nonEmpty)) { rows =>
           val original = spark.createDataset(rows).toDF
           val multiLineHeaders = original.withColumnRenamed("aString", "a\nString")
           val inferred = writeThenRead(multiLineHeaders, schema = None)
           assertEqualAfterInferringTypes(multiLineHeaders, inferred)
+        }
+      }
+
+      it("reads files with missing cells correctly") {
+        forAll(rowsGen.filter(_.nonEmpty)) { rows =>
+          val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
+          val numCols = 50
+          val headerNames = (0 until numCols).map(c => s"header_$c")
+          val existingData = Sheet(
+            name = sheetName,
+            rows =
+              SRow(headerNames.zipWithIndex.map { case (header, c) => Cell(header, index = c) }, index = 0) ::
+                (0 until 100)
+                .map(r => SRow((0 until numCols).filter(_ % 2 == 0).map(c => Cell(s"$r,$c", index = c)), index = r + 1))
+                .to[List]
+          )
+          existingData.convertAsXlsx.write(new FileOutputStream(new File(fileName)))
+          val allData = spark.read
+            .excel(sheetName = sheetName, useHeader = true, inferSchema = true)
+            .load(fileName)
+          allData.schema.fieldNames should equal(headerNames)
+          val (headersWithData, headersWithoutData) = headerNames.zipWithIndex.partition(_._2 % 2 == 0)
+          val expectedContents = existingData.rows.drop(1).map(_.cells.map(_.value))
+          val actualContents = allData.select(headersWithData.map(c => col(c._1)): _*).collect().map(_.toSeq)
+          actualContents should contain theSameElementsInOrderAs expectedContents
+          val emptyContents = allData.select(headersWithoutData.map(c => col(c._1)): _*).collect().map(_.toSeq)
+          emptyContents should contain theSameElementsInOrderAs (0 until existingData.rows.size - 1)
+            .map(_ => headersWithoutData.map(_ => null))
+        }
+      }
+
+      it("writes to and reads from the specified dataAddress, leaving non-overlapping existing data alone") {
+        forAll(rowsGen.filter(_.nonEmpty)) { rows =>
+          val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
+          val numCols = 50
+          val existingData = Sheet(
+            name = sheetName,
+            rows = (0 until 100)
+              .map(r => SRow((0 until numCols).map(c => Cell(s"$r,$c", index = c)), index = r))
+              .to[List]
+          )
+          existingData.convertAsXlsx.write(new FileOutputStream(new File(fileName)))
+          val original = spark.createDataset(rows).toDF
+          val startCellAddress = new CellReference(31, 32)
+          val endCellAddress =
+            new CellReference(startCellAddress.getRow + rows.size, startCellAddress.getCol + original.schema.size - 1)
+          val inferred =
+            writeThenRead(
+              original,
+              schema = None,
+              fileName = Some(fileName),
+              saveMode = SaveMode.Append,
+              dataAddress = Some(s"${startCellAddress.formatAsString()}:${endCellAddress.formatAsString()}")
+            )
+
+          assertEqualAfterInferringTypes(original, inferred)
+
+          val nonOverwrittenData = existingData.withRows(existingData.rows.map { row =>
+            row.withCells(
+              row.cells.filterNot(
+                c =>
+                  c.index.get >= startCellAddress.getCol &&
+                    c.index.get <= endCellAddress.getCol &&
+                    row.index.get >= startCellAddress.getRow &&
+                    row.index.get <= endCellAddress.getRow
+              )
+            )
+          })
+          val allData = spark.read
+            .excel(sheetName = sheetName, useHeader = false, inferSchema = false)
+            .load(fileName)
+            .collect()
+            .map(_.toSeq)
+
+          val differencesInNonOverwrittenData = nonOverwrittenData.rows.flatMap { row =>
+            row.cells.flatMap { cell =>
+              val actualData = for {
+                row <- allData.lift(row.index.get)
+                cell <- row.lift(cell.index.get)
+              } yield cell
+              if (actualData.contains(cell.value)) Nil
+              else List((actualData, cell.value))
+
+            }
+          }
+          differencesInNonOverwrittenData shouldBe empty
         }
       }
     }

@@ -34,12 +34,10 @@ package object excel {
       treatEmptyValuesAsNulls: Boolean = false,
       inferSchema: Boolean = false,
       addColorColumns: Boolean = false,
-      startColumn: java.lang.Integer = null,
-      endColumn: java.lang.Integer = null,
+      dataAddress: String = null,
       timestampFormat: String = null,
       maxRowsInMemory: java.lang.Integer = null,
       excerptSize: Int = 10,
-      skipFirstRows: java.lang.Integer = null,
       workbookPassword: String = null
     ): DataFrameReader = {
       Map(
@@ -48,12 +46,10 @@ package object excel {
         "treatEmptyValuesAsNulls" -> treatEmptyValuesAsNulls,
         "inferSchema" -> inferSchema,
         "addColorColumns" -> addColorColumns,
-        "startColumn" -> startColumn,
-        "endColumn" -> endColumn,
+        "dataAddress" -> dataAddress,
         "timestampFormat" -> timestampFormat,
         "maxRowsInMemory" -> maxRowsInMemory,
         "excerptSize" -> excerptSize,
-        "skipFirstRows" -> skipFirstRows,
         "workbookPassword" -> workbookPassword
       ).foldLeft(dataFrameReader.format("com.crealytics.spark.excel")) {
         case (dfReader, (key, value)) =>
@@ -69,6 +65,7 @@ package object excel {
     def excel(
       sheetName: String = null,
       useHeader: Boolean = true,
+      dataAddress: String = null,
       preHeader: String = null,
       dateFormat: String = null,
       timestampFormat: String = null,
@@ -77,6 +74,7 @@ package object excel {
       Map(
         "sheetName" -> sheetName,
         "useHeader" -> useHeader,
+        "dataAddress" -> dataAddress,
         "dateFormat" -> dateFormat,
         "timestampFormat" -> timestampFormat,
         "preHeader" -> preHeader
