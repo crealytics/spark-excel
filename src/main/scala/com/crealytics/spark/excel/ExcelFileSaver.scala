@@ -1,13 +1,14 @@
 package com.crealytics.spark.excel
 
 import java.io.BufferedOutputStream
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
 
-import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
+import com.crealytics.spark.excel.ExcelFileSaver.{DEFAULT_DATE_FORMAT, DEFAULT_SHEET_NAME, DEFAULT_TIMESTAMP_FORMAT}
 import com.norbitltd.spoiwo.model._
-import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.sql.DataFrame
+import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
+import org.apache.hadoop.fs.{FSDataInputStream, FileSystem, Path}
+import org.apache.poi.ss.util.CellRangeAddress
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.apache.spark.sql.{DataFrame, SaveMode}
 
 import scala.collection.JavaConverters._
 
@@ -17,29 +18,64 @@ object ExcelFileSaver {
   final val DEFAULT_TIMESTAMP_FORMAT = "yyyy-mm-dd hh:mm:ss.000"
 }
 
-class ExcelFileSaver(fs: FileSystem) {
-  import ExcelFileSaver._
-  def save(
-    location: Path,
-    dataFrame: DataFrame,
-    sheetName: String = DEFAULT_SHEET_NAME,
-    useHeader: Boolean = true,
-    dateFormat: String = DEFAULT_DATE_FORMAT,
-    timestampFormat: String = DEFAULT_TIMESTAMP_FORMAT,
-    preHeader: Option[String]
-  ): Unit = {
-    val preHeaderRow = preHeader.toList.flatMap(_.split("\\R", -1).map(s => Row(s.split("\t").map(Cell(_)))))
-    val headerRow = Row(dataFrame.schema.fields.map(f => Cell(f.name)))
-    val dataRows = dataFrame
-      .toLocalIterator()
-      .asScala
-      .map { row =>
-        Row(row.toSeq.map(toCell(_, dateFormat, timestampFormat)))
-      }
-      .toList
-    val rows = preHeaderRow ++ (if (useHeader) headerRow :: dataRows else dataRows)
-    val workbook = Sheet(name = sheetName, rows = rows).convertAsXlsx
-    autoClose(new BufferedOutputStream(fs.create(location)))(workbook.write)
+class ExcelFileSaver(
+  fs: FileSystem,
+  location: Path,
+  dataFrame: DataFrame,
+  saveMode: SaveMode,
+  sheetName: String,
+  dataAddress: CellRangeAddress,
+  useHeader: Boolean = true,
+  dateFormat: String = DEFAULT_DATE_FORMAT,
+  timestampFormat: String = DEFAULT_TIMESTAMP_FORMAT,
+  preHeader: Option[String]
+) {
+  private def startColumn = dataAddress.getFirstColumn
+  private def endColumn = dataAddress.getLastColumn
+  private def startRow = dataAddress.getFirstRow
+
+  def save(): Unit = {
+    lazy val sheet = {
+      val preHeaderRows =
+        preHeader.toList.flatMap(_.split("\\R", -1).zipWithIndex.map {
+          case (line, idx) =>
+            Row(line.split("\t").zipWithIndex.map { case (str, idx) => Cell(str, index = idx) }, index = startRow + idx)
+        })
+      val preHeaderOffset = startRow + preHeaderRows.size
+      val headerRow = Row(dataFrame.schema.fields.zipWithIndex.map {
+        case (f, idx) => Cell(f.name, index = idx + startColumn)
+      }, index = preHeaderOffset)
+      val headerOffset = preHeaderOffset + (if (useHeader) 1 else 0)
+      val dataRows = dataFrame
+        .toLocalIterator()
+        .asScala
+        .zipWithIndex
+        .map {
+          case (row, idx) =>
+            Row(row.toSeq.zipWithIndex.map {
+              case (c, idx) => toCell(c, dateFormat, timestampFormat).withIndex(idx + startColumn)
+            }, index = idx + headerOffset)
+        }
+        .toList
+      val rows = preHeaderRows ++ (if (useHeader) headerRow :: dataRows else dataRows)
+      Sheet(name = sheetName, rows = rows)
+    }
+    val fileAlreadyExists = fs.exists(location)
+    (fileAlreadyExists, saveMode) match {
+      case (false, _) | (_, SaveMode.Overwrite) =>
+        if (fileAlreadyExists) {
+          fs.delete(location, true)
+        }
+        autoClose(new BufferedOutputStream(fs.create(location)))(sheet.convertAsXlsx.write)
+      case (true, SaveMode.ErrorIfExists) =>
+        sys.error(s"path $location already exists.")
+      case (true, SaveMode.Ignore) => ()
+      case (true, SaveMode.Append) =>
+        val inputStream: FSDataInputStream = fs.open(location)
+        val workbook = new XSSFWorkbook(inputStream)
+        Workbook(sheet).writeToExisting(workbook)
+        autoClose(new BufferedOutputStream(fs.create(location)))(workbook.write)
+    }
   }
   def dateCell(time: Long, format: String): Cell = {
     Cell(new java.util.Date(time), style = CellStyle(dataFormat = CellDataFormat(format)))
