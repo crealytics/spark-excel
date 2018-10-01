@@ -26,6 +26,7 @@ libraryDependencies ++= Seq(
 ).map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 libraryDependencies ++= Seq(
+  "org.typelevel" %% "cats-core" % "1.4.0" % Test,
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.8" % Test,
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.scalacheck" %% "scalacheck" % "1.14.0" % Test,
