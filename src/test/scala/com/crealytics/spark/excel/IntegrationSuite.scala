@@ -1,28 +1,22 @@
 package com.crealytics.spark.excel
 
 import java.io.File
-import java.lang.Math.sqrt
-import java.sql.Timestamp
+import java.sql.Date
+import java.time.temporal.ChronoUnit
+import java.time.{Instant, ZoneId, ZoneOffset}
 
-import org.scalacheck.{Arbitrary, Gen, Shrink}
-import Arbitrary.{arbBigDecimal => _, arbLong => _, arbString => _, _}
-import org.scalacheck.ScalacheckShapeless._
-import org.scalatest.{FunSpec, Matchers}
-import org.scalatest.prop.PropertyChecks
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types._
 import org.scalacheck.Arbitrary.{arbBigDecimal => _, arbLong => _, arbString => _, _}
 import org.scalacheck.ScalacheckShapeless._
 import org.scalacheck.{Arbitrary, Gen, Shrink}
-import org.scalatest.FunSpec
+import org.scalatest.{FunSpec, Matchers}
 import org.scalatest.prop.PropertyChecks
 
+import scala.collection.JavaConverters._
 import scala.util.Random
 
 object IntegrationSuite {
@@ -75,16 +69,25 @@ object IntegrationSuite {
           f(values)
       }
 
-  implicit val arbitraryDateFourDigits = Arbitrary[java.sql.Date](
+  val dstTransitionDays =
+    ZoneId.systemDefault().getRules.getTransitions.asScala.map(_.getInstant.truncatedTo(ChronoUnit.DAYS))
+  def isDstTransitionDay(instant: Instant): Boolean = {
+    dstTransitionDays.exists(_ == instant.truncatedTo(ChronoUnit.DAYS))
+  }
+  implicit val arbitraryDateFourDigits: Arbitrary[Date] = Arbitrary[java.sql.Date](
     Gen
       .chooseNum[Long](0L, (new java.util.Date).getTime + 1000000)
       .map(new java.sql.Date(_))
+      // We get some weird DST problems when the chosen date is a DST transition
+      .filterNot(d => isDstTransitionDay(d.toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant))
   )
 
   implicit val arbitraryTimestamp = Arbitrary[java.sql.Timestamp](
     Gen
       .chooseNum[Long](0L, (new java.util.Date).getTime + 1000000)
       .map(new java.sql.Timestamp(_))
+      // We get some weird DST problems when the chosen date is a DST transition
+      .filterNot(d => isDstTransitionDay(d.toInstant))
   )
 
   implicit val arbitraryBigDecimal =
@@ -113,7 +116,6 @@ object IntegrationSuite {
 class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBase with Matchers {
 
   import IntegrationSuite._
-
   import spark.implicits._
 
   implicit def shrinkOnlyNumberOfRows[A]: Shrink[List[A]] = Shrink.shrinkContainer[List, A]
