@@ -59,15 +59,18 @@ object IntegrationSuite {
       pf
     }
 
-  def expectedDataTypes(inferred: DataFrame): Seq[DataType] =
+  def expectedDataTypes(inferred: DataFrame): Seq[DataType] = {
+    val data = inferred.collect()
     inferredDataTypes(exampleDataSchema)
       .to[List]
       .zip(inferred.schema)
+      .zipWithIndex
       .map {
-        case (f, sf) =>
-          val values = inferred.select(sf.name).collect().map(_.get(0))
+        case ((f, sf), idx) =>
+          val values = data.map(_.get(idx))
           f(values)
       }
+  }
 
   val dstTransitionDays =
     ZoneId.systemDefault().getRules.getTransitions.asScala.map(_.getInstant.truncatedTo(ChronoUnit.DAYS))
