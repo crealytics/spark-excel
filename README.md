@@ -56,6 +56,26 @@ val df = sqlContext.read
     .load("Worktime.xlsx")
 ```
 
+#### Create a DataFrame from an Excel file using custom schema
+```scala
+import org.apache.spark.sql._
+import org.apache.spark.sql.types._
+
+val peopleSchema = StructType(Array(
+    StructField("Name", StringType, nullable = false),
+    StructField("Age", DoubleType, nullable = false),
+    StructField("Occupation", StringType, nullable = false),
+    StructField("Date of birth", StringType, nullable = false)))
+
+val sqlContext = new SQLContext(sc)
+val df = sqlContext.read
+    .format("com.crealytics.spark.excel")
+    .option("sheetName", "Info") 
+    .option("useHeader", "true")
+    .schema(peopleSchema) 
+    .load("People.xlsx")
+```
+
 #### Write a DataFrame to an Excel file
 ```scala
 df.write
