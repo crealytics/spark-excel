@@ -5,4 +5,13 @@ object Utils {
   implicit class RichTry[T](t: Try[T]) {
     def toEither: Either[Throwable, T] = t.transform(s => Success(Right(s)), f => Success(Left(f))).get
   }
+
+  case class MapIncluding[K](keys: Seq[K], optionally: Seq[K] = Seq()) {
+    def unapplySeq[V](m: Map[K, V]): Option[Seq[Any]] =
+      if (keys.forall(m.contains)) {
+        Some(keys.map(m) ++ optionally.map(m.get))
+      } else {
+        None
+      }
+  }
 }
