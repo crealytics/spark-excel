@@ -42,15 +42,16 @@ class HeaderDataColumn(
         case CellType.BLANK => None
         case _ => Some(dataFormatter.formatCellValue(cell))
       }
+    def parseNumber(string: Option[String]): Option[Double] = string.filter(_.trim.nonEmpty).map(stringToDouble)
     lazy val numericValue =
       cell.getCellType match {
         case CellType.NUMERIC => Option(cell.getNumericCellValue)
-        case CellType.STRING => Option(cell.getStringCellValue).filter(_.nonEmpty).map(stringToDouble)
+        case CellType.STRING => parseNumber(Option(cell.getStringCellValue))
         case CellType.FORMULA =>
           cell.getCachedFormulaResultType match {
             case CellType.NUMERIC => Option(cell.getNumericCellValue)
             case CellType.STRING =>
-              Option(cell.getRichStringCellValue).map(_.getString).filter(_.nonEmpty).map(stringToDouble)
+              parseNumber(Option(cell.getRichStringCellValue).map(_.getString))
           }
       }
     lazy val bigDecimal = numericValue.map(new BigDecimal(_))
@@ -67,7 +68,7 @@ class HeaderDataColumn(
       case _: TimestampType =>
         cellType match {
           case CellType.NUMERIC => numericValue.map(n => new Timestamp(DateUtil.getJavaDate(n).getTime))
-          case _ => stringValue.filter(_.nonEmpty).map(parseTimestamp)
+          case _ => stringValue.filter(_.trim.nonEmpty).map(parseTimestamp)
         }
       case _: DateType => numericValue.map(n => new java.sql.Date(DateUtil.getJavaDate(n).getTime))
       case _: StringType =>
