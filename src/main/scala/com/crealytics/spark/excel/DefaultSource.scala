@@ -36,7 +36,10 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
       timestampFormat = parameters.get("timestampFormat"),
       maxRowsInMemory = parameters.get("maxRowsInMemory").map(_.toInt),
       excerptSize = parameters.get("excerptSize").fold(10)(_.toInt),
-      dataAddress = parseRangeAddress(parameters.getOrElse("dataAddress", "A1")),
+      dataLocator = new CellRangeAddressDataLocator(
+        parameters.get("sheetName"),
+        parseRangeAddress(parameters.getOrElse("dataAddress", "A1"))
+      ),
       workbookPassword = parameters.get("workbookPassword")
     )(sqlContext)
   }
