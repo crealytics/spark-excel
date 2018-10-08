@@ -140,7 +140,6 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
     def writeThenRead(
       df: DataFrame,
       schema: Option[StructType] = Some(exampleDataSchema),
-      preHeader: Option[String] = None,
       fileName: Option[String] = None,
       saveMode: SaveMode = SaveMode.Overwrite,
       dataAddress: Option[String] = None
@@ -151,7 +150,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         .excel(sheetName = sheetName, useHeader = true)
         .mode(saveMode)
       val configuredWriter =
-        Map("preHeader" -> preHeader, "dataAddress" -> dataAddress).foldLeft(writer) {
+        Map("dataAddress" -> dataAddress).foldLeft(writer) {
           case (wri, (key, Some(value))) => wri.option(key, value)
           case (wri, _) => wri
         }
@@ -161,7 +160,6 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         .excel(sheetName = sheetName, useHeader = true, treatEmptyValuesAsNulls = false, addColorColumns = false)
       val skipRows = dataAddress
         .map(a => AddressContainer(a).startRow)
-        .orElse(preHeader.map(h => h.count(_ == '\n') + 1))
         .getOrElse(0)
       val configuredReader = Map(
         "maxRowsInMemory" -> maxRowsInMemory,
@@ -241,38 +239,6 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
           val original = spark.createDataset(rows).toDF
           val inferred = writeThenRead(original, schema = None)
           assertEqualAfterInferringTypes(original, inferred)
-        }
-      }
-
-      implicit val shrinkNoString: Shrink[String] = Shrink(_ => Stream.empty)
-      val preHeaderGen: Gen[String] = for {
-        words <- Gen.containerOf[Vector, String](arbitrary[String].filterNot(_.isEmpty))
-        newLines <- Gen.containerOf[Vector, String](Gen.oneOf("\n", "\r\n"))
-        tabs <- Gen.containerOf[Vector, String](Gen.const("\t"))
-      } yield Random.shuffle(newLines ++ tabs ++ words).mkString
-
-      it("correctly writes and skips the preHeader") {
-        forAll(rowsGen.filter(_.nonEmpty), preHeaderGen) {
-          case (rows, preHeader) =>
-            val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
-            val original = spark.createDataset(rows).toDF
-            val inferred =
-              writeThenRead(original, schema = None, preHeader = Some(preHeader), fileName = Some(fileName))
-
-            def cleanStrings(strings: Seq[String]) = strings.reverse.dropWhile(_.isEmpty).reverse
-
-            val preHeaderLines = preHeader.split("\\R", -1).map(_.split("\t").toSeq).map(cleanStrings)
-            val firstRowsDf = spark.read
-              .excel(sheetName = sheetName, useHeader = false, excerptSize = preHeaderLines.size)
-              .load(fileName)
-            val actualHeaders = firstRowsDf
-              .limit(preHeaderLines.length)
-              .collect()
-              .map(r => cleanStrings(r.toSeq.map(e => if (e == null) "" else e.toString)))
-
-            actualHeaders should contain theSameElementsInOrderAs preHeaderLines
-
-            assertEqualAfterInferringTypes(original, inferred)
         }
       }
 

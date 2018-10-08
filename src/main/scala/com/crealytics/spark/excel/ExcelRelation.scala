@@ -112,11 +112,9 @@ case class ExcelRelation(
               val values = lookups.map(l => l(row))
               Some(values)
             }.recover {
-              {
-                case e =>
-                  e.printStackTrace()
-                  None
-              }
+              case e =>
+                e.printStackTrace()
+                None
             }.get
         )
       val result = rows.to[Vector]
