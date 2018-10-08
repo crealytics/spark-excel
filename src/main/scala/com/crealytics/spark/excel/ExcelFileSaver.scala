@@ -24,41 +24,19 @@ class ExcelFileSaver(
   dataFrame: DataFrame,
   saveMode: SaveMode,
   sheetName: String,
-  dataAddress: CellRangeAddress,
+  dataLocator: DataLocator,
   useHeader: Boolean = true,
   dateFormat: String = DEFAULT_DATE_FORMAT,
-  timestampFormat: String = DEFAULT_TIMESTAMP_FORMAT,
-  preHeader: Option[String]
+  timestampFormat: String = DEFAULT_TIMESTAMP_FORMAT
 ) {
-  private def startColumn = dataAddress.getFirstColumn
-  private def endColumn = dataAddress.getLastColumn
-  private def startRow = dataAddress.getFirstRow
-
   def save(): Unit = {
     lazy val sheet = {
-      val preHeaderRows =
-        preHeader.toList.flatMap(_.split("\\R", -1).zipWithIndex.map {
-          case (line, idx) =>
-            Row(line.split("\t").zipWithIndex.map { case (str, idx) => Cell(str, index = idx) }, index = startRow + idx)
-        })
-      val preHeaderOffset = startRow + preHeaderRows.size
-      val headerRow = Row(dataFrame.schema.fields.zipWithIndex.map {
-        case (f, idx) => Cell(f.name, index = idx + startColumn)
-      }, index = preHeaderOffset)
-      val headerOffset = preHeaderOffset + (if (useHeader) 1 else 0)
+      val headerRow = if (useHeader) Some(dataFrame.schema.fields.map(_.name).toSeq) else None
       val dataRows = dataFrame
         .toLocalIterator()
         .asScala
-        .zipWithIndex
-        .map {
-          case (row, idx) =>
-            Row(row.toSeq.zipWithIndex.map {
-              case (c, idx) => toCell(c, dateFormat, timestampFormat).withIndex(idx + startColumn)
-            }, index = idx + headerOffset)
-        }
-        .toList
-      val rows = preHeaderRows ++ (if (useHeader) headerRow :: dataRows else dataRows)
-      Sheet(name = sheetName, rows = rows)
+        .map(_.toSeq)
+      dataLocator.toSheet(headerRow, dataRows, dateFormat, timestampFormat)
     }
     val fileAlreadyExists = fs.exists(location)
     (fileAlreadyExists, saveMode) match {
@@ -77,24 +55,7 @@ class ExcelFileSaver(
         autoClose(new BufferedOutputStream(fs.create(location)))(workbook.write)
     }
   }
-  def dateCell(time: Long, format: String): Cell = {
-    Cell(new java.util.Date(time), style = CellStyle(dataFormat = CellDataFormat(format)))
-  }
-  def toCell(a: Any, dateFormat: String, timestampFormat: String): Cell = a match {
-    case t: java.sql.Timestamp => dateCell(t.getTime, timestampFormat)
-    case d: java.sql.Date => dateCell(d.getTime, dateFormat)
-    case s: String => Cell(s)
-    case f: Float => Cell(f.toDouble)
-    case d: Double => Cell(d)
-    case b: Boolean => Cell(b)
-    case b: Byte => Cell(b.toInt)
-    case s: Short => Cell(s.toInt)
-    case i: Int => Cell(i)
-    case l: Long => Cell(l)
-    case b: BigDecimal => Cell(b)
-    case b: java.math.BigDecimal => Cell(BigDecimal(b))
-    case null => Cell.Empty
-  }
+
   def autoClose[A <: AutoCloseable, B](closeable: A)(fun: (A) => B): B = {
     try {
       fun(closeable)

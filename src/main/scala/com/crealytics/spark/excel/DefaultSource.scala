@@ -36,10 +36,7 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
       timestampFormat = parameters.get("timestampFormat"),
       maxRowsInMemory = parameters.get("maxRowsInMemory").map(_.toInt),
       excerptSize = parameters.get("excerptSize").fold(10)(_.toInt),
-      dataLocator = new CellRangeAddressDataLocator(
-        parameters.get("sheetName"),
-        parseRangeAddress(parameters.getOrElse("dataAddress", "A1"))
-      ),
+      dataLocator = DataLocator(parameters),
       workbookPassword = parameters.get("workbookPassword")
     )(sqlContext)
   }
@@ -55,8 +52,6 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
     val useHeader = checkParameter(parameters, "useHeader").toBoolean
     val dateFormat = parameters.getOrElse("dateFormat", ExcelFileSaver.DEFAULT_DATE_FORMAT)
     val timestampFormat = parameters.getOrElse("timestampFormat", ExcelFileSaver.DEFAULT_TIMESTAMP_FORMAT)
-    val preHeader = parameters.get("preHeader")
-    val dataAddress = parseRangeAddress(parameters.getOrElse("dataAddress", "A1"))
     val filesystemPath = new Path(path)
     val fs = filesystemPath.getFileSystem(sqlContext.sparkContext.hadoopConfiguration)
     new ExcelFileSaver(
@@ -68,8 +63,7 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
       useHeader = useHeader,
       dateFormat = dateFormat,
       timestampFormat = timestampFormat,
-      preHeader = preHeader,
-      dataAddress = dataAddress
+      dataLocator = DataLocator(parameters)
     ).save()
 
     createRelation(sqlContext, parameters, data.schema)
@@ -83,14 +77,4 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
       map.apply(param)
     }
   }
-
-  // Gets the Parameter if it exists, otherwise returns the default argument
-  private def parameterOrDefault(map: Map[String, String], param: String, default: String) =
-    map.getOrElse(param, default)
-
-  private def parseRangeAddress(address: String): CellRangeAddress =
-    Try {
-      val cellRef = new CellReference(address)
-      new CellRangeAddress(cellRef.getRow, Int.MaxValue, cellRef.getCol, Int.MaxValue)
-    }.getOrElse(CellRangeAddress.valueOf(address))
 }
