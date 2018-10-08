@@ -1,7 +1,19 @@
 package com.crealytics.spark.excel
-import com.norbitltd.spoiwo.model.{CellDataFormat, CellStyle, Cell => WriteCell, Row => WriteRow, Sheet => WriteSheet}
+import com.norbitltd.spoiwo.model.{
+  CellDataFormat,
+  CellRange,
+  CellStyle,
+  HasIndex,
+  Table,
+  Cell => WriteCell,
+  Row => WriteRow,
+  Sheet => WriteSheet
+}
+import HasIndex._
+import com.crealytics.spark.excel.Utils.MapIncluding
 import org.apache.poi.ss.usermodel.{Cell, Row, Sheet, Workbook}
 import org.apache.poi.ss.util.{CellRangeAddress, CellReference}
+import org.apache.poi.xssf.usermodel.{XSSFTable, XSSFWorkbook}
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -12,7 +24,8 @@ trait DataLocator {
     header: Option[Seq[String]],
     data: Iterator[Seq[Any]],
     dateFormat: String,
-    timestampFormat: String
+    timestampFormat: String,
+    existingWorkbook: Workbook
   ): WriteSheet
 }
 
@@ -24,26 +37,30 @@ object DataLocator {
       new CellRangeAddress(cellRef.getRow, Int.MaxValue, cellRef.getCol, Int.MaxValue)
     }.getOrElse(CellRangeAddress.valueOf(address))
 
-  def apply(parameters: Map[String, String]): DataLocator = {
-    new CellRangeAddressDataLocator(
-      parameters.get("sheetName"),
-      parseRangeAddress(parameters.getOrElse("dataAddress", "A1"))
-    )
+  val WithTableName = MapIncluding(Seq("tableName"))
+  val WithSheetAndAddress = MapIncluding(Seq(), optionally = Seq("sheetName", "dataAddress"))
+  def apply(parameters: Map[String, String]): DataLocator = parameters match {
+    case WithTableName(tableName: String) if parameters.contains("maxRowsInMemory") =>
+      throw new IllegalArgumentException(s"tableName option cannot be combined with maxRowsInMemory")
+    case WithTableName(tableName: String) => new TableDataLocator(tableName)
+    case WithSheetAndAddress(sheetName: Option[String], dataAddress: Option[String]) =>
+      new CellRangeAddressDataLocator(sheetName, parseRangeAddress(dataAddress.getOrElse("A1")))
   }
 }
 
-class CellRangeAddressDataLocator(sheetName: Option[String], dataAddress: CellRangeAddress) extends DataLocator {
-
-  private val startColumn = dataAddress.getFirstColumn
-  private val endColumn = dataAddress.getLastColumn
-  private val startRow = dataAddress.getFirstRow
-  private val endRow = dataAddress.getLastRow
+trait AreaDataLocator extends DataLocator {
+  def startColumn(workbook: Workbook): Int
+  def endColumn(workbook: Workbook): Int
+  def startRow(workbook: Workbook): Int
+  def endRow(workbook: Workbook): Int
+  def sheetName(workbook: Workbook): Option[String]
 
   implicit class RichRowIterator(iter: Iterator[Row]) {
     def withinStartAndEndRow(startRow: Int, endRow: Int): Iterator[Row] =
       iter.dropWhile(_.getRowNum < startRow).takeWhile(_.getRowNum <= endRow)
   }
-  private def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet =
+
+  def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet =
     sheetName
       .map(
         sn =>
@@ -53,18 +70,33 @@ class CellRangeAddressDataLocator(sheetName: Option[String], dataAddress: CellRa
       )
       .getOrElse(workBook.getSheetAt(0))
 
-  override def readFrom(workbook: Workbook): Iterator[Seq[Cell]] = {
-    val sheet = findSheet(workbook, sheetName)
+  def readFromSheet(workbook: Workbook, name: Option[String]): Iterator[Vector[Cell]] = {
+    val sheet = findSheet(workbook, name)
+    val rowStart = startRow(workbook)
+    val rowEnd = endRow(workbook)
+    val colStart = startColumn(workbook)
+    val colEnd = endColumn(workbook)
     sheet.iterator.asScala
-      .withinStartAndEndRow(startRow, endRow)
-      .map(
-        r =>
-          r.cellIterator()
-            .asScala
-            .filter(c => c.getColumnIndex >= startColumn && c.getColumnIndex <= endColumn)
-            .to[Vector]
-      )
+      .withinStartAndEndRow(rowStart, rowEnd)
+      .map(_.cellIterator().asScala.filter(c => c.getColumnIndex >= colStart && c.getColumnIndex <= colEnd).to[Vector])
   }
+
+  override def toSheet(
+    header: Option[Seq[String]],
+    data: Iterator[Seq[Any]],
+    dateFormat: String,
+    timestampFormat: String,
+    existingWorkbook: Workbook
+  ): WriteSheet = {
+    val dataRows: List[WriteRow] = (header.iterator ++ data).zipWithIndex.map {
+      case (row, idx) =>
+        WriteRow(row.zipWithIndex.map {
+          case (c, idx) => toCell(c, dateFormat, timestampFormat).withIndex(idx + startColumn(existingWorkbook))
+        }, index = idx + startRow(existingWorkbook))
+    }.toList
+    sheetName(existingWorkbook).foldLeft(WriteSheet(rows = dataRows))(_ withSheetName _)
+  }
+
   def dateCell(time: Long, format: String): WriteCell = {
     WriteCell(new java.util.Date(time), style = CellStyle(dataFormat = CellDataFormat(format)))
   }
@@ -83,18 +115,48 @@ class CellRangeAddressDataLocator(sheetName: Option[String], dataAddress: CellRa
     case b: java.math.BigDecimal => WriteCell(BigDecimal(b))
     case null => WriteCell.Empty
   }
+}
+
+class CellRangeAddressDataLocator(sheetName: Option[String], dataAddress: CellRangeAddress) extends AreaDataLocator {
+
+  def startColumn(workbook: Workbook): Int = dataAddress.getFirstColumn
+  def endColumn(workbook: Workbook): Int = dataAddress.getLastColumn
+  def startRow(workbook: Workbook): Int = dataAddress.getFirstRow
+  def endRow(workbook: Workbook): Int = dataAddress.getLastRow
+
+  override def readFrom(workbook: Workbook): Iterator[Seq[Cell]] = readFromSheet(workbook, sheetName)
+  override def sheetName(workbook: Workbook): Option[String] = sheetName
+}
+
+class TableDataLocator(tableName: String) extends AreaDataLocator {
+  override def readFrom(workbook: Workbook): Iterator[Seq[Cell]] = {
+    val xwb = workbook.asInstanceOf[XSSFWorkbook]
+    readFromSheet(workbook, Some(xwb.getTable(tableName).getSheetName))
+  }
   override def toSheet(
     header: Option[Seq[String]],
     data: Iterator[Seq[Any]],
     dateFormat: String,
-    timestampFormat: String
+    timestampFormat: String,
+    existingWorkbook: Workbook
   ): WriteSheet = {
-    val dataRows: List[WriteRow] = (header.iterator ++ data).zipWithIndex.map {
-      case (row, idx) =>
-        WriteRow(row.zipWithIndex.map {
-          case (c, idx) => toCell(c, dateFormat, timestampFormat).withIndex(idx + startColumn)
-        }, index = idx + startRow)
-    }.toList
-    sheetName.foldLeft(WriteSheet(rows = dataRows))(_ withSheetName _)
+    val sheet = super.toSheet(header, data, dateFormat, timestampFormat, existingWorkbook)
+    val maxRow = sheet.rows.maxIndex
+    val minRow = sheet.rows.flatMap(_.index).sorted.headOption.getOrElse(0)
+    val maxCol = sheet.rows.map(_.cells.maxIndex).sorted.lastOption.getOrElse(0)
+    val minCol = sheet.rows.flatMap(_.cells.flatMap(_.index)).sorted.headOption.getOrElse(0)
+    sheet.withTables(
+      Table(cellRange = CellRange(rowRange = (minRow, maxRow), columnRange = (minCol, maxCol)), name = tableName)
+    )
+  }
+  override def startColumn(workbook: Workbook): Int = findTable(workbook).map(_.getStartColIndex).getOrElse(0)
+  override def endColumn(workbook: Workbook): Int = findTable(workbook).map(_.getEndColIndex).getOrElse(Int.MaxValue)
+  override def startRow(workbook: Workbook): Int = findTable(workbook).map(_.getStartRowIndex).getOrElse(0)
+  override def endRow(workbook: Workbook): Int = findTable(workbook).map(_.getEndRowIndex).getOrElse(Int.MaxValue)
+  override def sheetName(workbook: Workbook): Option[String] =
+    findTable(workbook).map(_.getSheetName).orElse(Some(tableName))
+
+  private def findTable(workbook: Workbook): Option[XSSFTable] = {
+    Option(workbook.asInstanceOf[XSSFWorkbook].getTable(tableName))
   }
 }

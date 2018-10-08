@@ -8,7 +8,7 @@ import java.time.{Instant, ZoneId, ZoneOffset}
 import cats.Monoid
 import cats.instances.all._
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import com.norbitltd.spoiwo.model.{Cell, Sheet, Row => SRow}
+import com.norbitltd.spoiwo.model.{Cell, CellRange, Sheet, Row => SRow, Table => STable}
 import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
 import org.apache.poi.ss.util.CellReference
 import org.apache.spark.sql.catalyst.ScalaReflection
@@ -142,6 +142,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
       schema: Option[StructType] = Some(exampleDataSchema),
       fileName: Option[String] = None,
       saveMode: SaveMode = SaveMode.Overwrite,
+      tableName: Option[String] = None,
       dataAddress: Option[String] = None
     ): DataFrame = {
       val theFileName = fileName.getOrElse(File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath)
@@ -150,7 +151,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         .excel(sheetName = sheetName, useHeader = true)
         .mode(saveMode)
       val configuredWriter =
-        Map("dataAddress" -> dataAddress).foldLeft(writer) {
+        Map("dataAddress" -> dataAddress, "tableName" -> tableName).foldLeft(writer) {
           case (wri, (key, Some(value))) => wri.option(key, value)
           case (wri, _) => wri
         }
@@ -165,6 +166,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         "maxRowsInMemory" -> maxRowsInMemory,
         "inferSchema" -> Some(schema.isEmpty),
         "excerptSize" -> Some(skipRows + 10),
+        "tableName" -> tableName,
         "dataAddress" -> dataAddress.orElse(Some("A" + (skipRows + 1)))
       ).foldLeft(reader) {
         case (rdr, (key, Some(value))) => rdr.option(key, value.toString)
@@ -279,66 +281,134 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         }
       }
 
+      val cellAddressGen = for {
+        row <- Gen.choose(0, 100)
+        col <- Gen.choose(0, 100)
+      } yield new CellReference(row, col)
+
+      val sheetGen = for {
+        numRows <- Gen.choose(0, 200)
+        numCols <- Gen.choose(0, 200)
+      } yield {
+        Sheet(
+          name = sheetName,
+          rows = (0 until numRows)
+            .map(r => SRow((0 until numCols).map(c => Cell(s"$r,$c", index = c)), index = r))
+            .to[List]
+        )
+      }
+
+      val dataAndLocationGen = for {
+        rows <- rowsGen
+        startAddress <- cellAddressGen
+      } yield
+        (
+          rows,
+          startAddress,
+          new CellReference(startAddress.getRow + rows.size, startAddress.getCol + exampleDataSchema.size - 1)
+        )
+
+      def withFileOutputStream[T](fileName: String)(f: FileOutputStream => T): T = {
+        val outputStream = new FileOutputStream(new File(fileName))
+        val res = f(outputStream)
+        outputStream.close()
+        res
+      }
+
       it("writes to and reads from the specified dataAddress, leaving non-overlapping existing data alone") {
-        forAll(rowsGen.filter(_.nonEmpty)) { rows =>
-          val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
-          val numCols = 50
-          val existingData = Sheet(
-            name = sheetName,
-            rows = (0 until 100)
-              .map(r => SRow((0 until numCols).map(c => Cell(s"$r,$c", index = c)), index = r))
-              .to[List]
-          )
-          existingData.convertAsXlsx.write(new FileOutputStream(new File(fileName)))
-          val original = spark.createDataset(rows).toDF
-          val startCellAddress = new CellReference(31, 32)
-          val endCellAddress =
-            new CellReference(startCellAddress.getRow + rows.size, startCellAddress.getCol + original.schema.size - 1)
-          val inferred =
-            writeThenRead(
-              original,
-              schema = None,
-              fileName = Some(fileName),
-              saveMode = SaveMode.Append,
-              dataAddress = Some(s"${startCellAddress.formatAsString()}:${endCellAddress.formatAsString()}")
-            )
-
-          assertEqualAfterInferringTypes(original, inferred)
-
-          val nonOverwrittenData = existingData.withRows(existingData.rows.map { row =>
-            row.withCells(
-              row.cells.filterNot(
-                c =>
-                  c.index.get >= startCellAddress.getCol &&
-                    c.index.get <= endCellAddress.getCol &&
-                    row.index.get >= startCellAddress.getRow &&
-                    row.index.get <= endCellAddress.getRow
+        forAll(dataAndLocationGen.filter(_._1.nonEmpty), sheetGen) {
+          case ((rows, startCellAddress, endCellAddress), existingData) =>
+            val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
+            withFileOutputStream(fileName)(existingData.convertAsXlsx.write)
+            val original = spark.createDataset(rows).toDF
+            val inferred =
+              writeThenRead(
+                original,
+                schema = None,
+                fileName = Some(fileName),
+                saveMode = SaveMode.Append,
+                dataAddress = Some(s"${startCellAddress.formatAsString()}:${endCellAddress.formatAsString()}")
               )
-            )
-          })
-          val allData = spark.read
-            .excel(sheetName = sheetName, useHeader = false, inferSchema = false)
-            .load(fileName)
-            .collect()
-            .map(_.toSeq)
 
-          val differencesInNonOverwrittenData = nonOverwrittenData.rows.flatMap { row =>
-            row.cells.flatMap { cell =>
-              val actualData = for {
-                row <- allData.lift(row.index.get)
-                cell <- row.lift(cell.index.get)
-              } yield cell
-              if (actualData.contains(cell.value)) Nil
-              else List((actualData, cell.value))
+            assertEqualAfterInferringTypes(original, inferred)
 
-            }
+            assertNoDataOverwritten(existingData, fileName, startCellAddress, endCellAddress)
+        }
+      }
+
+      if (maxRowsInMemory.isEmpty) {
+        it("writes to and reads from the specified table, leaving non-overlapping existing data alone") {
+          forAll(dataAndLocationGen.filter(_._1.nonEmpty), sheetGen) {
+            case ((rows, startCellAddress, endCellAddress), sheet) =>
+              val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
+              val tableName = "SomeTable"
+              val original = spark.createDataset(rows).toDF
+
+              val existingData = sheet.withTables(
+                STable(
+                  cellRange = CellRange(
+                    rowRange = (startCellAddress.getRow, endCellAddress.getRow),
+                    columnRange = (startCellAddress.getCol, endCellAddress.getCol)
+                  ),
+                  name = tableName,
+                  displayName = tableName
+                )
+              )
+              withFileOutputStream(fileName)(existingData.convertAsXlsx.write)
+              val inferred =
+                writeThenRead(
+                  original,
+                  schema = None,
+                  fileName = Some(fileName),
+                  saveMode = SaveMode.Append,
+                  tableName = Some(tableName)
+                )
+
+              assertEqualAfterInferringTypes(original, inferred)
+
+              assertNoDataOverwritten(existingData, fileName, startCellAddress, endCellAddress)
           }
-          differencesInNonOverwrittenData shouldBe empty
         }
       }
     }
   }
 
+  private def assertNoDataOverwritten(
+    existingData: Sheet,
+    fileName: String,
+    startCellAddress: CellReference,
+    endCellAddress: CellReference
+  ): Unit = {
+    val nonOverwrittenData = existingData.withRows(existingData.rows.map { row =>
+      row.withCells(
+        row.cells.filterNot(
+          c =>
+            c.index.get >= startCellAddress.getCol &&
+              c.index.get <= endCellAddress.getCol &&
+              row.index.get >= startCellAddress.getRow &&
+              row.index.get <= endCellAddress.getRow
+        )
+      )
+    })
+    val allData = spark.read
+      .excel(sheetName = sheetName, useHeader = false, inferSchema = false)
+      .load(fileName)
+      .collect()
+      .map(_.toSeq)
+
+    val differencesInNonOverwrittenData = nonOverwrittenData.rows.flatMap { row =>
+      row.cells.flatMap { cell =>
+        val actualData = for {
+          row <- allData.lift(row.index.get)
+          cell <- row.lift(cell.index.get)
+        } yield cell
+        if (actualData.contains(cell.value)) Nil
+        else List((actualData, cell.value))
+
+      }
+    }
+    differencesInNonOverwrittenData shouldBe empty
+  }
   runTests(maxRowsInMemory = None)
   runTests(maxRowsInMemory = Some(20))
 }

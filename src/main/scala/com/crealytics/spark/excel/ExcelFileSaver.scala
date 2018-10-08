@@ -30,29 +30,31 @@ class ExcelFileSaver(
   timestampFormat: String = DEFAULT_TIMESTAMP_FORMAT
 ) {
   def save(): Unit = {
-    lazy val sheet = {
+    def sheet(workbook: XSSFWorkbook) = {
       val headerRow = if (useHeader) Some(dataFrame.schema.fields.map(_.name).toSeq) else None
       val dataRows = dataFrame
         .toLocalIterator()
         .asScala
         .map(_.toSeq)
-      dataLocator.toSheet(headerRow, dataRows, dateFormat, timestampFormat)
+      dataLocator.toSheet(headerRow, dataRows, dateFormat, timestampFormat, workbook)
     }
     val fileAlreadyExists = fs.exists(location)
+    def writeToWorkbook(workbook: XSSFWorkbook): Unit = {
+      Workbook(sheet(workbook)).writeToExisting(workbook)
+      autoClose(new BufferedOutputStream(fs.create(location)))(workbook.write)
+    }
     (fileAlreadyExists, saveMode) match {
       case (false, _) | (_, SaveMode.Overwrite) =>
         if (fileAlreadyExists) {
           fs.delete(location, true)
         }
-        autoClose(new BufferedOutputStream(fs.create(location)))(sheet.convertAsXlsx.write)
+        writeToWorkbook(new XSSFWorkbook())
       case (true, SaveMode.ErrorIfExists) =>
         sys.error(s"path $location already exists.")
       case (true, SaveMode.Ignore) => ()
       case (true, SaveMode.Append) =>
         val inputStream: FSDataInputStream = fs.open(location)
-        val workbook = new XSSFWorkbook(inputStream)
-        Workbook(sheet).writeToExisting(workbook)
-        autoClose(new BufferedOutputStream(fs.create(location)))(workbook.write)
+        writeToWorkbook(new XSSFWorkbook(inputStream))
     }
   }
 
