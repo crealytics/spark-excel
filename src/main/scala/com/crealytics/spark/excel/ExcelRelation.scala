@@ -5,20 +5,18 @@ import java.text.SimpleDateFormat
 
 import com.monitorjbl.xlsx.StreamingReader
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil, Sheet, Workbook, WorkbookFactory, Row => PRow}
-import org.apache.poi.ss.util.CellRangeAddress
+import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil, Workbook, WorkbookFactory, Row => _}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
 
-import scala.collection.JavaConverters._
 import scala.util.Try
 
 case class ExcelRelation(
   location: String,
   sheetName: Option[String],
-  dataAddress: CellRangeAddress,
+  dataLocator: DataLocator,
   useHeader: Boolean,
   treatEmptyValuesAsNulls: Boolean,
   inferSheetSchema: Boolean,
@@ -35,14 +33,6 @@ case class ExcelRelation(
 
   type SheetRow = Seq[Cell]
   private val path = new Path(location)
-
-  private val startColumn = dataAddress.getFirstColumn
-  private val endColumn = dataAddress.getLastColumn
-  private val startRow = dataAddress.getFirstRow
-  private val endRow = dataAddress.getLastRow
-
-  def extractCells(row: Seq[Cell]): Seq[Cell] =
-    row.filter(c => c.getColumnIndex >= startColumn && c.getColumnIndex <= endColumn)
 
   private def openWorkbook(): Workbook = {
     val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
@@ -69,24 +59,9 @@ case class ExcelRelation(
     res
   }
 
-  private def withRangeIterator[T](f: Iterator[PRow] => T): T =
-    withWorkbook { workbook =>
-      val sheet = findSheet(workbook, sheetName)
-      f(sheet.iterator.asScala.withinStartAndEndRow(startRow, endRow))
-    }
+  lazy val excerpt: List[SheetRow] = withWorkbook(dataLocator.readFrom(_).take(excerptSize).to[List])
 
-  implicit class RichRowIterator(iter: Iterator[PRow]) {
-    def withinStartAndEndRow(startRow: Int, endRow: Int): Iterator[PRow] =
-      iter.dropWhile(_.getRowNum < startRow).takeWhile(_.getRowNum <= endRow)
-  }
-  lazy val excerptRows: List[PRow] =
-    withRangeIterator(sheetIterator => sheetIterator.take(excerptSize).to[List])
-
-  lazy val excerpt: List[SheetRow] = {
-    val emptyRows = (startRow until excerptRows.head.getRowNum).map(_ => Seq()).to[List]
-    emptyRows ::: excerptRows.map(_.cellIterator().asScala.toArray.toSeq)
-  }
-  lazy val headerCells = extractCells(excerpt.dropWhile(_.isEmpty).head)
+  lazy val headerCells = excerpt.dropWhile(_.isEmpty).head
   lazy val columnIndexForName = if (useHeader) {
     headerCells.map(c => c.getStringCellValue -> c.getColumnIndex).toMap
   } else {
@@ -97,19 +72,13 @@ case class ExcelRelation(
 
   val dataFormatter = new DataFormatter()
 
-  private def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet =
-    sheetName
-      .map(sn => Option(workBook.getSheet(sn)).getOrElse(throw new IllegalArgumentException(s"Unknown sheet $sn")))
-      .getOrElse(workBook.sheetIterator.next)
-
   override def buildScan: RDD[Row] = buildScan(schema.map(_.name).toArray)
 
   private val timestampParser: String => Timestamp =
     timestampFormat
       .map { fmt =>
         val parser = new SimpleDateFormat(fmt)
-        (stringValue: String) =>
-          new Timestamp(parser.parse(stringValue).getTime)
+        (stringValue: String) => new Timestamp(parser.parse(stringValue).getTime)
       }
       .getOrElse((stringValue: String) => Timestamp.valueOf(stringValue))
 
@@ -133,11 +102,10 @@ case class ExcelRelation(
 
   override def buildScan(requiredColumns: Array[String]): RDD[Row] = {
     val lookups = requiredColumns.map(columnExtractor).toSeq
-    withRangeIterator { allDataIterator =>
+    withWorkbook { workbook =>
+      val allDataIterator = dataLocator.readFrom(workbook)
       val iter = if (useHeader) allDataIterator.drop(1) else allDataIterator
       val rows: Iterator[Seq[Any]] = iter
-        .map(_.cellIterator().asScala.to[Vector])
-        .map(extractCells)
         .flatMap(
           row =>
             Try {
@@ -227,8 +195,7 @@ case class ExcelRelation(
     val fields = makeSafeHeader(rawHeader, dataTypes)
     val baseSchema = StructType(fields)
     if (addColorColumns) {
-      fields.foldLeft(baseSchema) { (schema, header) =>
-        schema.add(s"${header}_color", StringType, nullable = true)
+      fields.foldLeft(baseSchema) { (schema, header) => schema.add(s"${header}_color", StringType, nullable = true)
       }
     } else {
       baseSchema
