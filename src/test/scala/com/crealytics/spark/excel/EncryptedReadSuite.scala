@@ -25,20 +25,12 @@ object EncryptedReadSuite {
 class EncryptedReadSuite extends FunSpec with DataFrameSuiteBase with Matchers {
   import EncryptedReadSuite._
 
-  val PackageName = "com.crealytics.spark.excel"
-
   lazy val expected = spark.createDataFrame(expectedData, simpleSchema)
 
   def readFromResources(path: String, password: String, maxRowsInMemory: Option[Int] = None): DataFrame = {
     val url = getClass.getResource(path)
     val reader = spark.read
-      .format(PackageName)
-      .option("sheetName", "Sheet1")
-      .option("useHeader", "true")
-      .option("treatEmptyValuesAsNulls", "true")
-      .option("addColorColumns", "false")
-      .option("workbookPassword", password)
-      .option("inferSchema", "true")
+      .excel(sheetName = "Sheet1", treatEmptyValuesAsNulls = true, workbookPassword = password, inferSchema = true)
     val withMaxRows = maxRowsInMemory.fold(reader)(rows => reader.option("maxRowsInMemory", s"$rows"))
     withMaxRows.load(url.getPath)
   }

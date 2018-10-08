@@ -118,7 +118,6 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
 
   implicit def shrinkOnlyNumberOfRows[A]: Shrink[List[A]] = Shrink.shrinkContainer[List, A]
 
-  val PackageName = "com.crealytics.spark.excel"
   val sheetName = "test sheet"
 
   def runTests(maxRowsInMemory: Option[Int]) {
@@ -132,9 +131,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
       val theFileName = fileName.getOrElse(File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath)
 
       val writer = df.write
-        .format(PackageName)
-        .option("sheetName", sheetName)
-        .option("useHeader", "true")
+        .excel(sheetName = sheetName, useHeader = true)
         .mode("overwrite")
       val withPreHeader = preHeader.foldLeft(writer) {
         case (wri, pre) =>
@@ -143,11 +140,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
       withPreHeader.save(theFileName)
 
       val reader = spark.read
-        .format(PackageName)
-        .option("sheetName", sheetName)
-        .option("useHeader", "true")
-        .option("treatEmptyValuesAsNulls", "true")
-        .option("addColorColumns", "false")
+        .excel(sheetName = sheetName, useHeader = true, treatEmptyValuesAsNulls = false, addColorColumns = false)
       val withPreHeaderSkip = preHeader.foldLeft(reader) {
         case (reader, preHeader) =>
           val skipRows = preHeader.count(_ == '\n') + 1
@@ -241,10 +234,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
 
             val preHeaderLines = preHeader.split("\\R", -1).map(_.split("\t"))
             val firstRowsDf = spark.read
-              .format(PackageName)
-              .option("sheetName", sheetName)
-              .option("useHeader", "false")
-              .option("excerptSize", preHeaderLines.size)
+              .excel(sheetName = sheetName, useHeader = false, excerptSize = preHeaderLines.size)
               .load(fileName)
             val actualHeaders = firstRowsDf
               .limit(preHeaderLines.length)
