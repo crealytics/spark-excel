@@ -1,3 +1,7 @@
+0.10.0
+======
+- Change: Update to Apache POI 4.0.0
+
 0.9.18
 ======
 - Feature: Add `workbookPassword` option for reading encrypted excel spreadsheets
