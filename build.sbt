@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
   "org.apache.poi" % "poi-ooxml" % "4.0.0",
   "com.norbitltd" %% "spoiwo" % "1.2.0",
-  "com.github.pjfanning" % "excel-streaming-reader" % "2.0.0"
+  "com.monitorjbl" % "xlsx-streamer" % "2.0.0"
 ).map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 libraryDependencies ++= Seq(

@@ -4,7 +4,7 @@ import java.math.BigDecimal
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
-import com.github.pjfanning.xlsx.StreamingReader
+import com.monitorjbl.xlsx.StreamingReader
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.poi.ss.usermodel.{
   Cell,
