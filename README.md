@@ -3,6 +3,8 @@
 A library for querying Excel files with Apache Spark, for Spark SQL and DataFrames.
 
 [![Build Status](https://travis-ci.org/crealytics/spark-excel.svg?branch=master)](https://travis-ci.org/crealytics/spark-excel)
+[![Maven Central](https://img.shields.io/maven-central/v/com.crealytics/spark-excel_2.11.svg)](https://search.maven.org/artifact/com.crealytics/spark-excel_2.11/)
+
 
 ## Requirements
 
