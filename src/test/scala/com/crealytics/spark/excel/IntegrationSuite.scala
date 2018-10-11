@@ -159,15 +159,12 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
 
       val reader = spark.read
         .excel(sheetName = sheetName, useHeader = true, treatEmptyValuesAsNulls = false, addColorColumns = false)
-      val skipRows = dataAddress
-        .map(a => AddressContainer(a).startRow)
-        .getOrElse(0)
       val configuredReader = Map(
         "maxRowsInMemory" -> maxRowsInMemory,
         "inferSchema" -> Some(schema.isEmpty),
-        "excerptSize" -> Some(skipRows + 10),
+        "excerptSize" -> Some(10),
         "tableName" -> tableName,
-        "dataAddress" -> dataAddress.orElse(Some("A" + (skipRows + 1)))
+        "dataAddress" -> dataAddress
       ).foldLeft(reader) {
         case (rdr, (key, Some(value))) => rdr.option(key, value.toString)
         case (rdr, _) => rdr
