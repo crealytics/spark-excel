@@ -51,8 +51,29 @@ val df = sqlContext.read
     .option("maxRowsInMemory", 20) // Optional, default None. If set, uses a streaming reader which can help with big files
     .option("excerptSize", 10) // Optional, default: 10. If set and if schema inferred, number of rows to infer schema from
     .option("skipFirstRows", 5) // Optional, default None. If set skips the first n rows and checks for headers in row n+1
+    .option("workbookPassword", "pass") // Optional, default None. Requires unlimited strength JCE for older JVMs
     .schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
     .load("Worktime.xlsx")
+```
+
+#### Create a DataFrame from an Excel file using custom schema
+```scala
+import org.apache.spark.sql._
+import org.apache.spark.sql.types._
+
+val peopleSchema = StructType(Array(
+    StructField("Name", StringType, nullable = false),
+    StructField("Age", DoubleType, nullable = false),
+    StructField("Occupation", StringType, nullable = false),
+    StructField("Date of birth", StringType, nullable = false)))
+
+val sqlContext = new SQLContext(sc)
+val df = sqlContext.read
+    .format("com.crealytics.spark.excel")
+    .option("sheetName", "Info") 
+    .option("useHeader", "true")
+    .schema(peopleSchema) 
+    .load("People.xlsx")
 ```
 
 #### Write a DataFrame to an Excel file

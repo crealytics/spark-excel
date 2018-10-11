@@ -34,7 +34,8 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
       timestampFormat = parameters.get("timestampFormat"),
       maxRowsInMemory = parameters.get("maxRowsInMemory").map(_.toInt),
       excerptSize = parameters.get("excerptSize").fold(10)(_.toInt),
-      skipFirstRows = parameters.get("skipFirstRows").map(_.toInt)
+      skipFirstRows = parameters.get("skipFirstRows").map(_.toInt),
+      workbookPassword = parameters.get("workbookPassword")
     )(sqlContext)
   }
 

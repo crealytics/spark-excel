@@ -37,7 +37,8 @@ case class ExcelRelation(
   timestampFormat: Option[String] = None,
   maxRowsInMemory: Option[Int] = None,
   excerptSize: Int = 10,
-  skipFirstRows: Option[Int] = None
+  skipFirstRows: Option[Int] = None,
+  workbookPassword: Option[String] = None
 )(@transient val sqlContext: SQLContext)
     extends BaseRelation
     with TableScan
@@ -52,13 +53,18 @@ case class ExcelRelation(
     val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
     maxRowsInMemory
       .map { maxRowsInMem =>
-        StreamingReader
+        val builder = StreamingReader
           .builder()
           .rowCacheSize(maxRowsInMem)
           .bufferSize(maxRowsInMem * 1024)
+        workbookPassword
+          .fold(builder)(password => builder.password(password))
           .open(inputStream)
       }
-      .getOrElse(WorkbookFactory.create(inputStream))
+      .getOrElse(
+        workbookPassword
+          .fold(WorkbookFactory.create(inputStream))(password => WorkbookFactory.create(inputStream, password))
+      )
   }
 
   lazy val excerpt: List[SheetRow] = {
