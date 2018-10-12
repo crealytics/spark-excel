@@ -80,11 +80,9 @@ object IntegrationSuite {
       .map { case ((f, sf), idx) => sf.name -> f(data.map(_.get(idx))) }
   }
 
-  val dstTransitionDays =
+  private val dstTransitionDays =
     ZoneId.systemDefault().getRules.getTransitions.asScala.map(_.getInstant.truncatedTo(ChronoUnit.DAYS))
-  def isDstTransitionDay(instant: Instant): Boolean = {
-    dstTransitionDays.exists(_ == instant.truncatedTo(ChronoUnit.DAYS))
-  }
+  def isDstTransitionDay(instant: Instant): Boolean = dstTransitionDays.contains(instant.truncatedTo(ChronoUnit.DAYS))
   implicit val arbitraryDateFourDigits: Arbitrary[Date] = Arbitrary[java.sql.Date](
     Gen
       .chooseNum[Long](0L, (new java.util.Date).getTime + 1000000)
@@ -147,9 +145,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
     ): DataFrame = {
       val theFileName = fileName.getOrElse(File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath)
 
-      val writer = df.write
-        .excel(sheetName = sheetName, useHeader = true)
-        .mode(saveMode)
+      val writer = df.write.excel(sheetName = sheetName).mode(saveMode)
       val configuredWriter =
         Map("dataAddress" -> dataAddress, "tableName" -> tableName).foldLeft(writer) {
           case (wri, (key, Some(value))) => wri.option(key, value)
@@ -157,8 +153,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         }
       configuredWriter.save(theFileName)
 
-      val reader = spark.read
-        .excel(sheetName = sheetName, useHeader = true, treatEmptyValuesAsNulls = false, addColorColumns = false)
+      val reader = spark.read.excel(sheetName = sheetName)
       val configuredReader = Map(
         "maxRowsInMemory" -> maxRowsInMemory,
         "inferSchema" -> Some(schema.isEmpty),
@@ -265,7 +260,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
           )
           existingData.convertAsXlsx.write(new FileOutputStream(new File(fileName)))
           val allData = spark.read
-            .excel(sheetName = sheetName, useHeader = true, inferSchema = true)
+            .excel(sheetName = sheetName, inferSchema = true)
             .load(fileName)
           allData.schema.fieldNames should equal(headerNames)
           val (headersWithData, headersWithoutData) = headerNames.zipWithIndex.partition(_._2 % 2 == 0)
