@@ -3,9 +3,7 @@ package com.crealytics.spark.excel
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
-import com.monitorjbl.xlsx.StreamingReader
-import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil, Workbook, WorkbookFactory, Row => _}
+import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil, Row => _}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.sources._
@@ -14,8 +12,6 @@ import org.apache.spark.sql.types._
 import scala.util.Try
 
 case class ExcelRelation(
-  location: String,
-  sheetName: Option[String],
   dataLocator: DataLocator,
   useHeader: Boolean,
   treatEmptyValuesAsNulls: Boolean,
@@ -23,43 +19,16 @@ case class ExcelRelation(
   addColorColumns: Boolean = true,
   userSchema: Option[StructType] = None,
   timestampFormat: Option[String] = None,
-  maxRowsInMemory: Option[Int] = None,
   excerptSize: Int = 10,
-  workbookPassword: Option[String] = None
+  workbookReader: WorkbookReader
 )(@transient val sqlContext: SQLContext)
     extends BaseRelation
     with TableScan
     with PrunedScan {
 
   type SheetRow = Seq[Cell]
-  private val path = new Path(location)
 
-  private def openWorkbook(): Workbook = {
-    val inputStream = FileSystem.get(path.toUri, sqlContext.sparkContext.hadoopConfiguration).open(path)
-    maxRowsInMemory
-      .map { maxRowsInMem =>
-        val builder = StreamingReader
-          .builder()
-          .rowCacheSize(maxRowsInMem)
-          .bufferSize(maxRowsInMem * 1024)
-        workbookPassword
-          .fold(builder)(password => builder.password(password))
-          .open(inputStream)
-      }
-      .getOrElse(
-        workbookPassword
-          .fold(WorkbookFactory.create(inputStream))(password => WorkbookFactory.create(inputStream, password))
-      )
-  }
-
-  private def withWorkbook[T](f: Workbook => T): T = {
-    val workbook = openWorkbook()
-    val res = f(workbook)
-    workbook.close()
-    res
-  }
-
-  lazy val excerpt: List[SheetRow] = withWorkbook(dataLocator.readFrom(_).take(excerptSize).to[List])
+  lazy val excerpt: List[SheetRow] = workbookReader.withWorkbook(dataLocator.readFrom(_).take(excerptSize).to[List])
 
   lazy val headerCells = excerpt.dropWhile(_.isEmpty).head
   lazy val columnIndexForName = if (useHeader) {
@@ -78,7 +47,8 @@ case class ExcelRelation(
     timestampFormat
       .map { fmt =>
         val parser = new SimpleDateFormat(fmt)
-        (stringValue: String) => new Timestamp(parser.parse(stringValue).getTime)
+        (stringValue: String) =>
+          new Timestamp(parser.parse(stringValue).getTime)
       }
       .getOrElse((stringValue: String) => Timestamp.valueOf(stringValue))
 
@@ -102,7 +72,7 @@ case class ExcelRelation(
 
   override def buildScan(requiredColumns: Array[String]): RDD[Row] = {
     val lookups = requiredColumns.map(columnExtractor).toSeq
-    withWorkbook { workbook =>
+    workbookReader.withWorkbook { workbook =>
       val allDataIterator = dataLocator.readFrom(workbook)
       val iter = if (useHeader) allDataIterator.drop(1) else allDataIterator
       val rows: Iterator[Seq[Any]] = iter
@@ -193,7 +163,8 @@ case class ExcelRelation(
     val fields = makeSafeHeader(rawHeader, dataTypes)
     val baseSchema = StructType(fields)
     if (addColorColumns) {
-      fields.foldLeft(baseSchema) { (schema, header) => schema.add(s"${header}_color", StringType, nullable = true)
+      fields.foldLeft(baseSchema) { (schema, header) =>
+        schema.add(s"${header}_color", StringType, nullable = true)
       }
     } else {
       baseSchema

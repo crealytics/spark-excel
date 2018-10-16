@@ -84,7 +84,7 @@ pomExtra :=
 test in assembly := {}
 
 addArtifact(artifact in (Compile, assembly), assembly)
-
+/*
 initialCommands += """
   import org.apache.spark.{SparkConf, SparkContext}
   import org.apache.spark.SparkContext._
@@ -100,7 +100,7 @@ initialCommands += """
   """
 
 fork := true
-
+*/
 // -- MiMa binary compatibility checks ------------------------------------------------------------
 
 mimaPreviousArtifacts := Set("com.crealytics" %% "spark-excel" % "0.0.1")
