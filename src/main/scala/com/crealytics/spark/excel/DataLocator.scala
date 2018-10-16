@@ -1,4 +1,6 @@
 package com.crealytics.spark.excel
+import com.crealytics.spark.excel.Utils.MapIncluding
+import com.norbitltd.spoiwo.model.HasIndex._
 import com.norbitltd.spoiwo.model.{
   CellDataFormat,
   CellRange,
@@ -9,8 +11,6 @@ import com.norbitltd.spoiwo.model.{
   Row => WriteRow,
   Sheet => WriteSheet
 }
-import HasIndex._
-import com.crealytics.spark.excel.Utils.MapIncluding
 import org.apache.poi.ss.usermodel.{Cell, Row, Sheet, Workbook}
 import org.apache.poi.ss.util.{CellRangeAddress, CellReference}
 import org.apache.poi.xssf.usermodel.{XSSFTable, XSSFWorkbook}
@@ -40,10 +40,10 @@ object DataLocator {
   val WithTableName = MapIncluding(Seq("tableName"))
   val WithSheetAndAddress = MapIncluding(Seq(), optionally = Seq("sheetName", "dataAddress"))
   def apply(parameters: Map[String, String]): DataLocator = parameters match {
-    case WithTableName(tableName: String) if parameters.contains("maxRowsInMemory") =>
+    case WithTableName(Seq(tableName)) if parameters.contains("maxRowsInMemory") =>
       throw new IllegalArgumentException(s"tableName option cannot be combined with maxRowsInMemory")
-    case WithTableName(tableName: String) => new TableDataLocator(tableName)
-    case WithSheetAndAddress(sheetName: Option[String], dataAddress: Option[String]) =>
+    case WithTableName(Seq(tableName)) => new TableDataLocator(tableName.toString)
+    case WithSheetAndAddress(Seq(), Seq(sheetName, dataAddress)) =>
       new CellRangeAddressDataLocator(sheetName, parseRangeAddress(dataAddress.getOrElse("A1")))
   }
 }

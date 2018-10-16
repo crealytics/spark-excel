@@ -7,9 +7,9 @@ object Utils {
   }
 
   case class MapIncluding[K](keys: Seq[K], optionally: Seq[K] = Seq()) {
-    def unapplySeq[V](m: Map[K, V]): Option[Seq[Any]] =
+    def unapply[V](m: Map[K, V]): Option[(Seq[V], Seq[Option[V]])] =
       if (keys.forall(m.contains)) {
-        Some(keys.map(m) ++ optionally.map(m.get))
+        Some((keys.map(m), optionally.map(m.get)))
       } else {
         None
       }

@@ -15,8 +15,6 @@ import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SaveMode}
-import org.scalacheck.Arbitrary.{arbBigDecimal => _, arbLong => _, arbString => _, _}
-import org.scalacheck.ScalacheckShapeless._
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import org.scalactic.anyvals.PosInt
 import org.scalatest.prop.PropertyChecks
@@ -25,36 +23,14 @@ import org.scalatest.{FunSpec, Matchers}
 import scala.collection.JavaConverters._
 import scala.util.Random
 
-object IntegrationSuite {
+class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBase with Matchers with Generators {
 
-  case class ExampleData(
-    aBoolean: Boolean,
-    aBooleanOption: Option[Boolean],
-    aByte: Byte,
-    aByteOption: Option[Byte],
-    aShort: Short,
-    aShortOption: Option[Short],
-    anInt: Int,
-    anIntOption: Option[Int],
-    aLong: Long,
-    aLongOption: Option[Long],
-    aFloat: Float,
-    aFloatOption: Option[Float],
-    aDouble: Double,
-    aDoubleOption: Option[Double],
-    aBigDecimal: BigDecimal,
-    aBigDecimalOption: Option[BigDecimal],
-    aJavaBigDecimal: java.math.BigDecimal,
-    aJavaBigDecimalOption: Option[java.math.BigDecimal],
-    aString: String,
-    aStringOption: Option[String],
-    aTimestamp: java.sql.Timestamp,
-    aTimestampOption: Option[java.sql.Timestamp],
-    aDate: java.sql.Date,
-    aDateOption: Option[java.sql.Date]
+  import spark.implicits._
+
+  implicit def shrinkOnlyNumberOfRows[A]: Shrink[List[A]] = Shrink.shrinkContainer[List, A]
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration = PropertyCheckConfiguration(
+    minSuccessful = PosInt.from(sys.env.getOrElse("EXAMPLES_PER_PROPERTY", "6").toInt).get
   )
-
-  private val exampleDataSchema = ScalaReflection.schemaFor[ExampleData].dataType.asInstanceOf[StructType]
 
   // inferring the schema will not match the original types exactly
   def inferredDataTypes(schema: StructType): Seq[Function[Seq[Any], DataType]] =
@@ -64,9 +40,15 @@ object IntegrationSuite {
           case values: Seq[Any] if values.distinct == Seq("") => StringType
           case _ => DoubleType
         }
-        case _: NumericType => _: Seq[Any] => DoubleType
-        case DateType => _: Seq[Any] => TimestampType
-        case t: DataType => _: Seq[Any] => t
+        case _: NumericType =>
+          _: Seq[Any] =>
+            DoubleType
+        case DateType =>
+          _: Seq[Any] =>
+            TimestampType
+        case t: DataType =>
+          _: Seq[Any] =>
+            t
       }
       pf
     }
@@ -79,59 +61,6 @@ object IntegrationSuite {
       .zipWithIndex
       .map { case ((f, sf), idx) => sf.name -> f(data.map(_.get(idx))) }
   }
-
-  private val dstTransitionDays =
-    ZoneId.systemDefault().getRules.getTransitions.asScala.map(_.getInstant.truncatedTo(ChronoUnit.DAYS))
-  def isDstTransitionDay(instant: Instant): Boolean = dstTransitionDays.contains(instant.truncatedTo(ChronoUnit.DAYS))
-  implicit val arbitraryDateFourDigits: Arbitrary[Date] = Arbitrary[java.sql.Date](
-    Gen
-      .chooseNum[Long](0L, (new java.util.Date).getTime + 1000000)
-      .map(new java.sql.Date(_))
-      // We get some weird DST problems when the chosen date is a DST transition
-      .filterNot(d => isDstTransitionDay(d.toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant))
-  )
-
-  implicit val arbitraryTimestamp: Arbitrary[Timestamp] = Arbitrary[java.sql.Timestamp](
-    Gen
-      .chooseNum[Long](0L, (new java.util.Date).getTime + 1000000)
-      .map(new java.sql.Timestamp(_))
-      // We get some weird DST problems when the chosen date is a DST transition
-      .filterNot(d => isDstTransitionDay(d.toInstant))
-  )
-
-  implicit val arbitraryBigDecimal: Arbitrary[BigDecimal] =
-    Arbitrary[BigDecimal](Gen.chooseNum[Double](-1.0e15, 1.0e15).map(BigDecimal.apply))
-
-  implicit val arbitraryJavaBigDecimal: Arbitrary[java.math.BigDecimal] =
-    Arbitrary[java.math.BigDecimal](arbitraryBigDecimal.arbitrary.map(_.bigDecimal))
-
-  // Unfortunately we're losing some precision when parsing Longs
-  // due to the fact that we have to read them as Doubles and then cast.
-  // We're restricting our tests to Int-sized Longs in order not to fail
-  // because of this issue.
-  implicit val arbitraryLongWithLosslessDoubleConvertability: Arbitrary[Long] =
-    Arbitrary[Long] {
-      arbitrary[Int].map(_.toLong)
-    }
-
-  implicit val arbitraryStringWithoutUnicodeCharacters: Arbitrary[String] =
-    Arbitrary[String](Gen.alphaNumStr)
-
-  val rowGen: Gen[ExampleData] = arbitrary[ExampleData].map(d => if (d.aString.isEmpty) d.copy(aString = null) else d)
-  val rowsGen: Gen[List[ExampleData]] = Gen.listOf(rowGen)
-
-}
-
-class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBase with Matchers {
-
-  import IntegrationSuite._
-  import spark.implicits._
-
-  implicit def shrinkOnlyNumberOfRows[A]: Shrink[List[A]] = Shrink.shrinkContainer[List, A]
-  implicit override val generatorDrivenConfig: PropertyCheckConfiguration = PropertyCheckConfiguration(
-    minSuccessful = PosInt.from(sys.env.getOrElse("EXAMPLES_PER_PROPERTY", "6").toInt).get
-  )
-  val sheetName = "test sheet"
 
   def runTests(maxRowsInMemory: Option[Int]) {
 
@@ -273,33 +202,6 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         }
       }
 
-      val cellAddressGen = for {
-        row <- Gen.choose(0, 100)
-        col <- Gen.choose(0, 100)
-      } yield new CellReference(row, col)
-
-      val sheetGen = for {
-        numRows <- Gen.choose(0, 200)
-        numCols <- Gen.choose(0, 200)
-      } yield {
-        Sheet(
-          name = sheetName,
-          rows = (0 until numRows)
-            .map(r => SRow((0 until numCols).map(c => Cell(s"$r,$c", index = c)), index = r))
-            .to[List]
-        )
-      }
-
-      val dataAndLocationGen = for {
-        rows <- rowsGen
-        startAddress <- cellAddressGen
-      } yield
-        (
-          rows,
-          startAddress,
-          new CellReference(startAddress.getRow + rows.size, startAddress.getCol + exampleDataSchema.size - 1)
-        )
-
       def withFileOutputStream[T](fileName: String)(f: FileOutputStream => T): T = {
         val outputStream = new FileOutputStream(new File(fileName))
         val res = f(outputStream)
@@ -334,7 +236,6 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
             case ((rows, startCellAddress, endCellAddress), sheet) =>
               val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
               val tableName = "SomeTable"
-              val original = spark.createDataset(rows).toDF
 
               val existingData = sheet.withTables(
                 STable(
@@ -346,6 +247,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
                   displayName = tableName
                 )
               )
+              val original = spark.createDataset(rows).toDF
               withFileOutputStream(fileName)(existingData.convertAsXlsx.write)
               val inferred =
                 writeThenRead(

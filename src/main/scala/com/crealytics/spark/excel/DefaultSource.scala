@@ -25,19 +25,18 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
     parameters: Map[String, String],
     schema: StructType
   ): ExcelRelation = {
+    val wbReader = WorkbookReader(parameters, sqlContext.sparkContext.hadoopConfiguration)
+    val dataLocator = DataLocator(parameters)
     ExcelRelation(
-      location = checkParameter(parameters, "path"),
-      sheetName = parameters.get("sheetName"),
       useHeader = checkParameter(parameters, "useHeader").toBoolean,
       treatEmptyValuesAsNulls = parameters.get("treatEmptyValuesAsNulls").fold(false)(_.toBoolean),
       userSchema = Option(schema),
       inferSheetSchema = parameters.get("inferSchema").fold(false)(_.toBoolean),
       addColorColumns = parameters.get("addColorColumns").fold(false)(_.toBoolean),
       timestampFormat = parameters.get("timestampFormat"),
-      maxRowsInMemory = parameters.get("maxRowsInMemory").map(_.toInt),
       excerptSize = parameters.get("excerptSize").fold(10)(_.toInt),
-      dataLocator = DataLocator(parameters),
-      workbookPassword = parameters.get("workbookPassword")
+      dataLocator = dataLocator,
+      workbookReader = wbReader
     )(sqlContext)
   }
 
