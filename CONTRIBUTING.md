@@ -13,6 +13,7 @@ with the owners of this repository before making a change.
      please coordinate with the project maintainers first.
      We're open to refactorings but would like to discuss and review them independently.
 4. Auto-format your code using `sbt scalafmt test:scalafmt`.
-5. Update the `README.md` and `CHANGELOG.md` with details of changes to the interface.
-6. Rebase your changes to the latest master in case something changed there.
+5. Check the code with scalastyle using `sbt scalastyle test:scalastyle`
+6. Update the `README.md` and `CHANGELOG.md` with details of changes to the interface.
+7. Rebase your changes to the latest master in case something changed there.
 
