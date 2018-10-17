@@ -43,7 +43,7 @@ import org.apache.spark.sql._
 val spark: SparkSession = ???
 val df = spark.read
     .format("com.crealytics.spark.excel")
-    .option("sheetName", "Daily") // Required
+    .option("sheetName", "Daily") // Optional, if not set reads the first sheet in the spreadsheet
     .option("useHeader", "true") // Required
     .option("treatEmptyValuesAsNulls", "false") // Optional, default: true
     .option("inferSchema", "false") // Optional, default: false
@@ -68,7 +68,7 @@ import com.crealytics.spark.excel._
 
 val spark: SparkSession = ???
 val df = spark.read.excel(
-    sheetName = "Daily",  // Required
+    sheetName = "Daily",  // Optional, if not set reads the first sheet in the spreadsheet
     useHeader = "true",  // Required
     treatEmptyValuesAsNulls = "false",  // Optional, default: true
     inferSchema = "false",  // Optional, default: false
