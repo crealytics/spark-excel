@@ -47,7 +47,7 @@ class ReadDefaultSheetSuite extends FunSpec with PropertyChecks with DataFrameSu
 object ReadDefaultSheetSuite {
 
   var spreadSheetCache = Map.empty[(Int, Boolean), String]
-  def generateSpreadSheetCached(numSheets: Int, xslx: Boolean) = this.synchronized {
+  def generateSpreadSheetCached(numSheets: Int, xslx: Boolean): String = this.synchronized {
     def genNewValue = {
       val path = generateSpreadSheet(numSheets, xslx)
       spreadSheetCache += (((numSheets, xslx), path))
@@ -89,8 +89,10 @@ object ReadDefaultSheetSuite {
   }
 
   implicit class ReachDataframeReader(reader: DataFrameReader) {
-    def withSchema(schema: Option[StructType]) = schema.foldLeft(reader.option("inferSchema", true))(_ schema _)
-    def withStreaming(maxRowsInMemory: Option[Int]) = maxRowsInMemory.foldLeft(reader)(_.option("maxRowsInMemory", _))
+    def withSchema(schema: Option[StructType]): DataFrameReader =
+      schema.foldLeft(reader.option("inferSchema", true))(_ schema _)
+    def withStreaming(maxRowsInMemory: Option[Int]): DataFrameReader =
+      maxRowsInMemory.foldLeft(reader)(_.option("maxRowsInMemory", _))
   }
 
   def expectedData(sheetIndex: Int)(implicit spark: SparkSession): DataFrame = {
