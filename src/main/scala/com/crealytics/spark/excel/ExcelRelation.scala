@@ -30,7 +30,7 @@ case class ExcelRelation(
 
   lazy val excerpt: List[SheetRow] = workbookReader.withWorkbook(dataLocator.readFrom(_).take(excerptSize).to[List])
 
-  lazy val headerCells = excerpt.dropWhile(_.isEmpty).head
+  lazy val headerCells = excerpt.head
   lazy val columnIndexForName = if (useHeader) {
     headerCells.map(c => c.getStringCellValue -> c.getColumnIndex).toMap
   } else {
