@@ -126,6 +126,7 @@ Currently the following address styles are supported:
   Writing will start in the first cell (`B3` in this example) and use only the specified columns and rows.
   If there are more rows or columns in the DataFrame to write, they will be truncated.
   Make sure this is what you want.
+* `'My Sheet'!B3:F35`: Same as above, but with a specific sheet.
 * `MyTable[#All]`: Table of data.
   Reading will return all rows and columns in this table.
   Writing will only write within the current range of the table.
