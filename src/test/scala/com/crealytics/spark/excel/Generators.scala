@@ -5,7 +5,7 @@ import java.time.temporal.ChronoUnit
 
 import org.scalacheck.Arbitrary.{arbBigDecimal => _, arbLong => _, arbString => _, _}
 import org.scalacheck.ScalacheckShapeless._
-import com.norbitltd.spoiwo.model.{Cell, CellRange, Sheet, Row => SRow, Table => STable}
+import com.norbitltd.spoiwo.model.{Cell, CellRange, Sheet, TableColumn, Row => SRow, Table => STable}
 import org.apache.poi.ss.util.CellReference
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.StructType
@@ -89,17 +89,22 @@ trait Generators {
 
   val sheetName = "test sheet"
 
-  val sheetGen = for {
-    numRows <- Gen.choose(0, 200)
-    numCols <- Gen.choose(0, 200)
-  } yield {
-    Sheet(
-      name = sheetName,
-      rows = (0 until numRows)
-        .map(r => SRow((0 until numCols).map(c => Cell(s"$r,$c", index = c)), index = r))
-        .to[List]
-    )
-  }
+  def sheetGenerator(withHeader: Gen[Boolean]): Gen[Sheet] =
+    for {
+      numRows <- Gen.choose(0, 200)
+      numCols <- Gen.choose(0, 200)
+      hasHeader <- withHeader
+    } yield {
+      val header = if (hasHeader) Some(SRow((0 until numCols).map(c => Cell(s"col_$c", index = c)))) else None
+      Sheet(
+        name = sheetName,
+        rows = header.toList ++ (0 until numRows)
+          .map(r => SRow((0 until numCols).map(c => Cell(s"$r,$c", index = c)), index = r))
+          .to[List]
+      )
+    }
+
+  val sheetGen = sheetGenerator(withHeader = Gen.const(false))
 
   val tableName = "TestTable"
 
@@ -108,17 +113,32 @@ trait Generators {
     startCellAddress <- cellAddressGen
     width <- Gen.choose(0, 50)
     height <- Gen.choose(0, 200)
-  } yield
-    sheet.withTables(
-      STable(
-        cellRange = CellRange(
-          rowRange = (startCellAddress.getRow, startCellAddress.getRow + height),
-          columnRange = (startCellAddress.getCol, startCellAddress.getCol + width)
-        ),
-        name = tableName,
-        displayName = tableName
+  } yield {
+    val columns =
+      (startCellAddress.getCol to startCellAddress.getCol + width).map(c => TableColumn(s"col_$c", c)).toList
+    val columnsByIndex = columns.map(c => c.id -> Cell[String](value = c.name, index = c.id.toInt)).toMap
+    sheet
+      .withRows(sheet.rows.map {
+        case r if r.index.exists(_ == startCellAddress.getRow) =>
+          val cellIndices = (r.cells.map(_.index.get) ++ columns.map(_.id.toInt)).toList.distinct.sorted
+          r.withCells(cellIndices.map { ci =>
+            columnsByIndex
+              .getOrElse(ci, r.cells.find(_.index.get == ci).get)
+          })
+        case r => r
+      })
+      .withTables(
+        STable(
+          columns = columns,
+          cellRange = CellRange(
+            rowRange = (startCellAddress.getRow, startCellAddress.getRow + height),
+            columnRange = (startCellAddress.getCol, startCellAddress.getCol + width)
+          ),
+          name = tableName,
+          displayName = tableName
+        )
       )
-    )
+  }
 
   val dataAndLocationGen = for {
     rows <- rowsGen
