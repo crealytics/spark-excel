@@ -1,3 +1,12 @@
+0.11.0
+======
+- Change: `dataAddress` as uniform way to specify where to read data from / write data to.
+  Remove now obsolete `sheetName`, `startColumn`, `endColumn`, `skipFirstRows`.
+- Feature: Append to existing files.
+  Only the range implicitly or explicitly specified via `dataAddress` will be overwritten.
+- Change: Remove `preHeaderLines`.
+  This is superseded by writing into a file that contains all the required pre-headers and footers.
+
 0.10.1
 ======
 - Bugfix: Shade commons-compress. Fixes https://github.com/crealytics/spark-excel/issues/93

@@ -43,17 +43,14 @@ import org.apache.spark.sql._
 val spark: SparkSession = ???
 val df = spark.read
     .format("com.crealytics.spark.excel")
-    .option("sheetName", "Daily") // Required
+    .option("dataAddress", "'My Sheet'!B3:C35") // Optional, default: "A1"
     .option("useHeader", "true") // Required
     .option("treatEmptyValuesAsNulls", "false") // Optional, default: true
     .option("inferSchema", "false") // Optional, default: false
     .option("addColorColumns", "true") // Optional, default: false
-    .option("startColumn", 0) // Optional, default: 0
-    .option("endColumn", 99) // Optional, default: Int.MaxValue
     .option("timestampFormat", "MM-dd-yyyy HH:mm:ss") // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
     .option("maxRowsInMemory", 20) // Optional, default None. If set, uses a streaming reader which can help with big files
     .option("excerptSize", 10) // Optional, default: 10. If set and if schema inferred, number of rows to infer schema from
-    .option("skipFirstRows", 5) // Optional, default None. If set skips the first n rows and checks for headers in row n+1
     .option("workbookPassword", "pass") // Optional, default None. Requires unlimited strength JCE for older JVMs
     .schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
     .load("Worktime.xlsx")
@@ -68,17 +65,14 @@ import com.crealytics.spark.excel._
 
 val spark: SparkSession = ???
 val df = spark.read.excel(
-    sheetName = "Daily",  // Required
     useHeader = "true",  // Required
+    dataAddress = "'My Sheet'!B3:C35", // Optional, default: "A1"
     treatEmptyValuesAsNulls = "false",  // Optional, default: true
     inferSchema = "false",  // Optional, default: false
     addColorColumns = "true",  // Optional, default: false
-    startColumn = 0,  // Optional, default: 0
-    endColumn = 99,  // Optional, default: Int.MaxValue
     timestampFormat = "MM-dd-yyyy HH:mm:ss",  // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
     maxRowsInMemory = 20,  // Optional, default None. If set, uses a streaming reader which can help with big files
     excerptSize = 10,  // Optional, default: 10. If set and if schema inferred, number of rows to infer schema from
-    skipFirstRows = 5,  // Optional, default None. If set skips the first n rows and checks for headers in row n+1
     workbookPassword = "pass"  // Optional, default None. Requires unlimited strength JCE for older JVMs
 ).schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
  .load("Worktime.xlsx")
@@ -111,14 +105,32 @@ import org.apache.spark.sql._
 val df: DataFrame = ???
 df.write
   .format("com.crealytics.spark.excel")
-  .option("sheetName", "Daily")
-  .option("preHeader", "Pre-header\tin\tcells\nand\trows") // Optional, default None. If set adds rows (split by "\n") and cells (split by "\t") before the column headers.
+  .option("dataAddress", "'My Sheet'!B3:C35")
   .option("useHeader", "true")
   .option("dateFormat", "yy-mmm-d") // Optional, default: yy-m-d h:mm
   .option("timestampFormat", "mm-dd-yyyy hh:mm:ss") // Optional, default: yyyy-mm-dd hh:mm:ss.000
-  .mode("overwrite")
+  .mode("append") // Optional, default: overwrite.
   .save("Worktime2.xlsx")
 ```
+
+#### Data Addresses
+As you can see in the examples above,
+the location of data to read or write can be specified with the `dataAddress` option.
+Currently the following address styles are supported:
+
+* `B3`: Start cell of the data.
+  Reading will return all rows below and all columns to the right.
+  Writing will start here and use as many columns and rows as required.
+* `B3:F35`: Cell range of data.
+  Reading will return only rows and columns in the specified range.
+  Writing will start in the first cell (`B3` in this example) and use only the specified columns and rows.
+  If there are more rows or columns in the DataFrame to write, they will be truncated.
+  Make sure this is what you want.
+* `MyTable[#All]`: Table of data.
+  Reading will return all rows and columns in this table.
+  Writing will only write within the current range of the table.
+  No growing of the table will be performed. PRs to change this are welcome.
+
 
 ## Building From Source
 This library is built with [SBT](http://www.scala-sbt.org/0.13/docs/Command-Line-Reference.html).
