@@ -7,6 +7,7 @@ import java.time.{Instant, ZoneId, ZoneOffset}
 
 import cats.Monoid
 import cats.instances.all._
+import com.crealytics.tags.WIP
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import com.norbitltd.spoiwo.model.{Cell, CellRange, Sheet, Row => SRow, Table => STable}
 import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
@@ -41,14 +42,11 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
           case _ => DoubleType
         }
         case _: NumericType =>
-          _: Seq[Any] =>
-            DoubleType
+          _: Seq[Any] => DoubleType
         case DateType =>
-          _: Seq[Any] =>
-            TimestampType
+          _: Seq[Any] => TimestampType
         case t: DataType =>
-          _: Seq[Any] =>
-            t
+          _: Seq[Any] => t
       }
       pf
     }
@@ -69,25 +67,23 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
       schema: Option[StructType] = Some(exampleDataSchema),
       fileName: Option[String] = None,
       saveMode: SaveMode = SaveMode.Overwrite,
-      tableName: Option[String] = None,
       dataAddress: Option[String] = None
     ): DataFrame = {
       val theFileName = fileName.getOrElse(File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath)
 
-      val writer = df.write.excel(sheetName = sheetName).mode(saveMode)
+      val writer = df.write.excel(dataAddress = s"'$sheetName'!A1").mode(saveMode)
       val configuredWriter =
-        Map("dataAddress" -> dataAddress, "tableName" -> tableName).foldLeft(writer) {
+        Map("dataAddress" -> dataAddress).foldLeft(writer) {
           case (wri, (key, Some(value))) => wri.option(key, value)
           case (wri, _) => wri
         }
       configuredWriter.save(theFileName)
 
-      val reader = spark.read.excel(sheetName = sheetName)
+      val reader = spark.read.excel(dataAddress = s"'$sheetName'!A1")
       val configuredReader = Map(
         "maxRowsInMemory" -> maxRowsInMemory,
         "inferSchema" -> Some(schema.isEmpty),
         "excerptSize" -> Some(10),
-        "tableName" -> tableName,
         "dataAddress" -> dataAddress
       ).foldLeft(reader) {
         case (rdr, (key, Some(value))) => rdr.option(key, value.toString)
@@ -157,7 +153,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         }
       }
 
-      it("returns all data rows when inferring schema") {
+      it("returns all data rows when inferring schema", WIP) {
         forAll(rowsGen.filter(_.nonEmpty)) { rows =>
           val original = spark.createDataset(rows).toDF
           val inferred = writeThenRead(original, schema = None)
@@ -189,7 +185,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
           )
           existingData.convertAsXlsx.write(new FileOutputStream(new File(fileName)))
           val allData = spark.read
-            .excel(sheetName = sheetName, inferSchema = true)
+            .excel(dataAddress = s"'$sheetName'!A1", inferSchema = true)
             .load(fileName)
           allData.schema.fieldNames should equal(headerNames)
           val (headersWithData, headersWithoutData) = headerNames.zipWithIndex.partition(_._2 % 2 == 0)
@@ -221,7 +217,8 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
                 schema = None,
                 fileName = Some(fileName),
                 saveMode = SaveMode.Append,
-                dataAddress = Some(s"${startCellAddress.formatAsString()}:${endCellAddress.formatAsString()}")
+                dataAddress =
+                  Some(s"'$sheetName'!${startCellAddress.formatAsString()}:${endCellAddress.formatAsString()}")
               )
 
             assertEqualAfterInferringTypes(original, inferred)
@@ -255,7 +252,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
                   schema = None,
                   fileName = Some(fileName),
                   saveMode = SaveMode.Append,
-                  tableName = Some(tableName)
+                  dataAddress = Some(s"$tableName[#All]")
                 )
 
               assertEqualAfterInferringTypes(original, inferred)
@@ -285,7 +282,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
       )
     })
     val allData = spark.read
-      .excel(sheetName = sheetName, useHeader = false, inferSchema = false)
+      .excel(dataAddress = s"'$sheetName'!A1", useHeader = false, inferSchema = false)
       .load(fileName)
       .collect()
       .map(_.toSeq)

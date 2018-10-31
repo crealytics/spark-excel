@@ -23,11 +23,8 @@ class ExcelFileSaver(
   location: Path,
   dataFrame: DataFrame,
   saveMode: SaveMode,
-  sheetName: String,
   dataLocator: DataLocator,
-  useHeader: Boolean = true,
-  dateFormat: String = DEFAULT_DATE_FORMAT,
-  timestampFormat: String = DEFAULT_TIMESTAMP_FORMAT
+  useHeader: Boolean = true
 ) {
   def save(): Unit = {
     def sheet(workbook: XSSFWorkbook) = {
@@ -36,7 +33,7 @@ class ExcelFileSaver(
         .toLocalIterator()
         .asScala
         .map(_.toSeq)
-      dataLocator.toSheet(headerRow, dataRows, dateFormat, timestampFormat, workbook)
+      dataLocator.toSheet(headerRow, dataRows, workbook)
     }
     val fileAlreadyExists = fs.exists(location)
     def writeToWorkbook(workbook: XSSFWorkbook): Unit = {
