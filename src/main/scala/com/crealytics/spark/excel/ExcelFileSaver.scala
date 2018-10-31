@@ -54,7 +54,9 @@ class ExcelFileSaver(
       case (true, SaveMode.Ignore) => ()
       case (true, SaveMode.Append) =>
         val inputStream: FSDataInputStream = fs.open(location)
-        writeToWorkbook(new XSSFWorkbook(inputStream))
+        val workbook = new XSSFWorkbook(inputStream)
+        inputStream.close()
+        writeToWorkbook(workbook)
     }
   }
 
