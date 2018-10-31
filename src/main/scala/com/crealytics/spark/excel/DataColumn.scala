@@ -54,6 +54,10 @@ class HeaderDataColumn(
               parseNumber(Option(cell.getRichStringCellValue).map(_.getString))
           }
       }
+    lazy val booleanValue = cell.getCellType match {
+      case CellType.BOOLEAN => Option(cell.getBooleanCellValue)
+      case CellType.STRING => Option(cell.getStringCellValue).map(_.toBoolean)
+    }
     lazy val bigDecimal = numericValue.map(new BigDecimal(_))
     val value: Option[Any] = dataType match {
       case _: ByteType => numericValue.map(_.toByte)
@@ -62,7 +66,7 @@ class HeaderDataColumn(
       case _: LongType => numericValue.map(_.toLong)
       case _: FloatType => numericValue.map(_.toFloat)
       case _: DoubleType => numericValue
-      case _: BooleanType => Option(cell.getBooleanCellValue)
+      case _: BooleanType => booleanValue
       case _: DecimalType =>
         if (cellType == CellType.STRING && cell.getStringCellValue == "") None else bigDecimal
       case _: TimestampType =>
