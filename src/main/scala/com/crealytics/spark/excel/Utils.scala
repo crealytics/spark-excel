@@ -14,4 +14,32 @@ object Utils {
         None
       }
   }
+  sealed trait MapRequirements[K] {
+    type ResultType[V]
+    def unapplySeq[V](m: Map[K, V]): Option[ResultType[V]]
+  }
+  case class RequiredKeys[K](keys: K*) extends MapRequirements[K] {
+    type ResultType[V] = Seq[V]
+    def unapplySeq[V](m: Map[K, V]): Option[Seq[V]] =
+      if (keys.forall(m.contains)) {
+        Some(keys.map(m))
+      } else {
+        None
+      }
+  }
+  case class OptionalKeys[K](keys: K*) extends MapRequirements[K] {
+    type ResultType[V] = Seq[Option[V]]
+    def unapplySeq[V](m: Map[K, V]): Option[Seq[Option[V]]] = Some(keys.map(m.get))
+  }
+  case class MapWith[K](
+    requiredKeys: RequiredKeys[K] = RequiredKeys[K](),
+    optionalKeys: OptionalKeys[K] = OptionalKeys[K]()
+  ) {
+    def unapply[V](m: Map[K, V]): Option[(requiredKeys.ResultType[V], optionalKeys.ResultType[V])] =
+      for {
+        req <- requiredKeys.unapplySeq(m)
+        opt <- optionalKeys.unapplySeq(m)
+      } yield (req, opt)
+
+  }
 }

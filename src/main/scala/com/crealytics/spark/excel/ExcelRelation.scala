@@ -83,7 +83,7 @@ case class ExcelRelation(
               Some(values)
             }.recover {
               case e =>
-                e.printStackTrace()
+                // e.printStackTrace()
                 None
             }.get
         )

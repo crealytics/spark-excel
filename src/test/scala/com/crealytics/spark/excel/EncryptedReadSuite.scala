@@ -30,7 +30,12 @@ class EncryptedReadSuite extends FunSpec with DataFrameSuiteBase with Matchers {
   def readFromResources(path: String, password: String, maxRowsInMemory: Option[Int] = None): DataFrame = {
     val url = getClass.getResource(path)
     val reader = spark.read
-      .excel(sheetName = "Sheet1", treatEmptyValuesAsNulls = true, workbookPassword = password, inferSchema = true)
+      .excel(
+        dataAddress = s"Sheet1!A1",
+        treatEmptyValuesAsNulls = true,
+        workbookPassword = password,
+        inferSchema = true
+      )
     val withMaxRows = maxRowsInMemory.fold(reader)(rows => reader.option("maxRowsInMemory", s"$rows"))
     withMaxRows.load(url.getPath)
   }

@@ -1,7 +1,8 @@
 package com.crealytics.spark
 
+import com.norbitltd.spoiwo.model.Sheet
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy
-import org.apache.poi.ss.usermodel.{Cell, Row}
+import org.apache.poi.ss.usermodel.{Cell, CellType, Row}
 import org.apache.spark.sql.{DataFrameReader, DataFrameWriter}
 
 package object excel {
@@ -27,28 +28,50 @@ package object excel {
     }
   }
 
+  implicit class RichCell(val cell: Cell) extends AnyVal {
+    def value: Any = cell.getCellType match {
+      case CellType.BLANK => null
+      case CellType.NUMERIC => cell.getNumericCellValue
+      case CellType.STRING => cell.getStringCellValue
+      case CellType.BOOLEAN => cell.getBooleanCellValue
+      case CellType.FORMULA =>
+        cell.getCachedFormulaResultType match {
+          case CellType.BLANK => null
+          case CellType.NUMERIC => cell.getNumericCellValue
+          case CellType.STRING => cell.getRichStringCellValue
+          case CellType.BOOLEAN => cell.getBooleanCellValue
+        }
+    }
+  }
+
+  implicit class RichSpoiwoSheet(val sheet: Sheet) extends AnyVal {
+    def extractTableData(tableNumber: Int): Seq[Seq[Any]] = {
+      val table = sheet.tables(tableNumber)
+      val (startRow, endRow) = table.cellRange.rowRange
+      val (startColumn, endColumn) = table.cellRange.columnRange
+      val tableRows = sheet.rows.filter(r => r.index.exists((startRow to endRow).contains))
+      tableRows.map(_.cells.filter(_.index.exists((startColumn to endColumn).contains)).map(_.value).to[Seq])
+    }
+  }
+
   implicit class ExcelDataFrameReader(val dataFrameReader: DataFrameReader) extends AnyVal {
     def excel(
-      sheetName: String = null,
       useHeader: Boolean = true,
       treatEmptyValuesAsNulls: Boolean = false,
       inferSchema: Boolean = false,
       addColorColumns: Boolean = false,
       dataAddress: String = null,
-      tableName: String = null,
       timestampFormat: String = null,
       maxRowsInMemory: java.lang.Integer = null,
       excerptSize: Int = 10,
       workbookPassword: String = null
     ): DataFrameReader = {
       Map(
-        "sheetName" -> sheetName,
         "useHeader" -> useHeader,
         "treatEmptyValuesAsNulls" -> treatEmptyValuesAsNulls,
         "inferSchema" -> inferSchema,
         "addColorColumns" -> addColorColumns,
         "dataAddress" -> dataAddress,
-        "tableName" -> tableName,
         "timestampFormat" -> timestampFormat,
         "maxRowsInMemory" -> maxRowsInMemory,
         "excerptSize" -> excerptSize,
@@ -65,7 +88,6 @@ package object excel {
 
   implicit class ExcelDataFrameWriter[T](val dataFrameWriter: DataFrameWriter[T]) extends AnyVal {
     def excel(
-      sheetName: String = null,
       useHeader: Boolean = true,
       dataAddress: String = null,
       preHeader: String = null,
@@ -74,7 +96,6 @@ package object excel {
       workbookPassword: String = null
     ): DataFrameWriter[T] = {
       Map(
-        "sheetName" -> sheetName,
         "useHeader" -> useHeader,
         "dataAddress" -> dataAddress,
         "dateFormat" -> dateFormat,
