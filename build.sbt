@@ -35,7 +35,10 @@ libraryDependencies ++= Seq(
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % Test
 )
 
-assemblyShadeRules in assembly := Seq(ShadeRule.rename("com.fasterxml.jackson.**" -> "shadeio.@1").inAll)
+assemblyShadeRules in assembly := Seq(
+  ShadeRule.rename("com.fasterxml.jackson.**" -> "shadeio.jackson.@1").inAll,
+  ShadeRule.rename("org.apache.commons.compress.**" -> "shadeio.commons.compress.@1").inAll
+)
 
 fork in Test := true
 parallelExecution in Test := false
