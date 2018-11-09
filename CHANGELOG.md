@@ -1,3 +1,7 @@
+0.10.1
+======
+- Bugfix: Shade commons-compress. Fixes https://github.com/crealytics/spark-excel/issues/93
+
 0.10.0
 ======
 - Change: Update to Apache POI 4.0.0
