@@ -20,10 +20,22 @@ resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
-  "org.apache.poi" % "poi-ooxml" % "4.0.0",
   "com.norbitltd" %% "spoiwo" % "1.4.1",
   "com.monitorjbl" % "xlsx-streamer" % "2.0.0"
 ).map(_.excludeAll(ExclusionRule(organization = "stax")))
+
+shadedDeps ++= Seq(
+  "org.apache.poi" ^ "poi-ooxml" ^ "4.0.0",
+  "org.apache.commons" ^ "commons-compress" ^ "1.18",
+  "com.fasterxml.jackson.core" ^ "jackson-core" ^ "2.8.8",
+)
+
+shadeRenames ++= Seq(
+  "com.fasterxml.jackson.**" -> "shadeio.jackson.@1",
+  "org.apache.commons.compress.**" -> "shadeio.commons.compress.@1",
+)
+
+publishThinShadedJar
 
 libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-core" % "1.4.0" % Test,
@@ -36,10 +48,6 @@ libraryDependencies ++= Seq(
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % Test
 )
 
-assemblyShadeRules in assembly := Seq(
-  ShadeRule.rename("com.fasterxml.jackson.**" -> "shadeio.jackson.@1").inAll,
-  ShadeRule.rename("org.apache.commons.compress.**" -> "shadeio.commons.compress.@1").inAll
-)
 
 fork in Test := true
 parallelExecution in Test := false
