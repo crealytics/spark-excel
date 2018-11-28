@@ -40,10 +40,10 @@ object DataLocator {
   val WithTableName = MapIncluding(Seq("tableName"))
   val WithSheetAndAddress = MapIncluding(Seq(), optionally = Seq("sheetName", "dataAddress"))
   def apply(parameters: Map[String, String]): DataLocator = parameters match {
-    case WithTableName(tableName: String) if parameters.contains("maxRowsInMemory") =>
+    case WithTableName(Seq(tableName)) if parameters.contains("maxRowsInMemory") =>
       throw new IllegalArgumentException(s"tableName option cannot be combined with maxRowsInMemory")
-    case WithTableName(tableName: String) => new TableDataLocator(tableName)
-    case WithSheetAndAddress(sheetName: Option[String], dataAddress: Option[String]) =>
+    case WithTableName(Seq(tableName)) => new TableDataLocator(tableName.toString)
+    case WithSheetAndAddress(Seq(), Seq(sheetName, dataAddress)) =>
       new CellRangeAddressDataLocator(sheetName, parseRangeAddress(dataAddress.getOrElse("A1")))
   }
 }
