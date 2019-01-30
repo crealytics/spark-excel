@@ -49,6 +49,7 @@ object DataLocator {
 
   val TableAddress = """(.*)\[(.*)\]""".r
   val WithDataAddress = MapIncluding(Seq("dataAddress"), optionally = Seq("dateFormat", "timestampFormat"))
+  val WithoutDataAddress = MapIncluding(Seq(), optionally = Seq("dateFormat", "timestampFormat"))
   def apply(parameters: Map[String, String]): DataLocator = parameters match {
     case WithDataAddress(Seq(TableAddress(_, _)), _) if parameters.contains("maxRowsInMemory") =>
       throw new IllegalArgumentException(
@@ -64,6 +65,8 @@ object DataLocator {
         dateFormat,
         timestampFormat
       )
+    case WithoutDataAddress(Seq(), Seq(dateFormat, timestampFormat)) =>
+      new CellRangeAddressDataLocator(parseRangeAddress("A1"), dateFormat, timestampFormat)
   }
 }
 
@@ -130,7 +133,7 @@ trait AreaDataLocator extends DataLocator {
 }
 
 class CellRangeAddressDataLocator(
-  dataAddress: AreaReference,
+  val dataAddress: AreaReference,
   val dateFormat: Option[String] = None,
   val timestampFormat: Option[String] = None
 ) extends AreaDataLocator {

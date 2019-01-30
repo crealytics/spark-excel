@@ -58,4 +58,13 @@ class DataLocatorSuite extends FunSpec with PropertyChecks with Matchers with Ge
       }
     }
   }
+  describe("without any dataAddress") {
+    it("defaults to starting at cell A1 in the first sheet") {
+      val dl = DataLocator(Map())
+      dl shouldBe a[CellRangeAddressDataLocator]
+      val cradl = dl.asInstanceOf[CellRangeAddressDataLocator]
+      cradl.dataAddress.getFirstCell.formatAsString() should equal("A1")
+      cradl.dataAddress.getFirstCell.getSheetName should equal(null)
+    }
+  }
 }
