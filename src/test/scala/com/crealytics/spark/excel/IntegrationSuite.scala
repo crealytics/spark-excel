@@ -153,7 +153,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         }
       }
 
-      it("returns all data rows when inferring schema", WIP) {
+      it("returns all data rows when inferring schema") {
         forAll(rowsGen.filter(_.nonEmpty)) { rows =>
           val original = spark.createDataset(rows).toDF
           val inferred = writeThenRead(original, schema = None)
