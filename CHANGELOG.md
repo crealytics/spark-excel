@@ -1,3 +1,7 @@
+0.11.1
+======
+- Bugfix: Make `dataAddress` actually optional.
+
 0.11.0
 ======
 - Change: `dataAddress` as uniform way to specify where to read data from / write data to.
