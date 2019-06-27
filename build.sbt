@@ -31,6 +31,7 @@ shadedDeps ++= Seq(
 )
 
 shadeRenames ++= Seq(
+  "org.apache.poi.**" -> "shadeio.poi.@1",
   "com.fasterxml.jackson.**" -> "shadeio.jackson.@1",
   "org.apache.commons.compress.**" -> "shadeio.commons.compress.@1",
 )
