@@ -12,7 +12,7 @@ addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.18")
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.6")
 
-addSbtPlugin("org.hammerlab.sbt" % "assembly" % "4.6.2")
+addSbtPlugin("org.hammerlab.sbt" % "assembly" % "5.0.0")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.6")
 
