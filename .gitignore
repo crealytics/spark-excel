@@ -5,3 +5,4 @@ project/target/
 *.swp
 .idea
 *.log
+**/.bloop/
