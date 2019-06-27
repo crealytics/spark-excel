@@ -65,11 +65,11 @@ import com.crealytics.spark.excel._
 
 val spark: SparkSession = ???
 val df = spark.read.excel(
-    useHeader = "true",  // Required
+    useHeader = true,  // Required
     dataAddress = "'My Sheet'!B3:C35", // Optional, default: "A1"
-    treatEmptyValuesAsNulls = "false",  // Optional, default: true
-    inferSchema = "false",  // Optional, default: false
-    addColorColumns = "true",  // Optional, default: false
+    treatEmptyValuesAsNulls = false,  // Optional, default: true
+    inferSchema = false,  // Optional, default: false
+    addColorColumns = true,  // Optional, default: false
     timestampFormat = "MM-dd-yyyy HH:mm:ss",  // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
     maxRowsInMemory = 20,  // Optional, default None. If set, uses a streaming reader which can help with big files
     excerptSize = 10,  // Optional, default: 10. If set and if schema inferred, number of rows to infer schema from
