@@ -25,6 +25,7 @@ libraryDependencies ++= Seq(
 ).map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 shadedDeps ++= Seq(
+  "org.apache.poi" ^ "poi" ^ "4.0.0",
   "org.apache.poi" ^ "poi-ooxml" ^ "4.0.0",
   "org.apache.commons" ^ "commons-compress" ^ "1.18",
   "com.fasterxml.jackson.core" ^ "jackson-core" ^ "2.8.8",
