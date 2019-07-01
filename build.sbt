@@ -39,9 +39,9 @@ shadeRenames ++= Seq(
 publishThinShadedJar
 
 libraryDependencies ++= Seq(
-  "org.typelevel" %% "cats-core" % "1.6.0" % Test,
-  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.8" % Test,
-  "org.scalatest" %% "scalatest" % "3.0.7" % Test,
+  "org.typelevel" %% "cats-core" % "1.6.1" % Test,
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.9" % Test,
+  "org.scalatest" %% "scalatest" % "3.0.8" % Test,
   "org.scalacheck" %% "scalacheck" % "1.14.0" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.3" % Test,
   "com.github.nightscape" %% "spark-testing-base" % "e67541ce12c004b479f8bbf661d3fe4389aba1e8" % Test,
