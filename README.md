@@ -13,19 +13,31 @@ This library requires Spark 2.0+
 ## Linking
 You can link against this library in your program at the following coordinates:
 
+### Scala 2.12
+```
+groupId: com.crealytics
+artifactId: spark-excel_2.12
+version: 0.12.0
+```
+
 ### Scala 2.11
 ```
 groupId: com.crealytics
 artifactId: spark-excel_2.11
-version: 0.11.1
+version: 0.12.0
 ```
 
 ## Using with Spark shell
 This package can be added to  Spark using the `--packages` command line option.  For example, to include it when starting the spark shell:
 
+### Spark compiled with Scala 2.12
+```
+$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.12:0.12.0
+```
+
 ### Spark compiled with Scala 2.11
 ```
-$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:0.11.1
+$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:0.12.0
 ```
 
 ## Features
@@ -136,4 +148,4 @@ Currently the following address styles are supported:
 ## Building From Source
 This library is built with [SBT](http://www.scala-sbt.org/0.13/docs/Command-Line-Reference.html).
 To build a JAR file simply run `sbt assembly` from the project root.
-The build configuration includes support for Scala 2.11.
+The build configuration includes support for Scala 2.12 and 2.11.

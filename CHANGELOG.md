@@ -1,3 +1,8 @@
+0.12.0
+======
+- Change: Cross-build for Scala 2.11 and 2.12
+- Bugfix: Bundle and shade commons-compress to prevent exceptions at runtime (fixes https://github.com/crealytics/spark-excel/issues/93)
+
 0.11.1
 ======
 - Bugfix: Make `dataAddress` actually optional.
