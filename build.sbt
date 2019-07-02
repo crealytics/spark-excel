@@ -2,13 +2,13 @@ name := "spark-excel"
 
 organization := "com.crealytics"
 
-crossScalaVersions := Seq("2.11.12", "2.10.6")
+crossScalaVersions := Seq("2.12.8", "2.11.12")
 
 scalaVersion := crossScalaVersions.value.head
 
 spName := "crealytics/spark-excel"
 
-sparkVersion := "2.3.1"
+sparkVersion := "2.4.3"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
@@ -19,18 +19,21 @@ sparkComponents := Seq("core", "sql", "hive")
 resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
 libraryDependencies ++= Seq(
-  "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
-  "com.norbitltd" %% "spoiwo" % "1.4.1",
-  "com.monitorjbl" % "xlsx-streamer" % "2.0.0"
+  "org.slf4j" % "slf4j-api" % "1.7.26" % "provided",
+  "com.monitorjbl" % "xlsx-streamer" % "2.1.0"
 ).map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 shadedDeps ++= Seq(
+  "org.apache.poi" ^ "poi" ^ "4.0.0",
   "org.apache.poi" ^ "poi-ooxml" ^ "4.0.0",
+  "com.norbitltd" ^^ "spoiwo" ^ "1.4.1",
   "org.apache.commons" ^ "commons-compress" ^ "1.18",
   "com.fasterxml.jackson.core" ^ "jackson-core" ^ "2.8.8",
 )
 
 shadeRenames ++= Seq(
+  "org.apache.poi.**" -> "shadeio.poi.@1",
+  "com.norbitltd.spoiwo.**" -> "shadeio.spoiwo.@1",
   "com.fasterxml.jackson.**" -> "shadeio.jackson.@1",
   "org.apache.commons.compress.**" -> "shadeio.commons.compress.@1",
 )
@@ -38,13 +41,16 @@ shadeRenames ++= Seq(
 publishThinShadedJar
 
 libraryDependencies ++= Seq(
-  "org.typelevel" %% "cats-core" % "1.4.0" % Test,
-  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.8" % Test,
-  "org.scalatest" %% "scalatest" % "3.0.5" % Test,
+  "org.typelevel" %% "cats-core" % "1.6.1" % Test,
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.9" % Test,
+  "org.scalatest" %% "scalatest" % "3.0.8" % Test,
   "org.scalacheck" %% "scalacheck" % "1.14.0" % Test,
-  "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.8" % Test,
-  "com.github.nightscape" % "spark-testing-base" % "c6ac5d3b0629440f5fe13cf8830fdb17535c8513" % Test,
-//  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
+  "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.3" % Test,
+  (if(scalaVersion.value.startsWith("2.12"))
+    "com.github.nightscape" %% "spark-testing-base" % "e67541ce12c004b479f8bbf661d3fe4389aba1e8"
+  else
+    "com.github.nightscape" % "spark-testing-base" % "c6ac5d3b0629440f5fe13cf8830fdb17535c8513") % Test,
+  //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % Test
 )
 

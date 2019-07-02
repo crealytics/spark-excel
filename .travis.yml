@@ -6,8 +6,11 @@ cache:
 matrix:
   include:
     - jdk: openjdk8
+      scala: 2.12.8
+      env: TEST_SPARK_VERSION="2.4.0"
+    - jdk: openjdk8
       scala: 2.11.12
-      env: TEST_SPARK_VERSION="2.2.2"
+      env: TEST_SPARK_VERSION="2.4.0"
     - jdk: openjdk8
       scala: 2.11.12
       env: TEST_SPARK_VERSION="2.3.2"

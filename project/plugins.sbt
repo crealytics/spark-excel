@@ -12,7 +12,7 @@ addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.18")
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.6")
 
-addSbtPlugin("org.hammerlab.sbt" % "assembly" % "4.6.2")
+addSbtPlugin("org.hammerlab.sbt" % "assembly" % "5.0.0")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.6")
 
@@ -20,6 +20,6 @@ addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.1")
 
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0")
 
-addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.1-M1")
+addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.1.0-M13-4")
 
 addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")

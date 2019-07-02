@@ -42,11 +42,14 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
           case _ => DoubleType
         }
         case _: NumericType =>
-          _: Seq[Any] => DoubleType
+          _: Seq[Any] =>
+            DoubleType
         case DateType =>
-          _: Seq[Any] => TimestampType
+          _: Seq[Any] =>
+            TimestampType
         case t: DataType =>
-          _: Seq[Any] => t
+          _: Seq[Any] =>
+            t
       }
       pf
     }
