@@ -31,11 +31,8 @@ case class ExcelRelation(
   lazy val excerpt: List[SheetRow] = workbookReader.withWorkbook(dataLocator.readFrom(_).take(excerptSize).to[List])
 
   lazy val headerCells = excerpt.head
-  lazy val columnIndexForName = if (useHeader) {
-    headerCells.map(c => c.getStringCellValue -> c.getColumnIndex).toMap
-  } else {
-    schema.zipWithIndex.map { case (f, idx) => f.name -> idx }.toMap
-  }
+
+  var columnIndexForName: Map[String, Int] = Map()
 
   override val schema: StructType = inferSchema
 
@@ -55,6 +52,7 @@ case class ExcelRelation(
   val columnNameRegex = s"(?s)^(.*?)(_color)?$$".r.unanchored
   private def columnExtractor(column: String): SheetRow => Any = {
     val columnNameRegex(columnName, isColor) = column
+//    val columnIndex = columnIndexForName(columnName)
     val columnIndex = columnIndexForName(columnName)
 
     val cellExtractor: PartialFunction[Seq[Cell], Any] = if (isColor == null) {
@@ -125,15 +123,19 @@ case class ExcelRelation(
         case (value, index) =>
           if (value == null || value.isEmpty) {
             // When there are empty strings or the, put the index as the suffix.
-            s"_c$index"
+            value
           } else if (duplicates.contains(value)) {
             // When there are duplicates, put the index as the suffix.
+            headerCells(index).setCellValue(s"$value$index")
             s"$value$index"
           } else {
             value
           }
       }
-      headerNames.zip(dataTypes).map { case (name, dt) => StructField(name, dt, nullable = true) }
+      headerNames
+        .zip(dataTypes)
+        .filter { case (name, dt) => name != null && !name.isEmpty }
+        .map { case (name, dt) => StructField(name, dt, nullable = true) }
     } else {
       dataTypes.zipWithIndex.map {
         case (dt, index) =>
@@ -161,6 +163,13 @@ case class ExcelRelation(
       (0 until maxCellsPerRow).map(_ => StringType: DataType).toArray
     }
     val fields = makeSafeHeader(rawHeader, dataTypes)
+
+    columnIndexForName = if (useHeader) {
+      headerCells.map(c => c.getStringCellValue -> c.getColumnIndex).toMap
+    } else {
+      schema.zipWithIndex.map { case (f, idx) => f.name -> idx }.toMap
+    }
+
     val baseSchema = StructType(fields)
     if (addColorColumns) {
       fields.foldLeft(baseSchema) { (schema, header) =>
