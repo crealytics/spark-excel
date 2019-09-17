@@ -1,5 +1,6 @@
 package com.crealytics.spark.excel
 
+import java.math.BigDecimal
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
@@ -114,8 +115,12 @@ case class ExcelRelation(
       case CellType.STRING => cell.getStringCellValue
       case CellType.BOOLEAN => cell.getBooleanCellValue.toString
       case CellType.NUMERIC if DateUtil.isCellDateFormatted(cell) => cell.getDateCellValue.toString
-      case CellType.NUMERIC => cell.getNumericCellValue.toString
+      case CellType.NUMERIC => stripTrailingZeros(cell.getNumericCellValue)
     }
+  }
+
+  private def stripTrailingZeros(double: Double) = {
+    new BigDecimal(double).toString
   }
 
   private def parallelize[T : scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
