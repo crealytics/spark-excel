@@ -30,9 +30,9 @@ case class ExcelRelation(
 
   lazy val excerpt: List[SheetRow] = workbookReader.withWorkbook(dataLocator.readFrom(_).take(excerptSize).to[List])
 
-  lazy val headerCells = excerpt.head
+  private def headerCells = excerpt.head
   lazy val columnIndexForName = if (useHeader) {
-    headerCells.map(c => c.getStringCellValue -> c.getColumnIndex).toMap
+    headerCells.map(c => getCellValue(c) -> c.getColumnIndex).toMap
   } else {
     schema.zipWithIndex.map { case (f, idx) => f.name -> idx }.toMap
   }
@@ -108,6 +108,16 @@ case class ExcelRelation(
     }
   }
 
+  private def getCellValue(cell: Cell): String = {
+    cell.getCellType match {
+      case CellType.FORMULA => cell.getCellFormula
+      case CellType.STRING => cell.getStringCellValue
+      case CellType.BOOLEAN => cell.getBooleanCellValue.toString
+      case CellType.NUMERIC if DateUtil.isCellDateFormatted(cell) => cell.getDateCellValue.toString
+      case CellType.NUMERIC => cell.getNumericCellValue.toString
+    }
+  }
+
   private def parallelize[T : scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
 
   /**
@@ -145,13 +155,16 @@ case class ExcelRelation(
   }
 
   private def inferSchema(): StructType = this.userSchema.getOrElse {
-    val headerIndices = headerCells.map(_.getColumnIndex)
-    val rawHeader = headerCells.map(_.getStringCellValue)
+    val rawHeader = headerCells.map(getCellValue)
 
     val dataTypes = if (this.inferSheetSchema) {
       val stringsAndCellTypes: Seq[Seq[DataType]] = excerpt.tail
         .map { r =>
-          headerIndices.map(i => r.find(_.getColumnIndex == i).map(getSparkType).getOrElse(DataTypes.NullType))
+          headerCells.map(
+            h =>
+              r.find(_.getColumnIndex == h.getColumnIndex)
+                .fold(DataTypes.NullType)(getSparkType)
+          )
         }
       InferSchema(parallelize(stringsAndCellTypes))
     } else {

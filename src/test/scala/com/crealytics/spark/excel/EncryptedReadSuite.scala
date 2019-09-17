@@ -27,36 +27,44 @@ class EncryptedReadSuite extends FunSpec with DataFrameSuiteBase with Matchers {
 
   lazy val expected = spark.createDataFrame(expectedData, simpleSchema)
 
-  def readFromResources(path: String, password: String, maxRowsInMemory: Option[Int] = None): DataFrame = {
+  def readFromResources(
+    path: String,
+    password: String,
+    dataAddress: String,
+    maxRowsInMemory: Option[Int] = None
+  ): DataFrame = {
     val url = getClass.getResource(path)
     val reader = spark.read
-      .excel(
-        dataAddress = s"Sheet1!A1",
-        treatEmptyValuesAsNulls = true,
-        workbookPassword = password,
-        inferSchema = true
-      )
-    val withMaxRows = maxRowsInMemory.fold(reader)(rows => reader.option("maxRowsInMemory", s"$rows"))
+      .excel(dataAddress = dataAddress, treatEmptyValuesAsNulls = true, workbookPassword = password, inferSchema = true)
+    val withMaxRows = maxRowsInMemory.fold(reader)(rows => reader.option("maxRowsInMemory", rows))
     withMaxRows.load(url.getPath)
   }
 
   describe("spark-excel") {
     it("should read encrypted xslx file") {
-      val df = readFromResources("/spreadsheets/simple_encrypted.xlsx", "fooba")
+      val df = readFromResources("/spreadsheets/simple_encrypted.xlsx", "fooba", "Sheet1!A1")
 
       assertDataFrameEquals(expected, df)
     }
 
     it("should read encrypted xlsx file with maxRowsInMem=10") {
-      val df = readFromResources("/spreadsheets/simple_encrypted.xlsx", "fooba", maxRowsInMemory = Some(10))
+      val df =
+        readFromResources("/spreadsheets/simple_encrypted.xlsx", "fooba", "Sheet1!A1", maxRowsInMemory = Some(10))
 
       assertDataFrameEquals(expected, df)
     }
 
     it("should read encrypted xls file") {
-      val df = readFromResources("/spreadsheets/simple_encrypted.xls", "fooba")
+      val df = readFromResources("/spreadsheets/simple_encrypted.xls", "fooba", "Sheet1!A1")
 
       assertDataFrameEquals(expected, df)
     }
+
+    it("should read all xls file") {
+      val df = readFromResources("/spreadsheets/simple_encrypted.xls", "fooba", "Sheet1[#All]")
+
+      assertDataFrameEquals(expected, df)
+    }
+
   }
 }

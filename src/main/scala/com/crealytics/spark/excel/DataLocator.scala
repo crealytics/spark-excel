@@ -12,6 +12,7 @@ import com.norbitltd.spoiwo.model.{
 }
 import HasIndex._
 import com.crealytics.spark.excel.Utils.MapIncluding
+import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.SpreadsheetVersion
 import org.apache.poi.ss.usermodel.{Cell, Row, Sheet, Workbook}
 import org.apache.poi.ss.util.{AreaReference, CellRangeAddress, CellReference}
@@ -152,8 +153,10 @@ class TableDataLocator(
   val timestampFormat: Option[String] = None
 ) extends AreaDataLocator {
   override def readFrom(workbook: Workbook): Iterator[Seq[Cell]] = {
-    val xwb = workbook.asInstanceOf[XSSFWorkbook]
-    readFromSheet(workbook, Some(xwb.getTable(tableName).getSheetName))
+    workbook match {
+      case xss: XSSFWorkbook => readFromSheet(workbook, Some(xss.getTable(tableName).getSheetName))
+      case hss: HSSFWorkbook => hss.getSheet(tableName).iterator().asScala.map(_.iterator().asScala.toList)
+    }
   }
   override def toSheet(
     header: Option[Seq[String]],
