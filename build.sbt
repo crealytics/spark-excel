@@ -24,9 +24,9 @@ libraryDependencies ++= Seq(
 ).map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 shadedDeps ++= Seq(
-  "org.apache.poi" ^ "poi" ^ "4.0.0",
-  "org.apache.poi" ^ "poi-ooxml" ^ "4.0.0",
-  "com.norbitltd" ^^ "spoiwo" ^ "1.4.1",
+  "org.apache.poi" ^ "poi" ^ "4.1.0",
+  "org.apache.poi" ^ "poi-ooxml" ^ "4.1.0",
+  "com.norbitltd" ^^ "spoiwo" ^ "1.6.0",
   "org.apache.commons" ^ "commons-compress" ^ "1.18",
   "com.fasterxml.jackson.core" ^ "jackson-core" ^ "2.8.8",
 )
@@ -41,10 +41,10 @@ shadeRenames ++= Seq(
 publishThinShadedJar
 
 libraryDependencies ++= Seq(
-  "org.typelevel" %% "cats-core" % "1.6.1" % Test,
-  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.9" % Test,
+  "org.typelevel" %% "cats-core" % "2.0.0" % Test,
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.10.0" % Test,
   "org.scalatest" %% "scalatest" % "3.0.8" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.14.0" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.14.2" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.3" % Test,
   (if(scalaVersion.value.startsWith("2.12"))
     "com.github.nightscape" %% "spark-testing-base" % "e67541ce12c004b479f8bbf661d3fe4389aba1e8"
