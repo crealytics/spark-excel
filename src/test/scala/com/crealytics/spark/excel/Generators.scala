@@ -143,10 +143,9 @@ trait Generators {
   val dataAndLocationGen = for {
     rows <- rowsGen
     startAddress <- cellAddressGen
-  } yield
-    (
-      rows,
-      startAddress,
-      new CellReference(startAddress.getRow + rows.size, startAddress.getCol + exampleDataSchema.size - 1)
-    )
+  } yield (
+    rows,
+    startAddress,
+    new CellReference(startAddress.getRow + rows.size, startAddress.getCol + exampleDataSchema.size - 1)
+  )
 }

@@ -42,14 +42,11 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
           case _ => DoubleType
         }
         case _: NumericType =>
-          _: Seq[Any] =>
-            DoubleType
+          _: Seq[Any] => DoubleType
         case DateType =>
-          _: Seq[Any] =>
-            TimestampType
+          _: Seq[Any] => TimestampType
         case t: DataType =>
-          _: Seq[Any] =>
-            t
+          _: Seq[Any] => t
       }
       pf
     }
@@ -113,7 +110,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         forAll(rowsGen) { rows =>
           val expected = spark.createDataset(rows).toDF
           val actual = writeThenRead(expected)
-          assertDataFrameApproximateEquals(expected, actual, relTol = 1.0E-6)
+          assertDataFrameApproximateEquals(expected, actual, relTol = 1.0e-6)
         }
       }
 
@@ -133,7 +130,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
           val fields = expectedWithEmptyStr.schema.fields
           fields.update(fields.indexWhere(_.name == "aString"), StructField("aString", DataTypes.StringType, true))
 
-          assertDataFrameApproximateEquals(expectedWithEmptyStr, writeThenRead(expectedWithEmptyStr), relTol = 1.0E-6)
+          assertDataFrameApproximateEquals(expectedWithEmptyStr, writeThenRead(expectedWithEmptyStr), relTol = 1.0e-6)
         }
       }
 
@@ -183,8 +180,10 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
             rows =
               SRow(headerNames.zipWithIndex.map { case (header, c) => Cell(header, index = c) }, index = 0) ::
                 (0 until 100)
-                .map(r => SRow((0 until numCols).filter(_ % 2 == 0).map(c => Cell(s"$r,$c", index = c)), index = r + 1))
-                .to[List]
+                  .map(
+                    r => SRow((0 until numCols).filter(_ % 2 == 0).map(c => Cell(s"$r,$c", index = c)), index = r + 1)
+                  )
+                  .to[List]
           )
           existingData.convertAsXlsx.write(new FileOutputStream(new File(fileName)))
           val allData = spark.read

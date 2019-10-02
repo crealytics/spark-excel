@@ -47,8 +47,7 @@ case class ExcelRelation(
     timestampFormat
       .map { fmt =>
         val parser = new SimpleDateFormat(fmt)
-        (stringValue: String) =>
-          new Timestamp(parser.parse(stringValue).getTime)
+        (stringValue: String) => new Timestamp(parser.parse(stringValue).getTime)
       }
       .getOrElse((stringValue: String) => Timestamp.valueOf(stringValue))
 
