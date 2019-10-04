@@ -67,11 +67,12 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
       schema: Option[StructType] = Some(exampleDataSchema),
       fileName: Option[String] = None,
       saveMode: SaveMode = SaveMode.Overwrite,
-      dataAddress: Option[String] = None
+      dataAddress: Option[String] = None,
+      useHeader: Boolean = true
     ): DataFrame = {
       val theFileName = fileName.getOrElse(File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath)
 
-      val writer = df.write.excel(dataAddress = s"'$sheetName'!A1").mode(saveMode)
+      val writer = df.write.excel(dataAddress = s"'$sheetName'!A1", useHeader = useHeader).mode(saveMode)
       val configuredWriter =
         Map("dataAddress" -> dataAddress).foldLeft(writer) {
           case (wri, (key, Some(value))) => wri.option(key, value)
@@ -79,7 +80,7 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         }
       configuredWriter.save(theFileName)
 
-      val reader = spark.read.excel(dataAddress = s"'$sheetName'!A1")
+      val reader = spark.read.excel(dataAddress = s"'$sheetName'!A1", useHeader = useHeader)
       val configuredReader = Map(
         "maxRowsInMemory" -> maxRowsInMemory,
         "inferSchema" -> Some(schema.isEmpty),
@@ -170,15 +171,49 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         }
       }
 
+      it("respects the given column names in a user-specified schema") {
+        forAll(rowsGen.filter(_.nonEmpty)) { rows =>
+          val renamedSchema = StructType(exampleDataSchema.fields.map(f => f.copy(name = s"${f.name}CustomName")))
+          val original = spark.createDataset(rows).toDF
+          val expected = spark.createDataset(rows).toDF(renamedSchema.fieldNames: _*)
+          val inferred = writeThenRead(original, schema = Some(renamedSchema))
+          assertDataFrameApproximateEquals(expected, inferred, relTol = 1.0e-6)
+        }
+      }
+
+      it("reads files without headers correctly") {
+        forAll(dataAndLocationGen.filter(_._1.nonEmpty)) {
+          case (rows, startCellAddress, endCellAddress) =>
+            val original = spark.createDataset(rows).toDF
+            val renamed = spark.createDataset(rows).toDF(original.schema.fieldNames.indices.map(i => s"_c$i"): _*)
+            val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
+            val inferred = writeThenRead(
+              original,
+              schema = None,
+              useHeader = false,
+              fileName = Some(fileName),
+              dataAddress =
+                Some(s"'$sheetName'!${startCellAddress.formatAsString()}:${endCellAddress.formatAsString()}")
+            )
+            assertEqualAfterInferringTypes(renamed, inferred)
+        }
+      }
+
       it("reads files with missing cells correctly") {
         forAll(rowsGen.filter(_.nonEmpty)) { rows =>
           val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
-          val numCols = 50
-          val headerNames = (0 until numCols).map(c => s"header_$c")
+          val numCols = 20
+          /*
+            Generate some header names.
+            Some written headers are set to an empty String,
+            but we also store the column names spark-excel should give them.
+           */
+          val (writtenHeaderNames, expectedHeaderNames) =
+            (0 until numCols).map(c => if (c % 3 == 0) ("", s"_c$c") else (s"header_$c", s"header_$c")).unzip
           val existingData = Sheet(
             name = sheetName,
             rows =
-              SRow(headerNames.zipWithIndex.map { case (header, c) => Cell(header, index = c) }, index = 0) ::
+              SRow(writtenHeaderNames.zipWithIndex.map { case (header, c) => Cell(header, index = c) }, index = 0) ::
                 (0 until 100)
                   .map(
                     r => SRow((0 until numCols).filter(_ % 2 == 0).map(c => Cell(s"$r,$c", index = c)), index = r + 1)
@@ -189,8 +224,8 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
           val allData = spark.read
             .excel(dataAddress = s"'$sheetName'!A1", inferSchema = true)
             .load(fileName)
-          allData.schema.fieldNames should equal(headerNames)
-          val (headersWithData, headersWithoutData) = headerNames.zipWithIndex.partition(_._2 % 2 == 0)
+          allData.schema.fieldNames should equal(expectedHeaderNames)
+          val (headersWithData, headersWithoutData) = expectedHeaderNames.zipWithIndex.partition(_._2 % 2 == 0)
           val expectedContents = existingData.rows.drop(1).map(_.cells.map(_.value))
           val actualContents = allData.select(headersWithData.map(c => col(c._1)): _*).collect().map(_.toSeq)
           actualContents should contain theSameElementsInOrderAs expectedContents

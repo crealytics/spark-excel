@@ -31,11 +31,7 @@ case class ExcelRelation(
   lazy val excerpt: List[SheetRow] = workbookReader.withWorkbook(dataLocator.readFrom(_).take(excerptSize).to[List])
 
   lazy val headerCells = excerpt.head
-  lazy val columnIndexForName = if (useHeader) {
-    headerCells.map(c => c.getStringCellValue -> c.getColumnIndex).toMap
-  } else {
-    schema.zipWithIndex.map { case (f, idx) => f.name -> idx }.toMap
-  }
+  lazy val headerColumnForName = headerColumns.map(c => c.name -> c).toMap
 
   override val schema: StructType = inferSchema
 
@@ -54,17 +50,11 @@ case class ExcelRelation(
   val columnNameRegex = s"(?s)^(.*?)(_color)?$$".r.unanchored
   private def columnExtractor(column: String): SheetRow => Any = {
     val columnNameRegex(columnName, isColor) = column
-    val columnIndex = columnIndexForName(columnName)
+    val headerColumn = headerColumnForName(columnName)
 
     val cellExtractor: PartialFunction[Seq[Cell], Any] = if (isColor == null) {
-      new HeaderDataColumn(
-        columnName,
-        columnIndex,
-        schema.find(_.name == columnName).get.dataType,
-        treatEmptyValuesAsNulls,
-        timestampParser
-      )
-    } else new ColorDataColumn(columnName, columnIndex)
+      headerColumn
+    } else new ColorDataColumn(headerColumn.name, headerColumn.columnIndex)
 
     cellExtractor.applyOrElse(_, (_: Seq[Cell]) => null)
   }
@@ -112,58 +102,69 @@ case class ExcelRelation(
   /**
     * Generates a header from the given row which is null-safe and duplicate-safe.
     */
-  protected def makeSafeHeader(row: Seq[String], dataTypes: Seq[DataType]): Seq[StructField] = {
-    if (useHeader) {
-      val duplicates = {
-        val headerNames = row
-          .filter(_ != null)
-        headerNames.diff(headerNames.distinct).distinct
+  lazy val headerColumns: Seq[HeaderDataColumn] = {
+    val fields = userSchema.getOrElse {
+      val dataTypes = if (this.inferSheetSchema) {
+        val headerIndices = headerCells.map(_.getColumnIndex)
+        val cellTypes: Seq[Seq[DataType]] = excerpt.tail
+          .map { r =>
+            headerIndices.map(i => r.find(_.getColumnIndex == i).map(getSparkType).getOrElse(DataTypes.NullType))
+          }
+        InferSchema(parallelize(cellTypes))
+      } else {
+        // By default fields are assumed to be StringType
+        val maxCellsPerRow = excerpt.map(_.size).reduce(math.max)
+        (0 until maxCellsPerRow).map(_ => StringType: DataType).toArray
       }
 
-      val headerNames = row.zipWithIndex.map {
-        case (value, index) =>
-          if (value == null || value.isEmpty) {
-            // When there are empty strings or the, put the index as the suffix.
+      def colName(cell: Cell) = cell.getStringCellValue
+
+      val colNames = if (useHeader) {
+        val headerNames = headerCells.map(colName)
+        val duplicates = {
+          val nonNullHeaderNames = headerNames.filter(_ != null)
+          nonNullHeaderNames.groupBy(identity).filter(_._2.size > 1).keySet
+        }
+
+        headerCells.zipWithIndex.map {
+          case (cell, index) =>
+            val value = colName(cell)
+            if (value == null || value.isEmpty) {
+              // When there are empty strings or the, put the index as the suffix.
+              s"_c$index"
+            } else if (duplicates.contains(value)) {
+              // When there are duplicates, put the index as the suffix.
+              s"$value$index"
+            } else {
+              value
+            }
+        }
+      } else {
+        headerCells.zipWithIndex.map {
+          case (_, index) =>
+            // Uses default column names, "_c#" where # is its position of fields
+            // when header option is disabled.
             s"_c$index"
-          } else if (duplicates.contains(value)) {
-            // When there are duplicates, put the index as the suffix.
-            s"$value$index"
-          } else {
-            value
-          }
+        }
       }
-      headerNames.zip(dataTypes).map { case (name, dt) => StructField(name, dt, nullable = true) }
-    } else {
-      dataTypes.zipWithIndex.map {
-        case (dt, index) =>
-          // Uses default column names, "_c#" where # is its position of fields
-          // when header option is disabled.
-          StructField(s"_c$index", dt, nullable = true)
+      colNames.zip(dataTypes).map {
+        case (colName, dataType) =>
+          StructField(name = colName, dataType = dataType, nullable = true)
       }
+    }
+
+    headerCells.zip(fields).map {
+      case (cell, field) =>
+        new HeaderDataColumn(field, cell.getColumnIndex, treatEmptyValuesAsNulls, timestampParser)
     }
   }
 
   private def inferSchema(): StructType = this.userSchema.getOrElse {
-    val headerIndices = headerCells.map(_.getColumnIndex)
-    val rawHeader = headerCells.map(_.getStringCellValue)
 
-    val dataTypes = if (this.inferSheetSchema) {
-      val stringsAndCellTypes: Seq[Seq[DataType]] = excerpt.tail
-        .map { r =>
-          headerIndices.map(i => r.find(_.getColumnIndex == i).map(getSparkType).getOrElse(DataTypes.NullType))
-        }
-      InferSchema(parallelize(stringsAndCellTypes))
-    } else {
-      // By default fields are assumed to be StringType
-      val maxCellsPerRow =
-        excerpt.map(_.size).reduce(math.max)
-      (0 until maxCellsPerRow).map(_ => StringType: DataType).toArray
-    }
-    val fields = makeSafeHeader(rawHeader, dataTypes)
-    val baseSchema = StructType(fields)
+    val baseSchema = StructType(headerColumns.map(_.field))
     if (addColorColumns) {
-      fields.foldLeft(baseSchema) { (schema, header) =>
-        schema.add(s"${header}_color", StringType, nullable = true)
+      headerColumns.foldLeft(baseSchema) { (schema, header) =>
+        schema.add(s"${header.name}_color", StringType, nullable = true)
       }
     } else {
       baseSchema

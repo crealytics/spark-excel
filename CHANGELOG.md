@@ -1,3 +1,8 @@
+0.12.2
+======
+- Bugfix: Properly handle empty header cells (they get names like `_c1`)
+- Bugfix: Properly read non-String cells in a sheet without headers
+
 0.12.1
 ======
 - Change: Update POI to 4.1.0 and several other dependencies

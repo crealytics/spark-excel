@@ -17,12 +17,12 @@ trait DataColumn extends PartialFunction[Seq[Cell], Any] {
 }
 
 class HeaderDataColumn(
-  val name: String,
+  val field: StructField,
   val columnIndex: Int,
-  dataType: DataType,
   treatEmptyValuesAsNulls: Boolean,
   parseTimestamp: String => Timestamp
 ) extends DataColumn {
+  def name: String = field.name
   def extractValue(cell: Cell): Any = {
     val cellType = cell.getCellType
     if (cellType == CellType.BLANK) {
@@ -59,7 +59,7 @@ class HeaderDataColumn(
       case CellType.STRING => Option(cell.getStringCellValue).map(_.toBoolean)
     }
     lazy val bigDecimal = numericValue.map(new BigDecimal(_))
-    val value: Option[Any] = dataType match {
+    val value: Option[Any] = field.dataType match {
       case _: ByteType => numericValue.map(_.toByte)
       case _: ShortType => numericValue.map(_.toShort)
       case _: IntegerType => numericValue.map(_.toInt)
