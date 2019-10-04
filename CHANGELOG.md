@@ -1,3 +1,8 @@
+0.12.1
+======
+- Change: Update POI to 4.1.0 and several other dependencies
+- Bugfix: The Scala 2.12 version now actually fixes https://github.com/crealytics/spark-excel/issues/93
+
 0.12.0
 ======
 - Change: Cross-build for Scala 2.11 and 2.12
