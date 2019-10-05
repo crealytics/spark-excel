@@ -23,7 +23,7 @@ class DataLocatorSuite extends FunSpec with PropertyChecks with Matchers with Ge
       }
 
       it("writes into a new table in a new sheet if no corresponding table exists") {
-        forAll(sheetGenerator(withHeader = Gen.const(true))) { dataSheet =>
+        forAll(sheetGenerator(withHeader = Gen.const(true), numCols = Gen.choose(1, 200))) { dataSheet =>
           val workbook = new XSSFWorkbook()
           val header = dataSheet.rows.head.cells.map(_.value.toString).toSeq
           val generatedSheet = dl.toSheet(

@@ -89,17 +89,17 @@ trait Generators {
 
   val sheetName = "test sheet"
 
-  def sheetGenerator(withHeader: Gen[Boolean]): Gen[Sheet] =
+  def sheetGenerator(withHeader: Gen[Boolean], numCols: Gen[Int] = Gen.choose(0, 200)): Gen[Sheet] =
     for {
       numRows <- Gen.choose(0, 200)
-      numCols <- Gen.choose(0, 200)
+      numCol <- numCols
       hasHeader <- withHeader
     } yield {
-      val header = if (hasHeader) Some(SRow((0 until numCols).map(c => Cell(s"col_$c", index = c)))) else None
+      val header = if (hasHeader) Some(SRow((0 until numCol).map(c => Cell(s"col_$c", index = c)))) else None
       Sheet(
         name = sheetName,
         rows = header.toList ++ (0 until numRows)
-          .map(r => SRow((0 until numCols).map(c => Cell(s"$r,$c", index = c)), index = r))
+          .map(r => SRow((0 until numCol).map(c => Cell(s"$r,$c", index = c)), index = r))
           .to[List]
       )
     }
