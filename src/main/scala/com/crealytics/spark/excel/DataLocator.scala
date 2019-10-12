@@ -16,15 +16,17 @@ import org.apache.poi.ss.SpreadsheetVersion
 import org.apache.poi.ss.usermodel.{Cell, Row, Sheet, Workbook}
 import org.apache.poi.ss.util.{AreaReference, CellRangeAddress, CellReference}
 import org.apache.poi.xssf.usermodel.{XSSFTable, XSSFWorkbook}
+import org.apache.spark.sql.types.Decimal
+import org.apache.spark.unsafe.types.UTF8String
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-trait DataLocator {
+trait DataLocator extends Serializable {
   def dateFormat: Option[String]
   def timestampFormat: Option[String]
-  val dateFrmt = dateFormat.getOrElse(ExcelFileSaver.DEFAULT_DATE_FORMAT)
-  val timestampFrmt = timestampFormat.getOrElse(ExcelFileSaver.DEFAULT_TIMESTAMP_FORMAT)
+  val dateFrmt = dateFormat.getOrElse(ExcelOutputWriter.DEFAULT_DATE_FORMAT)
+  val timestampFrmt = timestampFormat.getOrElse(ExcelOutputWriter.DEFAULT_TIMESTAMP_FORMAT)
   def readFrom(workbook: Workbook): Iterator[Seq[Cell]]
   def toSheet(header: Option[Seq[String]], data: Iterator[Seq[Any]], existingWorkbook: Workbook): WriteSheet
 }
@@ -117,6 +119,7 @@ trait AreaDataLocator extends DataLocator {
   def toCell(a: Any, dateFormat: String, timestampFormat: String): WriteCell = a match {
     case t: java.sql.Timestamp => dateCell(t.getTime, timestampFormat)
     case d: java.sql.Date => dateCell(d.getTime, dateFormat)
+    case s: UTF8String => WriteCell(s.toString)
     case s: String => WriteCell(s)
     case f: Float => WriteCell(f.toDouble)
     case d: Double => WriteCell(d)
@@ -125,9 +128,11 @@ trait AreaDataLocator extends DataLocator {
     case s: Short => WriteCell(s.toInt)
     case i: Int => WriteCell(i)
     case l: Long => WriteCell(l)
+    case d: Decimal => WriteCell(d.toBigDecimal)
     case b: BigDecimal => WriteCell(b)
     case b: java.math.BigDecimal => WriteCell(BigDecimal(b))
     case null => WriteCell.Empty
+    case e => println(s"Don't know ${e.getClass}"); WriteCell(e.toString)
   }
 }
 

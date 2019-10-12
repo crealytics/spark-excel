@@ -30,7 +30,7 @@ class HeaderDataColumn(
     }
 
     lazy val dataFormatter = new DataFormatter()
-    lazy val stringValue =
+    def stringValue =
       cell.getCellType match {
         case CellType.FORMULA =>
           cell.getCachedFormulaResultType match {
@@ -43,7 +43,7 @@ class HeaderDataColumn(
         case _ => Some(dataFormatter.formatCellValue(cell))
       }
     def parseNumber(string: Option[String]): Option[Double] = string.filter(_.trim.nonEmpty).map(stringToDouble)
-    lazy val numericValue =
+    def numericValue =
       cell.getCellType match {
         case CellType.NUMERIC => Option(cell.getNumericCellValue)
         case CellType.STRING => parseNumber(Option(cell.getStringCellValue))
@@ -54,11 +54,11 @@ class HeaderDataColumn(
               parseNumber(Option(cell.getRichStringCellValue).map(_.getString))
           }
       }
-    lazy val booleanValue = cell.getCellType match {
+    def booleanValue = cell.getCellType match {
       case CellType.BOOLEAN => Option(cell.getBooleanCellValue)
       case CellType.STRING => Option(cell.getStringCellValue).map(_.toBoolean)
     }
-    lazy val bigDecimal = numericValue.map(new BigDecimal(_))
+    def bigDecimal = numericValue.map(new BigDecimal(_))
     val value: Option[Any] = field.dataType match {
       case _: ByteType => numericValue.map(_.toByte)
       case _: ShortType => numericValue.map(_.toShort)
@@ -79,7 +79,7 @@ class HeaderDataColumn(
         stringValue.filterNot(_.isEmpty && treatEmptyValuesAsNulls)
       case t => throw new RuntimeException(s"Unsupported cast from $cell to $t")
     }
-    value.orElse(null)
+    value.orNull
   }
 
   private def stringToDouble(value: String): Double = {

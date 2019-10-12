@@ -23,19 +23,13 @@ private[excel] object InferSchema {
 
   /**
     * Similar to the JSON schema inference.
-    * [[org.apache.spark.sql.execution.datasources.json.InferSchema]]
     *     1. Infer type of each row
     *     2. Merge row types to find common type
     *     3. Replace any null types with string type
     */
-  def apply(rowsRDD: RDD[Seq[DataType]]): Array[DataType] = {
+  def apply(rowsRDD: Seq[Seq[DataType]]): Array[DataType] = {
     val startType: Array[DataType] = Array.empty
-    val rootTypes: Array[DataType] = rowsRDD.aggregate(startType)(inferRowType _, mergeRowTypes)
-
-    rootTypes.map {
-      case z: NullType => StringType
-      case other => other
-    }
+    rowsRDD.aggregate(startType)(inferRowType _, mergeRowTypes)
   }
 
   private def inferRowType(rowSoFar: Array[DataType], next: Seq[DataType]): Array[DataType] = {
@@ -79,17 +73,9 @@ private[excel] object InferSchema {
     }
   }
 
-  /**
-    * Copied from internal Spark api
-    * [[org.apache.spark.sql.catalyst.analysis.HiveTypeCoercion]]
-    */
   private val numericPrecedence: IndexedSeq[DataType] =
     IndexedSeq[DataType](ByteType, ShortType, IntegerType, LongType, FloatType, DoubleType, TimestampType)
 
-  /**
-    * Copied from internal Spark api
-    * [[org.apache.spark.sql.catalyst.analysis.HiveTypeCoercion]]
-    */
   val findTightestCommonType: (DataType, DataType) => Option[DataType] = {
     case (t1, t2) if t1 == t2 => Some(t1)
     case (NullType, t1) => Some(t1)

@@ -11,6 +11,8 @@ import com.crealytics.tags.WIP
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import com.norbitltd.spoiwo.model.{Cell, CellRange, Sheet, Row => SRow, Table => STable}
 import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
+import com.softwaremill.diffx.{Derived, Diff}
+import com.softwaremill.diffx.scalatest.DiffMatcher
 import org.apache.poi.ss.util.CellReference
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.functions.{col, lit}
@@ -65,6 +67,22 @@ class IntegrationSuite
   }
 
   def runTests(maxRowsInMemory: Option[Int]) {
+    def writeDf(
+      df: DataFrame,
+      saveMode: SaveMode,
+      dataAddress: Option[String],
+      useHeader: Boolean,
+      theFileName: String
+    ) = {
+      val writer = df.coalesce(2).write.excel(dataAddress = s"'$sheetName'!A1", useHeader = useHeader).mode(saveMode)
+      val configuredWriter =
+        Map("dataAddress" -> dataAddress).foldLeft(writer) {
+          case (wri, (key, Some(value))) => wri.option(key, value)
+          case (wri, _) => wri
+        }
+      configuredWriter.save(theFileName)
+    }
+
     def writeThenRead(
       df: DataFrame,
       schema: Option[StructType] = Some(exampleDataSchema),
@@ -75,13 +93,7 @@ class IntegrationSuite
     ): DataFrame = {
       val theFileName = fileName.getOrElse(File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath)
 
-      val writer = df.write.excel(dataAddress = s"'$sheetName'!A1", useHeader = useHeader).mode(saveMode)
-      val configuredWriter =
-        Map("dataAddress" -> dataAddress).foldLeft(writer) {
-          case (wri, (key, Some(value))) => wri.option(key, value)
-          case (wri, _) => wri
-        }
-      configuredWriter.save(theFileName)
+      writeDf(df, saveMode, dataAddress, useHeader, theFileName)
 
       val reader = spark.read.excel(dataAddress = s"'$sheetName'!A1", useHeader = useHeader)
       val configuredReader = Map(
@@ -106,7 +118,10 @@ class IntegrationSuite
               df.withColumn(field.name, df(field.name).cast(dataType))
           }
       val expected = spark.createDataFrame(originalWithInferredColumnTypes.rdd, inferred.schema)
-      assertDataFrameEquals(expected, inferred)
+      assertDataFrameEquals(
+        expected.orderBy(expected.schema.fieldNames.map(col): _*),
+        inferred.orderBy(expected.schema.fieldNames.map(col): _*)
+      )
     }
 
     describe(s"with maxRowsInMemory = $maxRowsInMemory") {
@@ -165,6 +180,28 @@ class IntegrationSuite
         }
       }
 
+      it("handles different modes (PERMISSIVE, DROPMALFORMED, FAILFAST)") {
+        ???
+      }
+      describe("when working with multiple files") {
+        it("handles differing header column names correctly") {
+          ???
+        }
+        it("works for multiple files", WIP) {
+          forAll(rowsGen.filter(_.nonEmpty)) { rows =>
+            val original = spark.createDataset(rows).toDF
+            val subDfs = rows.zipWithIndex.groupBy(_._2 % 2).mapValues(r => spark.createDataset(r.map(_._1)).toDF)
+            val files = subDfs.map {
+              case (key, df) =>
+                val fileName = File.createTempFile(s"spark_excel_test_${key}_", ".xlsx").getAbsolutePath
+                writeDf(df, SaveMode.Overwrite, None, useHeader = true, theFileName = fileName)
+                fileName
+            }
+            val inferred = spark.read.excel().load(files.toSeq: _*)
+            assertEqualAfterInferringTypes(original, inferred)
+          }
+        }
+      }
       it("handles multi-line column headers correctly") {
         forAll(rowsGen.filter(_.nonEmpty)) { rows =>
           val original = spark.createDataset(rows).toDF
@@ -203,7 +240,7 @@ class IntegrationSuite
       }
 
       it("reads files with missing cells correctly") {
-        forAll(rowsGen.filter(_.nonEmpty)) { rows =>
+        forAll(rowsGen.filter(_.nonEmpty), Gen.option(Gen.const("")).map(_.orNull)) { (rows, emptyValue) =>
           val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
           val numCols = 20
           /*
@@ -212,7 +249,7 @@ class IntegrationSuite
             but we also store the column names spark-excel should give them.
            */
           val (writtenHeaderNames, expectedHeaderNames) =
-            (0 until numCols).map(c => if (c % 3 == 0) ("", s"_c$c") else (s"header_$c", s"header_$c")).unzip
+            (0 until numCols).map(c => if (c % 3 == 0) (emptyValue, s"_c$c") else (s"header_$c", s"header_$c")).unzip
           val existingData = Sheet(
             name = sheetName,
             rows =
