@@ -100,18 +100,17 @@ test in assembly := {}
 
 addArtifact(artifact in (Compile, assembly), assembly)
 
-initialCommands += """
-  import org.apache.spark.{SparkConf, SparkContext}
-  import org.apache.spark.SparkContext._
-  import org.apache.spark.sql.SQLContext
-  val conf = new SparkConf().
-    setMaster("local[*]").
-    setAppName("Console").
-    set("spark.app.id", "Console")   // To silence Metrics warning.
-  val sc = new SparkContext(conf)
-  val sqlContext = new SQLContext(sc)
-  import sqlContext.implicits._
+initialCommands in console := """
+  import org.apache.spark.sql._
+  val spark = SparkSession.
+    builder().
+    master("local[*]").
+    appName("Console").
+    config("spark.app.id", "Console").   // To silence Metrics warning.
+    getOrCreate
+  import spark.implicits._
   import org.apache.spark.sql.functions._    // for min, max, etc.
+  import com.crealytics.spark.excel._
   """
 
 fork := true
