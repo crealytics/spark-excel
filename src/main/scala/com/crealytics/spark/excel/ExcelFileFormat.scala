@@ -25,9 +25,7 @@ import org.apache.spark.unsafe.types.UTF8String
 import scala.util.Try
 import scala.util.control.NonFatal
 
-class ExcelFileFormat
-    extends FileFormat
-    with DataSourceRegister {
+class ExcelFileFormat extends FileFormat with DataSourceRegister {
   def shortName(): String = "excel"
   def prepareWrite(
     sparkSession: SparkSession,
