@@ -19,7 +19,7 @@ sparkComponents := Seq("core", "sql", "hive")
 resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
 libraryDependencies ++= Seq(
-  "org.slf4j" % "slf4j-api" % "1.7.28" % "provided",
+  "org.slf4j" % "slf4j-api" % "1.7.29" % "provided",
   "com.monitorjbl" % "xlsx-streamer" % "2.1.0"
 ).map(_.excludeAll(ExclusionRule(organization = "stax")))
 
