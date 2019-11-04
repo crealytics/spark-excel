@@ -13,6 +13,7 @@ import com.norbitltd.spoiwo.model.{
 import HasIndex._
 import com.crealytics.spark.excel.Utils.MapIncluding
 import org.apache.poi.ss.SpreadsheetVersion
+import org.apache.poi.ss.usermodel.Row.MissingCellPolicy
 import org.apache.poi.ss.usermodel.{Cell, Row, Sheet, Workbook}
 import org.apache.poi.ss.util.{AreaReference, CellRangeAddress, CellReference}
 import org.apache.poi.xssf.usermodel.{XSSFTable, XSSFWorkbook}
@@ -76,23 +77,22 @@ trait AreaDataLocator extends DataLocator {
   def rowIndices(workbook: Workbook): Seq[Int]
   def sheetName(workbook: Workbook): Option[String]
 
-  def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet =
+  def findSheet(workBook: Workbook, sheetName: Option[String]): Option[Sheet] =
     sheetName
-      .map(
+      .flatMap(
         sn =>
           Try(Option(workBook.getSheetAt(sn.toInt))).toOption.flatten
             .orElse(Option(workBook.getSheet(sn)))
-            .getOrElse(throw new IllegalArgumentException(s"Unknown sheet $sn"))
       )
-      .getOrElse(workBook.getSheetAt(0))
+      .orElse(Try(workBook.getSheetAt(0)).toOption)
 
   def readFromSheet(workbook: Workbook, name: Option[String]): Iterator[Vector[Cell]] = {
     val sheet = findSheet(workbook, name)
     val rowInd = rowIndices(workbook)
     val colInd = columnIndices(workbook)
-    sheet.iterator.asScala
+    sheet.get.iterator.asScala
       .filter(r => rowInd.contains(r.getRowNum))
-      .map(_.cellIterator().asScala.filter(c => colInd.contains(c.getColumnIndex)).to[Vector])
+      .map(r => colInd.map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK)).to[Vector])
   }
 
   override def toSheet(
@@ -143,7 +143,22 @@ class CellRangeAddressDataLocator(
 ) extends AreaDataLocator {
   private val sheetName = Option(dataAddress.getFirstCell.getSheetName)
 
-  def columnIndices(workbook: Workbook): Seq[Int] = (dataAddress.getFirstCell.getCol to dataAddress.getLastCell.getCol)
+  def columnIndices(workbook: Workbook): Seq[Int] = {
+    val sheetOption = findSheet(workbook, sheetName)
+    val rowInd = rowIndices(workbook)
+    val rows =
+      // TODO: Need to take into account excerpt size here
+      sheetOption.map(_.rowIterator().asScala.filter(r => rowInd.contains(r.getRowNum)).toSeq).getOrElse(Seq.empty)
+    val minCol =
+      math.max(dataAddress.getFirstCell.getCol, rows.map(_.getFirstCellNum).reduceOption(_ min _).getOrElse(0: Short))
+    val maxCol = math.min(
+      dataAddress.getLastCell.getCol,
+      rows.map(_.getLastCellNum - 1).reduceOption(_ max _).getOrElse(Int.MaxValue)
+    )
+    minCol to maxCol
+
+    // dataAddress.getFirstCell.getCol to dataAddress.getLastCell.getCol
+  }
   def rowIndices(workbook: Workbook): Seq[Int] = (dataAddress.getFirstCell.getRow to dataAddress.getLastCell.getRow)
 
   override def readFrom(workbook: Workbook): Iterator[Seq[Cell]] = readFromSheet(workbook, sheetName)

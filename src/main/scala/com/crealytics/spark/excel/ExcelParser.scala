@@ -111,8 +111,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
 
       case dt: DecimalType =>
         (d: Cell) =>
-          nullSafeCell(d, name, nullable, options)(_.stringValue.map { stringValue =>
-            val value = new BigDecimal(stringValue.replaceAll(",", ""))
+          nullSafeCell(d, name, nullable, options)(_.bigDecimalValue.map { value =>
             Decimal(value, dt.precision, dt.scale)
           })
 

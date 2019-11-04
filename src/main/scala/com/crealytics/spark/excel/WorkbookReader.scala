@@ -13,7 +13,7 @@ trait WorkbookReader {
   def withWorkbook[T](f: Workbook => T): T = {
     val workbook = openWorkbook()
     val res = f(workbook)
-    workbook.close()
+    // TODO: workbook.close()
     res
   }
 }

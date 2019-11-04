@@ -116,36 +116,16 @@ class IntegrationSuite
               df.withColumn(field.name, df(field.name).cast(dataType))
           }
       val expected = spark.createDataFrame(originalWithInferredColumnTypes.rdd, inferred.schema)
-      assertDataFrameEquals(
-        expected.orderBy(expected.schema.fieldNames.map(col): _*),
-        inferred.orderBy(expected.schema.fieldNames.map(col): _*)
-      )
-    }
-
-    def setNullableStateForAllColumns(df: DataFrame, nullable: Boolean) = {
-      def set(st: StructType): StructType =
-        StructType(st.map {
-          case StructField(name, dataType, _, metadata) =>
-            val newDataType = dataType match {
-              case t: StructType => set(t)
-              case _ => dataType
-            }
-            StructField(name, newDataType, nullable = nullable, metadata)
-        })
-
-      val newSchema = set(df.schema)
-      df.sqlContext.createDataFrame(df.rdd, newSchema)
+      assertEqualsAfterBasicTransformations(expected, inferred)
     }
 
     describe(s"with maxRowsInMemory = $maxRowsInMemory") {
-      it("parses known datatypes correctly", WIP) {
+      it("parses known datatypes correctly") {
         forAll(rowsGen, fileNames) {
           case (rows, fileName) =>
             val expected = spark.createDataset(rows).toDF
-            val actual = writeThenRead(expected, fileName = Some(fileName))
-            //assertEqualAfterInferringTypes(actual, expected)
-            val expectedNullable = setNullableStateForAllColumns(expected, true)
-            assertDataFrameApproximateEquals(expectedNullable, actual)
+            val actual = writeThenRead(expected, fileName = Some(fileName.getAbsolutePath))
+            assertEqualsAfterBasicTransformations(expected, actual, relTol = 1.0e-6)
         }
       }
 
@@ -165,7 +145,11 @@ class IntegrationSuite
           val fields = expectedWithEmptyStr.schema.fields
           fields.update(fields.indexWhere(_.name == "aString"), StructField("aString", DataTypes.StringType, true))
 
-          assertDataFrameApproximateEquals(expectedWithEmptyStr, writeThenRead(expectedWithEmptyStr), relTol = 1.0e-6)
+          assertEqualsAfterBasicTransformations(
+            expectedWithEmptyStr,
+            writeThenRead(expectedWithEmptyStr),
+            relTol = 1.0e-6
+          )
         }
       }
 
@@ -188,7 +172,7 @@ class IntegrationSuite
         }
       }
 
-      it("returns all data rows when inferring schema") {
+      it("returns all data rows when inferring schema", WIP) {
         forAll(rowsGen.filter(_.nonEmpty)) { rows =>
           val original = spark.createDataset(rows).toDF
           val inferred = writeThenRead(original, schema = None)
@@ -197,13 +181,14 @@ class IntegrationSuite
       }
 
       it("handles different modes (PERMISSIVE, DROPMALFORMED, FAILFAST)") {
-        ???
+        pending
       }
       describe("when working with multiple files") {
         it("handles differing header column names correctly") {
-          ???
+          pending
         }
         it("reads the data from all files") {
+          pending
           forAll(rowsGen.filter(_.nonEmpty)) { rows =>
             val original = spark.createDataset(rows).toDF
             val subDfs = rows.zipWithIndex.groupBy(_._2 % 2).mapValues(r => spark.createDataset(r.map(_._1)).toDF)
@@ -233,7 +218,7 @@ class IntegrationSuite
           val original = spark.createDataset(rows).toDF
           val expected = spark.createDataset(rows).toDF(renamedSchema.fieldNames: _*)
           val inferred = writeThenRead(original, schema = Some(renamedSchema))
-          assertDataFrameApproximateEquals(expected, inferred, relTol = 1.0e-6)
+          assertEqualsAfterBasicTransformations(expected, inferred, relTol = 1.0e-6)
         }
       }
 
@@ -246,7 +231,7 @@ class IntegrationSuite
               original,
               schema = None,
               useHeader = false,
-              fileName = Some(fileName),
+              fileName = Some(fileName.getAbsolutePath),
               dataAddress =
                 Some(s"'$sheetName'!${startCellAddress.formatAsString()}:${endCellAddress.formatAsString()}")
             )
@@ -254,7 +239,7 @@ class IntegrationSuite
         }
       }
 
-      it("reads files with missing cells correctly") {
+      it("reads files with missing cells correctly", WIP) {
         forAll(rowsGen.filter(_.nonEmpty), Gen.option(Gen.const("")).map(_.orNull)) { (rows, emptyValue) =>
           val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
           val numCols = 20
@@ -354,6 +339,34 @@ class IntegrationSuite
         }
       }
     }
+  }
+
+  private def setNullableStateForAllColumns(df: DataFrame, nullable: Boolean) = {
+    def set(st: StructType): StructType =
+      StructType(st.map {
+        case StructField(name, dataType, _, metadata) =>
+          val newDataType = dataType match {
+            case t: StructType => set(t)
+            case _ => dataType
+          }
+          StructField(name, newDataType, nullable = nullable, metadata)
+      })
+
+    val newSchema = set(df.schema)
+    df.sqlContext.createDataFrame(df.rdd, newSchema)
+  }
+
+  private def assertEqualsAfterBasicTransformations(
+    expected: DataFrame,
+    inferred: DataFrame,
+    relTol: Double = 0.0
+  ): Unit = {
+    val expectedNullable = setNullableStateForAllColumns(expected, true)
+    assertDataFrameApproximateEquals(
+      expectedNullable.orderBy(expected.schema.fieldNames.map(col): _*),
+      inferred.orderBy(expected.schema.fieldNames.map(col): _*),
+      relTol = relTol
+    )
   }
 
   private def assertNoDataOverwritten(

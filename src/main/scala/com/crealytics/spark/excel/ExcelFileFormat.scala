@@ -1,28 +1,18 @@
 package com.crealytics.spark.excel
 
 import java.io.{IOException, ObjectInputStream, ObjectOutputStream}
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
 
+import com.crealytics.spark.excel.ExcelFileFormat.{colName, SheetRow}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileStatus, Path}
 import org.apache.hadoop.mapreduce.{Job, TaskAttemptContext}
-import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil, Row => _}
-import org.apache.spark.rdd.RDD
+import org.apache.poi.ss.usermodel.{Cell, CellType, DateUtil, Row => _}
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.execution.datasources.{
-  FailureSafeParser,
-  FileFormat,
-  OutputWriter,
-  OutputWriterFactory,
-  PartitionedFile
-}
+import org.apache.spark.sql.execution.datasources._
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
-import org.apache.spark.unsafe.types.UTF8String
 
-import scala.util.Try
 import scala.util.control.NonFatal
 
 class ExcelFileFormat extends FileFormat with DataSourceRegister {
@@ -49,13 +39,14 @@ class ExcelFileFormat extends FileFormat with DataSourceRegister {
     filters: Seq[Filter],
     options: Map[String, String],
     hadoopConf: Configuration
-  ): (PartitionedFile) => Iterator[InternalRow] = {
+  ): PartitionedFile => Iterator[InternalRow] = {
     val broadcastedHadoopConf =
       sparkSession.sparkContext.broadcast(new SerializableConfiguration(hadoopConf))
     val broadcastedOptions = sparkSession.sparkContext.broadcast(options)
 
+    /*
     // Check a field requirement for corrupt records here to throw an exception in a driver side
-    /*Try(dataSchema.fieldIndex(parsedOptions.columnNameOfCorruptRecord)).foreach { corruptFieldIndex =>
+    Try(dataSchema.fieldIndex(parsedOptions.columnNameOfCorruptRecord)).foreach { corruptFieldIndex =>
       val f = dataSchema(corruptFieldIndex)
       if (f.dataType != StringType || !f.nullable) {
         throw new RuntimeException("The field for corrupt records must be string type and nullable")
@@ -63,9 +54,9 @@ class ExcelFileFormat extends FileFormat with DataSourceRegister {
     }
      */
 
-    (file: PartitionedFile) => {
-      val parsedOptions = new ExcelOptions(broadcastedOptions.value)
-      import parsedOptions._
+    file: PartitionedFile => {
+      val excelOptions = new ExcelOptions(broadcastedOptions.value)
+      import excelOptions._
       val conf = broadcastedHadoopConf.value.value
 
       val reader = WorkbookReader(parameters + ("path" -> file.filePath), conf)
@@ -73,7 +64,7 @@ class ExcelFileFormat extends FileFormat with DataSourceRegister {
       val excerpt: List[SheetRow] = reader.withWorkbook(dataLocator.readFrom(_).take(excerptSize).to[List])
       reader.withWorkbook { workbook =>
         val allDataIterator = dataLocator.readFrom(workbook)
-        val headerNs = headerNames(headerFlag, excerpt.head).zip(excerpt.head).toMap
+        val headerNs = dataSchema.fieldNames.zip(excerpt.head).toMap
         val cellsExtractor = requiredSchema.map(
           f =>
             headerNs.get(f.name) match {
@@ -82,7 +73,7 @@ class ExcelFileFormat extends FileFormat with DataSourceRegister {
             }
         )
 
-        val parser = new ExcelParser(dataSchema, requiredSchema, parsedOptions)
+        val parser = new ExcelParser(dataSchema, requiredSchema, excelOptions)
         val safeParser = new FailureSafeParser[Array[Cell]](
           input => Seq(parser.parse(input)),
           parser.options.parseMode,
@@ -95,6 +86,13 @@ class ExcelFileFormat extends FileFormat with DataSourceRegister {
     }
   }
 
+  private def sheetXHeader(excelOptions: ExcelOptions) =
+    if (excelOptions.headerFlag) {
+      new SheetWithHeader()
+    } else {
+      new SheetNoHeader()
+    }
+
   def inferSchema(
     sparkSession: SparkSession,
     options: Map[String, String],
@@ -102,27 +100,12 @@ class ExcelFileFormat extends FileFormat with DataSourceRegister {
   ): Option[StructType] = {
     val excelOptions = new ExcelOptions(options)
     import excelOptions._
-
-    val fieldsPerFile = files.flatMap { (file: FileStatus) =>
+    val sheetX = sheetXHeader(excelOptions)
+    val fieldsPerFile = files.flatMap { file: FileStatus =>
       val excerpt: List[SheetRow] =
         WorkbookReader(options + ("path" -> file.getPath.toString), sparkSession.sparkContext.hadoopConfiguration)
           .withWorkbook(DataLocator(options).readFrom(_).take(excerptSize).to[List])
-
-      val headerCells = excerpt.head
-      val headerIndices = headerCells.map(_.getColumnIndex)
-      val cellTypes: Seq[Seq[DataType]] = excerpt.tail
-        .map { r =>
-          headerIndices.map(
-            i => r.find(_.getColumnIndex == i).map(ExcelFileFormat.getSparkType).getOrElse(DataTypes.NullType)
-          )
-        }
-      val dataTypes = InferSchema(cellTypes)
-
-      val colNames: Seq[String] = headerNames(headerFlag, headerCells)
-      colNames.zip(dataTypes).map {
-        case (colName, dataType) =>
-          StructField(name = colName, dataType = dataType, nullable = true)
-      }
+      sheetX.namesAndTypes(excerpt)
     }
     val fieldForName = fieldsPerFile
       .groupBy(_.name)
@@ -140,40 +123,9 @@ class ExcelFileFormat extends FileFormat with DataSourceRegister {
 }
 
 object ExcelFileFormat {
-  def colName(cell: Cell) = cell.getStringCellValue
+  def colName(cell: Cell): String = cell.getStringCellValue
 
   type SheetRow = Seq[Cell]
-  def headerNames(headerFlag: Boolean, headerCells: SheetRow) = {
-    val colNames = if (headerFlag) {
-      val headerNames = headerCells.map(colName)
-      val duplicates = {
-        val nonNullHeaderNames = headerNames.filter(_ != null)
-        nonNullHeaderNames.groupBy(identity).filter(_._2.size > 1).keySet
-      }
-
-      headerCells.zipWithIndex.map {
-        case (cell, index) =>
-          val value = colName(cell)
-          if (value == null || value.isEmpty) {
-            // When there are empty strings or the, put the index as the suffix.
-            s"_c$index"
-          } else if (duplicates.contains(value)) {
-            // When there are duplicates, put the index as the suffix.
-            s"$value$index"
-          } else {
-            value
-          }
-      }
-    } else {
-      headerCells.zipWithIndex.map {
-        case (_, index) =>
-          // Uses default column names, "_c#" where # is its position of fields
-          // when header option is disabled.
-          s"_c$index"
-      }
-    }
-    colNames
-  }
   def getSparkType(cell: Cell): DataType = {
     cell.getCellType match {
       case CellType.FORMULA =>
@@ -190,6 +142,59 @@ object ExcelFileFormat {
     }
   }
 
+}
+
+sealed trait SheetXHeader {
+  def namesAndTypes(excerpt: Seq[SheetRow]): Seq[StructField] = {
+    val cellTypes: Seq[Seq[DataType]] = dataRows(excerpt)
+      .map { r =>
+        r.map(ExcelFileFormat.getSparkType)
+      }
+    val dataTypes = InferSchema(cellTypes)
+    colNames(excerpt, dataTypes).zip(dataTypes).map {
+      case (colName, dataType) =>
+        StructField(name = colName, dataType = dataType, nullable = true)
+    }
+  }
+  def dataRows(excerpt: Seq[SheetRow]): Seq[SheetRow]
+  def colNames(excerpt: Seq[SheetRow], dataTypes: Seq[DataType]): Seq[String]
+}
+class SheetWithHeader() extends SheetXHeader {
+  def dataRows(excerpt: Seq[SheetRow]): Seq[SheetRow] = excerpt.tail
+  def colNames(excerpt: Seq[SheetRow], dataTypes: Seq[DataType]): Seq[String] = {
+    require(excerpt.nonEmpty, "If headers=true, every file is required to have at least a header row")
+    val headerCells = excerpt.head
+
+    val headerNames = headerCells.map(colName)
+    val duplicates = {
+      val nonNullHeaderNames = headerNames.filter(_ != null)
+      nonNullHeaderNames.groupBy(identity).filter(_._2.size > 1).keySet
+    }
+    headerCells.zipWithIndex.map {
+      case (cell, index) =>
+        val value = colName(cell)
+        if (value == null || value.isEmpty) {
+          // When there are empty strings or nulls, put the index as the suffix.
+          s"_c$index"
+        } else if (duplicates.contains(value)) {
+          // When there are duplicates, put the index as the suffix.
+          s"$value$index"
+        } else {
+          value
+        }
+    }
+  }
+}
+class SheetNoHeader() extends SheetXHeader {
+
+  def dataRows(excerpt: Seq[SheetRow]): Seq[SheetRow] = excerpt
+  def colNames(excerpt: Seq[SheetRow], dataTypes: Seq[DataType]): Seq[String] = {
+    dataTypes.indices.map { index =>
+      // Uses default column names, "_c#" where # is its position of fields
+      // when header option is disabled.
+      s"_c$index"
+    }
+  }
 }
 class SerializableConfiguration(@transient var value: Configuration) extends Serializable {
 

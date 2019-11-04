@@ -78,6 +78,10 @@ package object excel {
       case CellType.BOOLEAN => Option(cell.getBooleanCellValue)
       case CellType.STRING => Option(cell.getStringCellValue).map(_.toBoolean)
     }
+    // TODO: We're losing precision here by first extracting a double and then converting
+    //       to a BigDecimal. The getNumericCellValue uses _cell.getV to get the String
+    //       value of a cell, but this is quite specific and might not port over to the
+    //       streaming implementation
     def bigDecimalValue: Option[BigDecimal] = numericValue.map(new BigDecimal(_))
   }
 
@@ -136,15 +140,17 @@ package object excel {
       preHeader: String = null,
       dateFormat: String = null,
       timestampFormat: String = null,
-      workbookPassword: String = null
+      workbookPassword: String = null,
+      singleFile: Boolean = true
     ): DataFrameWriter[T] = {
+      val format = if (singleFile) "com.crealytics.spark.excel" else "excel"
       Map(
         "header" -> useHeader,
         "dataAddress" -> dataAddress,
         "dateFormat" -> dateFormat,
         "timestampFormat" -> timestampFormat,
         "preHeader" -> preHeader
-      ).foldLeft(dataFrameWriter.format("excel")) {
+      ).foldLeft(dataFrameWriter.format(format)) {
         case (dfWriter, (key, value)) =>
           value match {
             case null => dfWriter
