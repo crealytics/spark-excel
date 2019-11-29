@@ -4,10 +4,10 @@ import org.apache.poi.ss.usermodel.{Cell, Row}
 import org.scalacheck.Gen
 import org.scalacheck.Prop.BooleanOperators
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.FunSuite
-import org.scalatest.prop.PropertyChecks
 
 import scala.util.Try
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import org.scalatest.funsuite.AnyFunSuite
 
 trait RowGenerator extends MockFactory {
   private val MAX_WIDTH = 100
@@ -21,12 +21,10 @@ trait RowGenerator extends MockFactory {
     row = stub[Row]
     _ = (row.getCell(_: Int)).when(*) returns stub[Cell]
     _ = row.getLastCellNum _ when () returns lastCellNum.toShort
-
   } yield GeneratedRow(startColumn, endColumn, lastCellNum, row)
 }
 
-class RichRowSuite extends FunSuite with PropertyChecks with RowGenerator {
-
+class RichRowSuite extends AnyFunSuite with ScalaCheckPropertyChecks with RowGenerator {
   test("Invalid cell range should throw an error") {
     forAll(rowGen) { g =>
       (g.start > g.end) ==> Try {

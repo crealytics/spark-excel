@@ -40,7 +40,6 @@ case class ExampleData(
 )
 
 trait Generators {
-
   val exampleDataSchema = ScalaReflection.schemaFor[ExampleData].dataType.asInstanceOf[StructType]
 
   private val dstTransitionDays =

@@ -18,14 +18,19 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import org.scalactic.anyvals.PosInt
-import org.scalatest.prop.PropertyChecks
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.JavaConverters._
 import scala.util.Random
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBase with Matchers with Generators {
-
+class IntegrationSuite
+    extends AnyFunSpec
+    with ScalaCheckPropertyChecks
+    with DataFrameSuiteBase
+    with Matchers
+    with Generators {
   import spark.implicits._
 
   implicit def shrinkOnlyNumberOfRows[A]: Shrink[List[A]] = Shrink.shrinkContainer[List, A]
@@ -61,7 +66,6 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
   }
 
   def runTests(maxRowsInMemory: Option[Int]) {
-
     def writeThenRead(
       df: DataFrame,
       schema: Option[StructType] = Some(exampleDataSchema),
@@ -332,7 +336,6 @@ class IntegrationSuite extends FunSpec with PropertyChecks with DataFrameSuiteBa
         } yield cell
         if (actualData.contains(cell.value)) Nil
         else List((actualData, cell.value))
-
       }
     }
     differencesInNonOverwrittenData shouldBe empty

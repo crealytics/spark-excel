@@ -6,9 +6,7 @@ import org.apache.poi.ss.usermodel.{Cell, CellType, Row}
 import org.apache.spark.sql.{DataFrameReader, DataFrameWriter}
 
 package object excel {
-
   implicit class RichRow(val row: Row) extends AnyVal {
-
     def eachCellIterator(startColumn: Int, endColumn: Int): Iterator[Option[Cell]] = new Iterator[Option[Cell]] {
       private val lastCellInclusive = row.getLastCellNum - 1
       private val endCol = Math.min(endColumn, Math.max(startColumn, lastCellInclusive))
@@ -110,5 +108,4 @@ package object excel {
       }
     }
   }
-
 }

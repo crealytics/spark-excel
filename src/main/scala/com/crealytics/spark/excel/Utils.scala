@@ -40,6 +40,5 @@ object Utils {
         req <- requiredKeys.unapplySeq(m)
         opt <- optionalKeys.unapplySeq(m)
       } yield (req, opt)
-
   }
 }

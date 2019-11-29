@@ -30,7 +30,6 @@ trait DataLocator {
 }
 
 object DataLocator {
-
   private def parseRangeAddress(address: String): AreaReference =
     Try {
       val cellRef = new CellReference(address)

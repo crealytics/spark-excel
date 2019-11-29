@@ -10,7 +10,6 @@ import org.apache.spark.sql.{DataFrame, SQLContext, SaveMode}
 import scala.util.Try
 
 class DefaultSource extends RelationProvider with SchemaRelationProvider with CreatableRelationProvider {
-
   /**
     * Creates a new relation for retrieving data from an Excel file
     */
