@@ -25,7 +25,6 @@ case class ExcelRelation(
     extends BaseRelation
     with TableScan
     with PrunedScan {
-
   type SheetRow = Seq[Cell]
 
   lazy val excerpt: List[SheetRow] = workbookReader.withWorkbook(dataLocator.readFrom(_).take(excerptSize).to[List])
@@ -160,7 +159,6 @@ case class ExcelRelation(
   }
 
   private def inferSchema(): StructType = this.userSchema.getOrElse {
-
     val baseSchema = StructType(headerColumns.map(_.field))
     if (addColorColumns) {
       headerColumns.foldLeft(baseSchema) { (schema, header) =>

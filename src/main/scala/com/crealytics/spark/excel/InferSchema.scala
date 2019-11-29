@@ -19,7 +19,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
 
 private[excel] object InferSchema {
-
   type CellType = Int
 
   /**

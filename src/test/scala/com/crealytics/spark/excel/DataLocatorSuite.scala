@@ -6,12 +6,13 @@ import org.apache.poi.ss.util.AreaReference
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
 import org.scalacheck.Gen
-import org.scalatest.{FunSpec, Matchers}
-import org.scalatest.prop.PropertyChecks
 
 import scala.collection.JavaConverters._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class DataLocatorSuite extends FunSpec with PropertyChecks with Matchers with Generators {
+class DataLocatorSuite extends AnyFunSpec with ScalaCheckPropertyChecks with Matchers with Generators {
   describe("with a table reference") {
     val dl = DataLocator(Map("dataAddress" -> s"$tableName[#All]"))
     describe("containing #All") {
