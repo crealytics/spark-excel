@@ -20,11 +20,11 @@ resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.30" % "provided",
-  "com.monitorjbl" % "xlsx-streamer" % "2.1.0"
+  "org.apache.poi" % "poi" % "4.1.0"
 ).map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 shadedDeps ++= Seq(
-  "org.apache.poi" ^ "poi" ^ "4.1.0",
+  "com.monitorjbl" ^ "xlsx-streamer" ^ "2.1.0",
   "org.apache.poi" ^ "poi-ooxml" ^ "4.1.0",
   "com.norbitltd" ^^ "spoiwo" ^ "1.6.0",
   "org.apache.commons" ^ "commons-compress" ^ "1.19",
@@ -32,7 +32,7 @@ shadedDeps ++= Seq(
 )
 
 shadeRenames ++= Seq(
-  "org.apache.poi.**" -> "shadeio.poi.@1",
+  "com.monitorjbl.**" -> "shadeio.monitorjbl.@1",
   "com.norbitltd.spoiwo.**" -> "shadeio.spoiwo.@1",
   "com.fasterxml.jackson.**" -> "shadeio.jackson.@1",
   "org.apache.commons.compress.**" -> "shadeio.commons.compress.@1",
