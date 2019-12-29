@@ -47,10 +47,7 @@ libraryDependencies ++= Seq(
   "org.scalatestplus" %% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % Test,
   "org.scalacheck" %% "scalacheck" % "1.14.3" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.3" % Test,
-  (if(scalaVersion.value.startsWith("2.12"))
-    "com.github.nightscape" %% "spark-testing-base" % "e67541ce12c004b479f8bbf661d3fe4389aba1e8"
-  else
-    "com.github.nightscape" % "spark-testing-base" % "c6ac5d3b0629440f5fe13cf8830fdb17535c8513") % Test,
+  "com.github.nightscape" %% "spark-testing-base" % "c2bc44caf4" % Test,
   //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % Test
 )
