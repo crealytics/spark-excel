@@ -17,14 +17,14 @@ You can link against this library in your program at the following coordinates:
 ```
 groupId: com.crealytics
 artifactId: spark-excel_2.12
-version: 0.12.2
+version: 0.12.4
 ```
 
 ### Scala 2.11
 ```
 groupId: com.crealytics
 artifactId: spark-excel_2.11
-version: 0.12.2
+version: 0.12.4
 ```
 
 ## Using with Spark shell
@@ -32,12 +32,12 @@ This package can be added to  Spark using the `--packages` command line option. 
 
 ### Spark compiled with Scala 2.12
 ```
-$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.12:0.12.2
+$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.12:0.12.4
 ```
 
 ### Spark compiled with Scala 2.11
 ```
-$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:0.12.2
+$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:0.12.4
 ```
 
 ## Features
