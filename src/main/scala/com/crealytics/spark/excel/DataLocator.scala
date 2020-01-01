@@ -86,11 +86,8 @@ trait AreaDataLocator extends DataLocator {
       )
       .orElse(Try(workBook.getSheetAt(0)).toOption)
 
-  def readFromSheet(workbook: Workbook, name: Option[String]): Iterator[Vector[Cell]] = {
-    val sheet = findSheet(workbook, name)
-    val rowInd = rowIndices(workbook)
-    val colInd = columnIndices(workbook)
-    sheet.get.iterator.asScala
+  protected def readCells(rowIter: Iterator[Row], rowInd: Seq[Int], colInd: Seq[Int]): Iterator[Vector[Cell]] = {
+    rowIter
       .filter(r => rowInd.contains(r.getRowNum))
       .map(r => colInd.map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK)).to[Vector])
   }
@@ -147,7 +144,6 @@ class CellRangeAddressDataLocator(
     val sheetOption = findSheet(workbook, sheetName)
     val rowInd = rowIndices(workbook)
     val rows =
-      // TODO: Need to take into account excerpt size here
       sheetOption.map(_.rowIterator().asScala.filter(r => rowInd.contains(r.getRowNum)).toSeq).getOrElse(Seq.empty)
     val minCol =
       math.max(dataAddress.getFirstCell.getCol, rows.map(_.getFirstCellNum).reduceOption(_ min _).getOrElse(0: Short))
@@ -161,6 +157,24 @@ class CellRangeAddressDataLocator(
   }
   def rowIndices(workbook: Workbook): Seq[Int] = (dataAddress.getFirstCell.getRow to dataAddress.getLastCell.getRow)
 
+  def readFromSheet(workbook: Workbook, name: Option[String]): Iterator[Vector[Cell]] = {
+    val sheet = findSheet(workbook, name)
+    val rowInd = rowIndices(workbook)
+    // TODO: The .duplicate method is caching everything in memory, which one iterator has already read
+    //  and the other one didn't
+    //  We could get around this entire colInd monkey dance if it were ok to return less columns than expected
+    val (rowIter, backupIter) = sheet.get.iterator.asScala.duplicate
+    val rows =
+      backupIter.filter(r => rowInd.contains(r.getRowNum)).toSeq
+    val minCol =
+      math.max(dataAddress.getFirstCell.getCol, rows.map(_.getFirstCellNum).reduceOption(_ min _).getOrElse(0: Short))
+    val maxCol = math.min(
+      dataAddress.getLastCell.getCol,
+      rows.map(_.getLastCellNum - 1).reduceOption(_ max _).getOrElse(Int.MaxValue)
+    )
+    val colInd = minCol to maxCol
+    readCells(rowIter, rowInd, colInd)
+  }
   override def readFrom(workbook: Workbook): Iterator[Seq[Cell]] = readFromSheet(workbook, sheetName)
   override def sheetName(workbook: Workbook): Option[String] = sheetName
 }
@@ -174,6 +188,11 @@ class TableDataLocator(
     val xwb = workbook.asInstanceOf[XSSFWorkbook]
     readFromSheet(workbook, Some(xwb.getTable(tableName).getSheetName))
   }
+  def readFromSheet(workbook: Workbook, name: Option[String]): Iterator[Vector[Cell]] = {
+    val sheet = findSheet(workbook, name)
+    readCells(sheet.get.iterator.asScala, rowIndices(workbook), columnIndices(workbook))
+  }
+
   override def toSheet(
     header: Option[Seq[String]],
     data: Iterator[Seq[Any]],

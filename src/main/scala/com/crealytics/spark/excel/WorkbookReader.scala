@@ -9,7 +9,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.poi.ss.usermodel.{Workbook, WorkbookFactory}
 
 trait WorkbookReader {
-  protected def openWorkbook(): Workbook
+  def openWorkbook(): Workbook
   def withWorkbook[T](f: Workbook => T): T = {
     val workbook = openWorkbook()
     val res = f(workbook)
@@ -37,7 +37,7 @@ object WorkbookReader {
 }
 class DefaultWorkbookReader(inputStreamProvider: => InputStream, workbookPassword: Option[String])
     extends WorkbookReader {
-  protected def openWorkbook(): Workbook =
+  def openWorkbook(): Workbook =
     workbookPassword
       .fold(WorkbookFactory.create(inputStreamProvider))(
         password => WorkbookFactory.create(inputStreamProvider, password)
@@ -46,7 +46,7 @@ class DefaultWorkbookReader(inputStreamProvider: => InputStream, workbookPasswor
 
 class StreamingWorkbookReader(inputStreamProvider: => InputStream, workbookPassword: Option[String], maxRowsInMem: Int)
     extends WorkbookReader {
-  override protected def openWorkbook(): Workbook = {
+  override def openWorkbook(): Workbook = {
     val builder = StreamingReader
       .builder()
       .rowCacheSize(maxRowsInMem)

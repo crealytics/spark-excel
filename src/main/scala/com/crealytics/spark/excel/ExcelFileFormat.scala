@@ -13,6 +13,7 @@ import org.apache.spark.sql.execution.datasources._
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
 
+import scala.collection.AbstractIterator
 import scala.util.control.NonFatal
 
 class ExcelFileFormat extends FileFormat with DataSourceRegister {
@@ -61,27 +62,34 @@ class ExcelFileFormat extends FileFormat with DataSourceRegister {
 
       val reader = WorkbookReader(parameters + ("path" -> file.filePath), conf)
       val dataLocator = DataLocator(parameters)
-      val excerpt: List[SheetRow] = reader.withWorkbook(dataLocator.readFrom(_).take(excerptSize).to[List])
-      reader.withWorkbook { workbook =>
-        val allDataIterator = dataLocator.readFrom(workbook)
-        val headerNs = dataSchema.fieldNames.zip(excerpt.head).toMap
-        val cellsExtractor = requiredSchema.map(
-          f =>
-            headerNs.get(f.name) match {
-              case Some(h) => (c: SheetRow) => c.find(_.getColumnIndex == h.getColumnIndex).orNull
-              case None => (_: SheetRow) => null
-            }
-        )
+      val workbook = reader.openWorkbook
+      val (excerptIterator, allDataIterator) = dataLocator.readFrom(workbook).duplicate
+      val excerpt: List[SheetRow] = excerptIterator.take(excerptSize).to[List]
+      val headerNs = dataSchema.fieldNames.zip(excerpt.head).toMap
+      val cellsExtractor = requiredSchema.map(
+        f =>
+          headerNs.get(f.name) match {
+            case Some(h) => (c: SheetRow) => c.find(_.getColumnIndex == h.getColumnIndex).orNull
+            case None => (_: SheetRow) => null
+          }
+      )
 
-        val parser = new ExcelParser(dataSchema, requiredSchema, excelOptions)
-        val safeParser = new FailureSafeParser[Array[Cell]](
-          input => Seq(parser.parse(input)),
-          parser.options.parseMode,
-          requiredSchema,
-          parser.options.columnNameOfCorruptRecord
-        )
-        val iter = if (headerFlag) allDataIterator.drop(1) else allDataIterator
-        iter.flatMap(row => safeParser.parse(cellsExtractor.map(_.apply(row)).toArray))
+      val parser = new ExcelParser(dataSchema, requiredSchema, excelOptions)
+      val safeParser = new FailureSafeParser[Array[Cell]](
+        input => Seq(parser.parse(input)),
+        parser.options.parseMode,
+        requiredSchema,
+        parser.options.columnNameOfCorruptRecord
+      )
+      val iter = if (headerFlag) allDataIterator.drop(1) else allDataIterator
+      val rowsIter = iter.flatMap(row => safeParser.parse(cellsExtractor.map(_.apply(row)).toArray))
+      new AbstractIterator[InternalRow] {
+        override def hasNext: Boolean = rowsIter.hasNext match {
+          case true => true
+          case false => workbook.close(); false
+        }
+
+        override def next(): InternalRow = rowsIter.next()
       }
     }
   }

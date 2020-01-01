@@ -163,14 +163,11 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
   private def nullSafeCell(datum: Cell, name: String, nullable: Boolean, options: ExcelOptions)(
     converter: ValueConverter
   ): Any = {
-    if (datum == options.nullValue || datum == null) {
-      if (!nullable) {
-        throw new RuntimeException(s"null value found but field $name is not nullable.")
-      }
-      null
-    } else {
-      converter.apply(datum).orNull
+    val valueOption = Option(datum).flatMap(converter).filterNot(_ == options.nullValue)
+    if (!nullable && valueOption.isEmpty) {
+      throw new RuntimeException(s"null value found but field $name is not nullable.")
     }
+    valueOption.orNull
   }
 
   private val doParse = if (requiredSchema.nonEmpty) { (input: Array[Cell]) =>
