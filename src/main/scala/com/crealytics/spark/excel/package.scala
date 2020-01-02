@@ -4,7 +4,7 @@ import java.math.BigDecimal
 
 import com.norbitltd.spoiwo.model.Sheet
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy
-import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, Row}
+import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, Row, Sheet => PSheet, Workbook}
 import org.apache.spark.sql.{DataFrameReader, DataFrameWriter}
 
 import scala.util.{Failure, Success, Try}
@@ -93,6 +93,18 @@ package object excel {
       val tableRows = sheet.rows.filter(r => r.index.exists((startRow to endRow).contains))
       tableRows.map(_.cells.filter(_.index.exists((startColumn to endColumn).contains)).map(_.value).to[Seq])
     }
+  }
+
+  implicit class RichWorkbook(val workBook: Workbook) extends AnyVal {
+
+    def findSheet(sheetName: Option[String]): Option[PSheet] =
+      sheetName
+        .flatMap(
+          sn =>
+            Try(Option(workBook.getSheetAt(sn.toInt))).toOption.flatten
+              .orElse(Option(workBook.getSheet(sn)))
+        )
+        .orElse(Try(workBook.getSheetAt(0)).toOption)
   }
 
   implicit class ExcelDataFrameReader(val dataFrameReader: DataFrameReader) extends AnyVal {
