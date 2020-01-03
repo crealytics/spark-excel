@@ -2,6 +2,8 @@ name := "spark-excel"
 
 organization := "com.crealytics"
 
+enablePlugins(GitVersioning)
+
 crossScalaVersions := Seq("2.12.10", "2.11.12")
 
 scalaVersion := crossScalaVersions.value.head

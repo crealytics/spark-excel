@@ -14,6 +14,8 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
 addSbtPlugin("org.hammerlab.sbt" % "assembly" % "5.0.0")
 
+addSbtPlugin("io.shiftleft" % "sbt-ci-release-early" % "1.2.2")
+
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.12")
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.8.1")
