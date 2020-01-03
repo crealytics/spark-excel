@@ -5,7 +5,6 @@ import com.norbitltd.spoiwo.model.{
   CellDataFormat,
   CellRange,
   CellStyle,
-  HasIndex,
   Table,
   TableColumn,
   Cell => WriteCell,
@@ -14,7 +13,7 @@ import com.norbitltd.spoiwo.model.{
 }
 import org.apache.poi.ss.SpreadsheetVersion
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy
-import org.apache.poi.ss.usermodel.{Cell, Row, Sheet, Workbook}
+import org.apache.poi.ss.usermodel.{Cell, Sheet, Workbook}
 import org.apache.poi.ss.util.{AreaReference, CellReference}
 import org.apache.poi.xssf.usermodel.{XSSFTable, XSSFWorkbook}
 import org.apache.spark.sql.types.Decimal
@@ -86,14 +85,17 @@ trait AreaDataLocator extends DataLocator {
       )
       .orElse(Try(workBook.getSheetAt(0)).toOption)
 
-  protected def readCells(rowIter: Iterator[Row], rowInd: Seq[Int], colInd: Seq[Int]): Iterator[Seq[Cell]] = {
-    rowIter
-      .filter(r => rowInd.contains(r.getRowNum))
-      .map { r =>
-        val values = colInd.filter(_ < r.getLastCellNum).map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK))
-        values //.iterator
-      }
-  }
+  def readFromSheet(workbook: Workbook, name: Option[String]): Iterator[Seq[Cell]] =
+    workbook
+      .findSheet(name)
+      .get
+      .iterator
+      .asScala
+      .filter(r => rowIndices(workbook).contains(r.getRowNum))
+      .map(
+        r =>
+          columnIndices(workbook).filter(_ < r.getLastCellNum).map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK))
+      )
 
   override def toSheet(
     header: Option[Seq[String]],
@@ -143,18 +145,9 @@ class CellRangeAddressDataLocator(
 ) extends AreaDataLocator {
   private val sheetName = Option(dataAddress.getFirstCell.getSheetName)
 
-  def columnIndices(workbook: Workbook): Seq[Int] = {
-    dataAddress.getFirstCell.getCol to dataAddress.getLastCell.getCol
-  }
+  def columnIndices(workbook: Workbook): Seq[Int] = dataAddress.getFirstCell.getCol to dataAddress.getLastCell.getCol
   def rowIndices(workbook: Workbook): Seq[Int] = (dataAddress.getFirstCell.getRow to dataAddress.getLastCell.getRow)
 
-  def readFromSheet(workbook: Workbook, name: Option[String]): Iterator[Seq[Cell]] = {
-    val sheet = findSheet(workbook, name)
-    val rowInd = rowIndices(workbook)
-    val colInd = columnIndices(workbook)
-    val rowIter = sheet.get.iterator.asScala
-    readCells(rowIter, rowInd, colInd)
-  }
   override def readFrom(workbook: Workbook): Iterator[Seq[Cell]] = readFromSheet(workbook, sheetName)
   override def sheetName(workbook: Workbook): Option[String] = sheetName
 }
@@ -167,10 +160,6 @@ class TableDataLocator(
   override def readFrom(workbook: Workbook): Iterator[Seq[Cell]] = {
     val xwb = workbook.asInstanceOf[XSSFWorkbook]
     readFromSheet(workbook, Some(xwb.getTable(tableName).getSheetName))
-  }
-  def readFromSheet(workbook: Workbook, name: Option[String]): Iterator[Seq[Cell]] = {
-    val sheet = findSheet(workbook, name)
-    readCells(sheet.get.iterator.asScala, rowIndices(workbook), columnIndices(workbook))
   }
 
   override def toSheet(
