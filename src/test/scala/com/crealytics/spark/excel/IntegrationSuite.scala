@@ -172,7 +172,7 @@ class IntegrationSuite
         }
       }
 
-      it("returns all data rows when inferring schema", WIP) {
+      it("returns all data rows when inferring schema") {
         forAll(rowsGen.filter(_.nonEmpty)) { rows =>
           val original = spark.createDataset(rows).toDF
           val inferred = writeThenRead(original, schema = None)
@@ -222,7 +222,7 @@ class IntegrationSuite
         }
       }
 
-      it("reads files without headers correctly") {
+      it("reads files without headers correctly", WIP) {
         forAll(dataAndLocationGen.filter(_._1.nonEmpty), fileNames) {
           case ((rows, startCellAddress, endCellAddress), fileName) =>
             val original = spark.createDataset(rows).toDF
@@ -239,7 +239,7 @@ class IntegrationSuite
         }
       }
 
-      it("reads files with missing cells correctly", WIP) {
+      it("reads files with missing cells correctly") {
         forAll(rowsGen.filter(_.nonEmpty), Gen.option(Gen.const("")).map(_.orNull)) { (rows, emptyValue) =>
           val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
           val numCols = 20

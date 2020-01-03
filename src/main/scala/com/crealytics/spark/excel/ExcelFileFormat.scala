@@ -63,9 +63,8 @@ class ExcelFileFormat extends FileFormat with DataSourceRegister {
       val reader = WorkbookReader(parameters + ("path" -> file.filePath), conf)
       val dataLocator = DataLocator(parameters)
       val workbook = reader.openWorkbook
-      val (excerptIterator, allDataIterator) = dataLocator.readFrom(workbook).duplicate
-      val excerpt: List[SheetRow] = excerptIterator.take(excerptSize).to[List]
-      val headerNs = dataSchema.fieldNames.zip(excerpt.head).toMap
+      val allDataIterator = dataLocator.readFrom(workbook).buffered
+      val headerNs = dataSchema.fieldNames.zip(allDataIterator.head).toMap
       val cellsExtractor = requiredSchema.map(
         f =>
           headerNs.get(f.name) match {
@@ -159,7 +158,8 @@ sealed trait SheetXHeader {
         r.map(ExcelFileFormat.getSparkType)
       }
     val dataTypes = InferSchema(cellTypes)
-    colNames(excerpt, dataTypes).zip(dataTypes).map {
+    val columnNames = colNames(excerpt, dataTypes)
+    columnNames.zipAll(dataTypes, null, StringType).filter(_._1 != null).map {
       case (colName, dataType) =>
         StructField(name = colName, dataType = dataType, nullable = true)
     }
