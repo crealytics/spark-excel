@@ -1,13 +1,26 @@
 name: CI
 on:
   push:
+
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+        scala: ["2.12.8", "2.11.12"]
+        spark: ["2.3.2", "2.4.0"]
+        exclude:
+          - scala: "2.12.8"
+            spark: "2.3.2"
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: olafurpg/setup-scala@v5
       - name: Compile
-        run: sbt compile
+        run: sbt -Dspark.testVersion=${{ matrix.spark  }} ++${{ matrix.scala }} compile
+      - name: Test
+        run: sbt -Dspark.testVersion=${{ matrix.spark  }} ++${{ matrix.scala }} test
+      - name: Assembly
+        run: sbt ++${{ matrix.scala }} assembly
+      - name: Scalastyle
+        run: sbt ++${{ matrix.scala }} scalastyle "test:scalastyle"
