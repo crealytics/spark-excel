@@ -16,11 +16,20 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - uses: olafurpg/setup-scala@v5
-      - name: Compile
-        run: sbt -Dspark.testVersion=${{ matrix.spark  }} ++${{ matrix.scala }} compile
       - name: Test
         run: sbt -Dspark.testVersion=${{ matrix.spark  }} ++${{ matrix.scala }} test
       - name: Assembly
         run: sbt ++${{ matrix.scala }} assembly
       - name: Scalastyle
         run: sbt ++${{ matrix.scala }} scalastyle "test:scalastyle"
+      - name: GPG import
+        run: openssl aes-256-cbc -pbkdf2 -k "${{ secrets.PGP_PASSPHRASE }}" -in private-key.pem.enc -out private-key.pem -d && gpg --import --no-tty --batch --yes private-key.pem
+      - name: GPG check
+        run: gpg --list-keys
+      - name: Publish
+        run: sbt ciReleaseTagNextVersion ciReleaseSonatype
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
