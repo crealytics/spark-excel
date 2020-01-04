@@ -6,3 +6,4 @@ project/target/
 .idea
 *.log
 **/.bloop/
+private-key.pem

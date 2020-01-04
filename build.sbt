@@ -67,34 +67,18 @@ spAppendScalaVersion := true
 
 spIncludeMaven := true
 
-publishTo := {
-  val nexus = "https://oss.sonatype.org/"
-  if (version.value.endsWith("SNAPSHOT"))
-    Some("snapshots" at nexus + "content/repositories/snapshots")
-  else
-    Some("releases" at nexus + "service/local/staging/deploy/maven2")
-}
+publishTo := sonatypePublishToBundle.value
 
-pomExtra :=
-  <url>https://github.com/crealytics/spark-excel</url>
-    <licenses>
-      <license>
-        <name>Apache License, Version 2.0</name>
-        <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
-        <distribution>repo</distribution>
-      </license>
-    </licenses>
-    <scm>
-      <url>git@github.com:crealytics/spark-excel.git</url>
-      <connection>scm:git:git@github.com:crealytics/spark-excel.git</connection>
-    </scm>
-    <developers>
-      <developer>
-        <id>nightscape</id>
-        <name>Martin Mauch</name>
-        <url>http://www.crealytics.com</url>
-      </developer>
-    </developers>
+Global/useGpgPinentry := true
+
+licenses += "Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")
+
+homepage := Some(url("https://github.com/crealytics/spark-excel"))
+
+developers ++= List(
+  Developer("nightscape", "Martin Mauch", "@nightscape", url("https://github.com/nightscape"))
+)
+scmInfo := Some(ScmInfo(url("https://github.com/crealytics/spark-excel"), "git@github.com:crealytics/spark-excel.git"))
 
 // Skip tests during assembly
 test in assembly := {}
