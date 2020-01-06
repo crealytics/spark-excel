@@ -5,6 +5,16 @@ A library for querying Excel files with Apache Spark, for Spark SQL and DataFram
 [![Build Status](https://github.com/crealytics/spark-excel/workflows/CI/badge.svg)](https://github.com/crealytics/spark-excel/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.crealytics/spark-excel_2.11.svg)](https://search.maven.org/artifact/com.crealytics/spark-excel_2.11/)
 
+## Co-maintainers wanted
+Due to personal and professional constraints, the development of this library has been rather slow.
+If you find value in this library, please consider stepping up as a co-maintainer by leaving a comment [here](https://github.com/crealytics/spark-excel/issues/191).
+Help is very welcome e.g. in the following areas:
+
+* Additional features
+* Code improvements and reviews
+* Bug analysis and fixing
+* Documentation improvements
+* Build / test infrastructure
 
 ## Requirements
 
