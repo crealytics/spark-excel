@@ -16,6 +16,13 @@ trait WorkbookReader {
     workbook.close()
     res
   }
+  def sheetNames: Seq[String] = {
+    withWorkbook(workbook =>
+        for (sheetIx <- (0 until workbook.getNumberOfSheets())) yield {
+          workbook.getSheetAt(sheetIx).getSheetName()
+        }
+      )
+  }
 }
 
 object WorkbookReader {
