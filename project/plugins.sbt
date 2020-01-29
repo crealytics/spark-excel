@@ -6,7 +6,7 @@ addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0" excludeAll(
   ExclusionRule(organization = "com.danieltrinh")))
 
 
-addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.2")
+addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.3")
 
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.6.1")
 
