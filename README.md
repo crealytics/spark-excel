@@ -100,6 +100,27 @@ val df = spark.read.excel(
  .load("Worktime.xlsx")
 ```
 
+If the sheet name is unavailable, it is possible to pass in an index:
+
+```scala
+val df = spark.read.excel(
+  useHeader = true,
+  dataAddress = "0!B3:C35"
+).load("Worktime.xlsx")
+```
+
+or to read in the names dynamically:
+
+```scala
+val sheetNames = WorkbookReader( Map("path") -> "Worktime.xlsx"
+                               , spark.sparkContext.hadoopConfiguration
+                               ).sheetNames
+val df = spark.read.excel(
+  useHeader = true,
+  dataAddress = sheetNames(0)
+)
+```
+
 #### Create a DataFrame from an Excel file using custom schema
 ```scala
 import org.apache.spark.sql._
