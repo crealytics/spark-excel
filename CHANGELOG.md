@@ -1,3 +1,7 @@
+0.12.5
+======
+- Feature: Add `sheetNames' in shaded Workbook
+
 0.12.4
 ======
 - Bugfix: Shade xlsx-streamer. Should fix https://github.com/crealytics/spark-excel/issues/135
