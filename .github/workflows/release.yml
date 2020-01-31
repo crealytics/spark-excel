@@ -1,6 +1,8 @@
 name: Release
 on:
   push:
+    branches:
+      - master
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -11,8 +13,12 @@ jobs:
       - name: GPG check
         run: gpg --list-keys
       - name: Publish
-        run: echo Publishing
+        run: sbt clean test ciReleaseTagNextVersion ciRelease
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
