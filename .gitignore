@@ -1,5 +1,6 @@
 target/
 project/target/
+project/project/
 *.p12
 .ensime*
 *.swp
