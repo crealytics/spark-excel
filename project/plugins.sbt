@@ -14,7 +14,7 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
 addSbtPlugin("org.hammerlab.sbt" % "assembly" % "5.0.0")
 
-addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.0")
+addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.2")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.13")
 
