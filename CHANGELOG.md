@@ -1,3 +1,7 @@
+0.12.6
+======
+- Bugfix: Properly handle empty spreadsheets
+
 0.12.5
 ======
 - Feature: Add `sheetNames' in shaded Workbook
