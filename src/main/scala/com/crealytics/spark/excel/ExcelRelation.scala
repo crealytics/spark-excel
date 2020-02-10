@@ -112,8 +112,12 @@ case class ExcelRelation(
         InferSchema(parallelize(cellTypes))
       } else {
         // By default fields are assumed to be StringType
-        val maxCellsPerRow = excerpt.map(_.size).reduce(math.max)
-        (0 until maxCellsPerRow).map(_ => StringType: DataType).toArray
+        excerpt.map(_.size).reduceOption(math.max) match {
+          case None => Array()
+          case Some(maxCellsPerRow) => {
+            (0 until maxCellsPerRow).map(_ => StringType: DataType).toArray
+          }
+        }
       }
 
       def colName(cell: Cell) = cell.getStringCellValue
