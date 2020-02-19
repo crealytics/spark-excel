@@ -9,6 +9,7 @@
 0.12.4
 ======
 - Bugfix: Shade xlsx-streamer. Should fix https://github.com/crealytics/spark-excel/issues/135
+
 0.12.2
 ======
 - Bugfix: Properly handle empty header cells (they get names like `_c1`)
