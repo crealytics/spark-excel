@@ -28,7 +28,7 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
     val wbReader = WorkbookReader(parameters, sqlContext.sparkContext.hadoopConfiguration)
     val dataLocator = DataLocator(parameters)
     ExcelRelation(
-      useHeader = checkParameter(parameters, "useHeader").toBoolean,
+      header = checkParameter(parameters, "header").toBoolean,
       treatEmptyValuesAsNulls = parameters.get("treatEmptyValuesAsNulls").fold(false)(_.toBoolean),
       userSchema = Option(schema),
       inferSheetSchema = parameters.get("inferSchema").fold(false)(_.toBoolean),
@@ -47,7 +47,7 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
     data: DataFrame
   ): BaseRelation = {
     val path = checkParameter(parameters, "path")
-    val useHeader = checkParameter(parameters, "useHeader").toBoolean
+    val header = checkParameter(parameters, "header").toBoolean
     val filesystemPath = new Path(path)
     val fs = filesystemPath.getFileSystem(sqlContext.sparkContext.hadoopConfiguration)
     new ExcelFileSaver(
@@ -55,7 +55,7 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
       filesystemPath,
       data,
       saveMode = mode,
-      useHeader = useHeader,
+      header = header,
       dataLocator = DataLocator(parameters)
     ).save()
 

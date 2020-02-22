@@ -66,7 +66,7 @@ val spark: SparkSession = ???
 val df = spark.read
     .format("com.crealytics.spark.excel")
     .option("dataAddress", "'My Sheet'!B3:C35") // Optional, default: "A1"
-    .option("useHeader", "true") // Required
+    .option("header", "true") // Required
     .option("treatEmptyValuesAsNulls", "false") // Optional, default: true
     .option("inferSchema", "false") // Optional, default: false
     .option("addColorColumns", "true") // Optional, default: false
@@ -87,7 +87,7 @@ import com.crealytics.spark.excel._
 
 val spark: SparkSession = ???
 val df = spark.read.excel(
-    useHeader = true,  // Required
+    header = true,  // Required
     dataAddress = "'My Sheet'!B3:C35", // Optional, default: "A1"
     treatEmptyValuesAsNulls = false,  // Optional, default: true
     inferSchema = false,  // Optional, default: false
@@ -104,7 +104,7 @@ If the sheet name is unavailable, it is possible to pass in an index:
 
 ```scala
 val df = spark.read.excel(
-  useHeader = true,
+  header = true,
   dataAddress = "0!B3:C35"
 ).load("Worktime.xlsx")
 ```
@@ -116,7 +116,7 @@ val sheetNames = WorkbookReader( Map("path") -> "Worktime.xlsx"
                                , spark.sparkContext.hadoopConfiguration
                                ).sheetNames
 val df = spark.read.excel(
-  useHeader = true,
+  header = true,
   dataAddress = sheetNames(0)
 )
 ```
@@ -136,7 +136,7 @@ val spark: SparkSession = ???
 val df = spark.read
     .format("com.crealytics.spark.excel")
     .option("sheetName", "Info")
-    .option("useHeader", "true")
+    .option("header", "true")
     .schema(peopleSchema)
     .load("People.xlsx")
 ```
@@ -149,7 +149,7 @@ val df: DataFrame = ???
 df.write
   .format("com.crealytics.spark.excel")
   .option("dataAddress", "'My Sheet'!B3:C35")
-  .option("useHeader", "true")
+  .option("header", "true")
   .option("dateFormat", "yy-mmm-d") // Optional, default: yy-m-d h:mm
   .option("timestampFormat", "mm-dd-yyyy hh:mm:ss") // Optional, default: yyyy-mm-dd hh:mm:ss.000
   .mode("append") // Optional, default: overwrite.

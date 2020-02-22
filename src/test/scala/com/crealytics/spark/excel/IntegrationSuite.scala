@@ -71,11 +71,11 @@ class IntegrationSuite
       fileName: Option[String] = None,
       saveMode: SaveMode = SaveMode.Overwrite,
       dataAddress: Option[String] = None,
-      useHeader: Boolean = true
+      header: Boolean = true
     ): DataFrame = {
       val theFileName = fileName.getOrElse(File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath)
 
-      val writer = df.write.excel(dataAddress = s"'$sheetName'!A1", useHeader = useHeader).mode(saveMode)
+      val writer = df.write.excel(dataAddress = s"'$sheetName'!A1", header = header).mode(saveMode)
       val configuredWriter =
         Map("dataAddress" -> dataAddress).foldLeft(writer) {
           case (wri, (key, Some(value))) => wri.option(key, value)
@@ -83,7 +83,7 @@ class IntegrationSuite
         }
       configuredWriter.save(theFileName)
 
-      val reader = spark.read.excel(dataAddress = s"'$sheetName'!A1", useHeader = useHeader)
+      val reader = spark.read.excel(dataAddress = s"'$sheetName'!A1", header = header)
       val configuredReader = Map(
         "maxRowsInMemory" -> maxRowsInMemory,
         "inferSchema" -> Some(schema.isEmpty),
@@ -193,7 +193,7 @@ class IntegrationSuite
             val inferred = writeThenRead(
               original,
               schema = None,
-              useHeader = false,
+              header = false,
               fileName = Some(fileName),
               dataAddress =
                 Some(s"'$sheetName'!${startCellAddress.formatAsString()}:${endCellAddress.formatAsString()}")
@@ -322,7 +322,7 @@ class IntegrationSuite
       )
     })
     val allData = spark.read
-      .excel(dataAddress = s"'$sheetName'!A1", useHeader = false, inferSchema = false)
+      .excel(dataAddress = s"'$sheetName'!A1", header = false, inferSchema = false)
       .load(fileName)
       .collect()
       .map(_.toSeq)

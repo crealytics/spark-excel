@@ -24,11 +24,11 @@ class ExcelFileSaver(
   dataFrame: DataFrame,
   saveMode: SaveMode,
   dataLocator: DataLocator,
-  useHeader: Boolean = true
+  header: Boolean = true
 ) {
   def save(): Unit = {
     def sheet(workbook: XSSFWorkbook) = {
-      val headerRow = if (useHeader) Some(dataFrame.schema.fields.map(_.name).toSeq) else None
+      val headerRow = if (header) Some(dataFrame.schema.fields.map(_.name).toSeq) else None
       val dataRows = dataFrame
         .toLocalIterator()
         .asScala
