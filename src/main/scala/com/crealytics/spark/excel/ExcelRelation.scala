@@ -13,7 +13,7 @@ import scala.util.Try
 
 case class ExcelRelation(
   dataLocator: DataLocator,
-  useHeader: Boolean,
+  header: Boolean,
   treatEmptyValuesAsNulls: Boolean,
   inferSheetSchema: Boolean,
   addColorColumns: Boolean = true,
@@ -62,7 +62,7 @@ case class ExcelRelation(
     val lookups = requiredColumns.map(columnExtractor).toSeq
     workbookReader.withWorkbook { workbook =>
       val allDataIterator = dataLocator.readFrom(workbook)
-      val iter = if (useHeader) allDataIterator.drop(1) else allDataIterator
+      val iter = if (header) allDataIterator.drop(1) else allDataIterator
       val rows: Iterator[Seq[Any]] = iter
         .flatMap(
           row =>
@@ -122,7 +122,7 @@ case class ExcelRelation(
 
       def colName(cell: Cell) = cell.getStringCellValue
 
-      val colNames = if (useHeader) {
+      val colNames = if (header) {
         val headerNames = headerCells.map(colName)
         val duplicates = {
           val nonNullHeaderNames = headerNames.filter(_ != null)

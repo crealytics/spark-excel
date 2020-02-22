@@ -54,7 +54,7 @@ package object excel {
 
   implicit class ExcelDataFrameReader(val dataFrameReader: DataFrameReader) extends AnyVal {
     def excel(
-      useHeader: Boolean = true,
+      header: Boolean = true,
       treatEmptyValuesAsNulls: Boolean = false,
       inferSchema: Boolean = false,
       addColorColumns: Boolean = false,
@@ -65,7 +65,7 @@ package object excel {
       workbookPassword: String = null
     ): DataFrameReader = {
       Map(
-        "useHeader" -> useHeader,
+        "header" -> header,
         "treatEmptyValuesAsNulls" -> treatEmptyValuesAsNulls,
         "inferSchema" -> inferSchema,
         "addColorColumns" -> addColorColumns,
@@ -86,7 +86,7 @@ package object excel {
 
   implicit class ExcelDataFrameWriter[T](val dataFrameWriter: DataFrameWriter[T]) extends AnyVal {
     def excel(
-      useHeader: Boolean = true,
+      header: Boolean = true,
       dataAddress: String = null,
       preHeader: String = null,
       dateFormat: String = null,
@@ -94,7 +94,7 @@ package object excel {
       workbookPassword: String = null
     ): DataFrameWriter[T] = {
       Map(
-        "useHeader" -> useHeader,
+        "header" -> header,
         "dataAddress" -> dataAddress,
         "dateFormat" -> dateFormat,
         "timestampFormat" -> timestampFormat,
