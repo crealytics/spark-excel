@@ -1,3 +1,7 @@
+0.13.0
+======
+- Change: Rename `useHeader` option to `header` in order to better align with Spark's CSV reader.
+
 0.12.6
 ======
 - Bugfix: Properly handle empty spreadsheets
