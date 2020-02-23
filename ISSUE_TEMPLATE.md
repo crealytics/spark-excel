@@ -1,5 +1,6 @@
 Your issue may already be reported!
 Please search on the [issue track](../) before creating one.
+Moreover, please read the [`CHANGELOG.md`](../../blob/master/CHANGELOG.md) file for any changes you might have missed.
 
 ## Expected Behavior
 > If you're describing a bug, tell us what should happen
