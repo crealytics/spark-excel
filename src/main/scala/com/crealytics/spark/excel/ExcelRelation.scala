@@ -29,7 +29,6 @@ case class ExcelRelation(
 
   lazy val excerpt: List[SheetRow] = workbookReader.withWorkbook(dataLocator.readFrom(_).take(excerptSize).to[List])
 
-  lazy val headerCells = excerpt.head
   lazy val headerColumnForName = headerColumns.map(c => c.name -> c).toMap
 
   override val schema: StructType = inferSchema
@@ -102,10 +101,13 @@ case class ExcelRelation(
     * Generates a header from the given row which is null-safe and duplicate-safe.
     */
   lazy val headerColumns: Seq[HeaderDataColumn] = {
+    val firstRow = excerpt.head
+    val nonHeaderRows = if (header) excerpt.tail else excerpt
+
     val fields = userSchema.getOrElse {
       val dataTypes = if (this.inferSheetSchema) {
-        val headerIndices = headerCells.map(_.getColumnIndex)
-        val cellTypes: Seq[Seq[DataType]] = excerpt.tail
+        val headerIndices = firstRow.map(_.getColumnIndex)
+        val cellTypes: Seq[Seq[DataType]] = nonHeaderRows
           .map { r =>
             headerIndices.map(i => r.find(_.getColumnIndex == i).map(getSparkType).getOrElse(DataTypes.NullType))
           }
@@ -123,13 +125,13 @@ case class ExcelRelation(
       def colName(cell: Cell) = cell.getStringCellValue
 
       val colNames = if (header) {
-        val headerNames = headerCells.map(colName)
+        val headerNames = firstRow.map(colName)
         val duplicates = {
           val nonNullHeaderNames = headerNames.filter(_ != null)
           nonNullHeaderNames.groupBy(identity).filter(_._2.size > 1).keySet
         }
 
-        headerCells.zipWithIndex.map {
+        firstRow.zipWithIndex.map {
           case (cell, index) =>
             val value = colName(cell)
             if (value == null || value.isEmpty) {
@@ -143,7 +145,7 @@ case class ExcelRelation(
             }
         }
       } else {
-        headerCells.zipWithIndex.map {
+        firstRow.zipWithIndex.map {
           case (_, index) =>
             // Uses default column names, "_c#" where # is its position of fields
             // when header option is disabled.
@@ -156,7 +158,7 @@ case class ExcelRelation(
       }
     }
 
-    headerCells.zip(fields).map {
+    firstRow.zip(fields).map {
       case (cell, field) =>
         new HeaderDataColumn(field, cell.getColumnIndex, treatEmptyValuesAsNulls, timestampParser)
     }
