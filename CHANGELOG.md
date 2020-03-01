@@ -1,3 +1,7 @@
+0.13.1
+======
+- Bugfix: https://github.com/crealytics/spark-excel/pull/215
+
 0.13.0
 ======
 - Change: Rename `useHeader` option to `header` in order to better align with Spark's CSV reader.
