@@ -18,11 +18,17 @@ Moreover, please read the [`CHANGELOG.md`](../../blob/master/CHANGELOG.md) file 
 
 ## Steps to Reproduce (for bugs)
 > Provide a link to a live example, or an unambiguous set of steps to
-> reproduce this bug. Include code to reproduce, if relevant
-1. E.g. clone repository xyz with minimal code for reproduction
-2. E.g. package JAR using Maven with the following POM
-3. E.g. command you used to start Spark (`spark-submit --foo=bar ...`)
-4. ...
+> reproduce this bug. Include code to reproduce, if relevant.
+> Example:
+1. Download the example file uploaded [here](http://example.com/)
+2. Start Spark from command line as `spark-shell --packages com.crealytics:spark-excel_2.12:x.y.z --foo=bar`
+3. Read the downloaded example file
+    ```
+    val df = spark.read
+    .format("com.crealytics.spark.excel")
+    .option("dataAddress", "'My Sheet'!B3:C35")
+    .load("example_file_exhibiting_bug.xlsx")
+    ```
 
 ## Context
 > How has this issue affected you? What are you trying to accomplish?
