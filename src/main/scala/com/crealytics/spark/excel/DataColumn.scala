@@ -71,7 +71,8 @@ class HeaderDataColumn(
         if (cellType == CellType.STRING && cell.getStringCellValue == "") None else bigDecimal
       case _: TimestampType =>
         cellType match {
-          case CellType.NUMERIC => numericValue.map(n => new Timestamp(DateUtil.getJavaDate(n).getTime))
+          case CellType.NUMERIC | CellType.FORMULA =>
+            numericValue.map(n => new Timestamp(DateUtil.getJavaDate(n).getTime))
           case _ => stringValue.filter(_.trim.nonEmpty).map(parseTimestamp)
         }
       case _: DateType => numericValue.map(n => new java.sql.Date(DateUtil.getJavaDate(n).getTime))
