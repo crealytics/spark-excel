@@ -1,3 +1,7 @@
+Next
+====
+- Bugfix: https://github.com/crealytics/spark-excel/pull/229
+
 0.13.1
 ======
 - Bugfix: https://github.com/crealytics/spark-excel/pull/215
