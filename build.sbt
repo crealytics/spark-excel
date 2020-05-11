@@ -25,18 +25,18 @@ libraryDependencies ++= Seq(
 ).map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 shadedDeps ++= Seq(
-  "org.apache.poi" ^ "poi" ^ "4.1.0",
-  "org.apache.poi" ^ "poi-ooxml" ^ "4.1.0",
-  "com.norbitltd" ^^ "spoiwo" ^ "1.6.0",
-  "com.monitorjbl" ^ "xlsx-streamer" ^ "2.1.0",
-  "org.apache.commons" ^ "commons-compress" ^ "1.19",
+  "org.apache.poi" ^ "poi" ^ "4.1.2",
+  "org.apache.poi" ^ "poi-ooxml" ^ "4.1.2",
+  "com.norbitltd" ^^ "spoiwo" ^ "1.7.0",
+  "com.github.pjfanning" ^ "excel-streaming-reader" ^ "2.3.3",
+  "org.apache.commons" ^ "commons-compress" ^ "1.20",
   "com.fasterxml.jackson.core" ^ "jackson-core" ^ "2.8.8",
 )
 
 shadeRenames ++= Seq(
   "org.apache.poi.**" -> "shadeio.poi.@1",
   "com.norbitltd.spoiwo.**" -> "shadeio.spoiwo.@1",
-  "com.monitorjbl.**" -> "shadeio.monitorjbl.@1",
+  "com.github.pjfanning.**" -> "shadeio.pjfanning.@1",
   "com.fasterxml.jackson.**" -> "shadeio.jackson.@1",
   "org.apache.commons.compress.**" -> "shadeio.commons.compress.@1",
 )

@@ -3,7 +3,7 @@ package com.crealytics.spark.excel
 import java.io.InputStream
 
 import com.crealytics.spark.excel.Utils.MapIncluding
-import com.monitorjbl.xlsx.StreamingReader
+import com.github.pjfanning.xlsx.StreamingReader
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.poi.ss.usermodel.{Workbook, WorkbookFactory}
@@ -58,7 +58,7 @@ class StreamingWorkbookReader(inputStreamProvider: => InputStream, workbookPassw
     val builder = StreamingReader
       .builder()
       .rowCacheSize(maxRowsInMem)
-      .bufferSize(maxRowsInMem * 1024)
+      .bufferSize(4096)
     workbookPassword
       .fold(builder)(password => builder.password(password))
       .open(inputStreamProvider)

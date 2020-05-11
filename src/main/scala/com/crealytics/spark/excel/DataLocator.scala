@@ -49,24 +49,25 @@ object DataLocator {
   val TableAddress = """(.*)\[(.*)\]""".r
   val WithDataAddress = MapIncluding(Seq("dataAddress"), optionally = Seq("dateFormat", "timestampFormat"))
   val WithoutDataAddress = MapIncluding(Seq(), optionally = Seq("dateFormat", "timestampFormat"))
-  def apply(parameters: Map[String, String]): DataLocator = parameters match {
-    case WithDataAddress(Seq(TableAddress(_, _)), _) if parameters.contains("maxRowsInMemory") =>
-      throw new IllegalArgumentException(
-        s"Reading from a table cannot be combined with maxRowsInMemory, parameters are: $parameters"
-      )
+  def apply(parameters: Map[String, String]): DataLocator =
+    parameters match {
+      case WithDataAddress(Seq(TableAddress(_, _)), _) if parameters.contains("maxRowsInMemory") =>
+        throw new IllegalArgumentException(
+          s"Reading from a table cannot be combined with maxRowsInMemory, parameters are: $parameters"
+        )
 
-    case WithDataAddress(Seq(TableAddress(tableName, "#All")), Seq(dateFormat, timestampFormat)) =>
-      new TableDataLocator(tableName, dateFormat, timestampFormat)
+      case WithDataAddress(Seq(TableAddress(tableName, "#All")), Seq(dateFormat, timestampFormat)) =>
+        new TableDataLocator(tableName, dateFormat, timestampFormat)
 
-    case WithDataAddress(Seq(dataAddress), Seq(dateFormat, timestampFormat)) =>
-      new CellRangeAddressDataLocator(
-        parseRangeAddress(Option(dataAddress).getOrElse("A1")),
-        dateFormat,
-        timestampFormat
-      )
-    case WithoutDataAddress(Seq(), Seq(dateFormat, timestampFormat)) =>
-      new CellRangeAddressDataLocator(parseRangeAddress("A1"), dateFormat, timestampFormat)
-  }
+      case WithDataAddress(Seq(dataAddress), Seq(dateFormat, timestampFormat)) =>
+        new CellRangeAddressDataLocator(
+          parseRangeAddress(Option(dataAddress).getOrElse("A1")),
+          dateFormat,
+          timestampFormat
+        )
+      case WithoutDataAddress(Seq(), Seq(dateFormat, timestampFormat)) =>
+        new CellRangeAddressDataLocator(parseRangeAddress("A1"), dateFormat, timestampFormat)
+    }
 }
 
 trait AreaDataLocator extends DataLocator {
@@ -103,9 +104,12 @@ trait AreaDataLocator extends DataLocator {
       .zip(rowIndices(existingWorkbook).iterator)
       .map {
         case (row, rowIdx) =>
-          WriteRow(row.zip(colInd).map {
-            case (c, colIdx) => toCell(c, dateFrmt, timestampFrmt).withIndex(colIdx)
-          }, index = rowIdx)
+          WriteRow(
+            row.zip(colInd).map {
+              case (c, colIdx) => toCell(c, dateFrmt, timestampFrmt).withIndex(colIdx)
+            },
+            index = rowIdx
+          )
       }
       .toList
     sheetName(existingWorkbook).foldLeft(WriteSheet(rows = dataRows))(_ withSheetName _)
@@ -114,21 +118,22 @@ trait AreaDataLocator extends DataLocator {
   def dateCell(time: Long, format: String): WriteCell = {
     WriteCell(new java.util.Date(time), style = CellStyle(dataFormat = CellDataFormat(format)))
   }
-  def toCell(a: Any, dateFormat: String, timestampFormat: String): WriteCell = a match {
-    case t: java.sql.Timestamp => dateCell(t.getTime, timestampFormat)
-    case d: java.sql.Date => dateCell(d.getTime, dateFormat)
-    case s: String => WriteCell(s)
-    case f: Float => WriteCell(f.toDouble)
-    case d: Double => WriteCell(d)
-    case b: Boolean => WriteCell(b)
-    case b: Byte => WriteCell(b.toInt)
-    case s: Short => WriteCell(s.toInt)
-    case i: Int => WriteCell(i)
-    case l: Long => WriteCell(l)
-    case b: BigDecimal => WriteCell(b)
-    case b: java.math.BigDecimal => WriteCell(BigDecimal(b))
-    case null => WriteCell.Empty
-  }
+  def toCell(a: Any, dateFormat: String, timestampFormat: String): WriteCell =
+    a match {
+      case t: java.sql.Timestamp => dateCell(t.getTime, timestampFormat)
+      case d: java.sql.Date => dateCell(d.getTime, dateFormat)
+      case s: String => WriteCell(s)
+      case f: Float => WriteCell(f.toDouble)
+      case d: Double => WriteCell(d)
+      case b: Boolean => WriteCell(b)
+      case b: Byte => WriteCell(b.toInt)
+      case s: Short => WriteCell(s.toInt)
+      case i: Int => WriteCell(i)
+      case l: Long => WriteCell(l)
+      case b: BigDecimal => WriteCell(b)
+      case b: java.math.BigDecimal => WriteCell(BigDecimal(b))
+      case null => WriteCell.Empty
+    }
 }
 
 class CellRangeAddressDataLocator(
