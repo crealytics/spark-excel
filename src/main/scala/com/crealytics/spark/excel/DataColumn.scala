@@ -92,9 +92,10 @@ class HeaderDataColumn(
 }
 
 class ColorDataColumn(val name: String, val columnIndex: Int) extends DataColumn {
-  def extractValue(cell: Cell): String = cell.getCellStyle.getFillForegroundColorColor match {
-    case null => ""
-    case c: org.apache.poi.xssf.usermodel.XSSFColor => c.getARGBHex
-    case c => throw new RuntimeException(s"Unknown color type $c: ${c.getClass}")
-  }
+  def extractValue(cell: Cell): String =
+    cell.getCellStyle.getFillForegroundColorColor match {
+      case null => ""
+      case c: org.apache.poi.xssf.usermodel.XSSFColor => c.getARGBHex
+      case c => throw new RuntimeException(s"Unknown color type $c: ${c.getClass}")
+    }
 }

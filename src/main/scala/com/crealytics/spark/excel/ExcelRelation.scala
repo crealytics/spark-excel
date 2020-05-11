@@ -164,14 +164,15 @@ case class ExcelRelation(
     }
   }
 
-  private def inferSchema(): StructType = this.userSchema.getOrElse {
-    val baseSchema = StructType(headerColumns.map(_.field))
-    if (addColorColumns) {
-      headerColumns.foldLeft(baseSchema) { (schema, header) =>
-        schema.add(s"${header.name}_color", StringType, nullable = true)
+  private def inferSchema(): StructType =
+    this.userSchema.getOrElse {
+      val baseSchema = StructType(headerColumns.map(_.field))
+      if (addColorColumns) {
+        headerColumns.foldLeft(baseSchema) { (schema, header) =>
+          schema.add(s"${header.name}_color", StringType, nullable = true)
+        }
+      } else {
+        baseSchema
       }
-    } else {
-      baseSchema
     }
-  }
 }
