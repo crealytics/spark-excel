@@ -111,7 +111,7 @@ case class ExcelRelation(
           .map { r =>
             headerIndices.map(i => r.find(_.getColumnIndex == i).map(getSparkType).getOrElse(DataTypes.NullType))
           }
-        InferSchema(parallelize(cellTypes))
+        InferSchema(cellTypes)
       } else {
         // By default fields are assumed to be StringType
         excerpt.map(_.size).reduceOption(math.max) match {
