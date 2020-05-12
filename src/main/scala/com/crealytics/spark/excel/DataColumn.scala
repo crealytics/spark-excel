@@ -29,67 +29,29 @@ class HeaderDataColumn(
       return null
     }
 
-    lazy val dataFormatter = new DataFormatter()
-    def stringValue =
-      cell.getCellType match {
-        case CellType.FORMULA =>
-          cell.getCachedFormulaResultType match {
-            case CellType.STRING => Option(cell.getRichStringCellValue).map(_.getString)
-            case CellType.NUMERIC => Option(cell.getNumericCellValue).map(_.toString)
-            case CellType.BLANK => None
-            case _ => Some(dataFormatter.formatCellValue(cell))
-          }
-        case CellType.BLANK => None
-        case _ => Some(dataFormatter.formatCellValue(cell))
-      }
-    def parseNumber(string: Option[String]): Option[Double] = string.filter(_.trim.nonEmpty).map(stringToDouble)
-    def numericValue =
-      cell.getCellType match {
-        case CellType.NUMERIC => Option(cell.getNumericCellValue)
-        case CellType.STRING => parseNumber(Option(cell.getStringCellValue))
-        case CellType.FORMULA =>
-          cell.getCachedFormulaResultType match {
-            case CellType.NUMERIC => Option(cell.getNumericCellValue)
-            case CellType.STRING =>
-              parseNumber(Option(cell.getRichStringCellValue).map(_.getString))
-          }
-      }
-    def booleanValue =
-      cell.getCellType match {
-        case CellType.BOOLEAN => Option(cell.getBooleanCellValue)
-        case CellType.STRING => Option(cell.getStringCellValue).map(_.toBoolean)
-      }
-    def bigDecimal = numericValue.map(new BigDecimal(_))
     val value: Option[Any] = field.dataType match {
-      case _: ByteType => numericValue.map(_.toByte)
-      case _: ShortType => numericValue.map(_.toShort)
-      case _: IntegerType => numericValue.map(_.toInt)
-      case _: LongType => numericValue.map(_.toLong)
-      case _: FloatType => numericValue.map(_.toFloat)
-      case _: DoubleType => numericValue
-      case _: BooleanType => booleanValue
+      case _: ByteType => cell.numericValue.map(_.toByte)
+      case _: ShortType => cell.numericValue.map(_.toShort)
+      case _: IntegerType => cell.numericValue.map(_.toInt)
+      case _: LongType => cell.numericValue.map(_.toLong)
+      case _: FloatType => cell.numericValue.map(_.toFloat)
+      case _: DoubleType => cell.numericValue
+      case _: BooleanType => cell.booleanValue
       case _: DecimalType =>
-        if (cellType == CellType.STRING && cell.getStringCellValue == "") None else bigDecimal
+        if (cellType == CellType.STRING && cell.getStringCellValue == "") None else cell.bigDecimalValue
       case _: TimestampType =>
         cellType match {
           case CellType.NUMERIC | CellType.FORMULA =>
-            numericValue.map(n => new Timestamp(DateUtil.getJavaDate(n).getTime))
-          case _ => stringValue.filter(_.trim.nonEmpty).map(parseTimestamp)
+            cell.numericValue.map(n => new Timestamp(DateUtil.getJavaDate(n).getTime))
+          case _ => cell.stringValue.filter(_.trim.nonEmpty).map(parseTimestamp)
         }
-      case _: DateType => numericValue.map(n => new java.sql.Date(DateUtil.getJavaDate(n).getTime))
+      case _: DateType => cell.numericValue.map(n => new java.sql.Date(DateUtil.getJavaDate(n).getTime))
       case _: StringType =>
-        stringValue.filterNot(_.isEmpty && treatEmptyValuesAsNulls)
+        cell.stringValue.filterNot(_.isEmpty && treatEmptyValuesAsNulls)
       case t => throw new RuntimeException(s"Unsupported cast from $cell to $t")
     }
 
     value.orNull
-  }
-
-  private def stringToDouble(value: String): Double = {
-    Try(value.toDouble) match {
-      case Success(d) => d
-      case Failure(_) => Double.NaN
-    }
   }
 }
 

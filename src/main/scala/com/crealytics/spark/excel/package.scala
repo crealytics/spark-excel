@@ -1,10 +1,14 @@
 package com.crealytics.spark
 
+import java.math.BigDecimal
+
 import com.norbitltd.spoiwo.model.Sheet
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy
-import org.apache.poi.ss.usermodel.{Cell, CellType, DateUtil, Row}
-import org.apache.spark.sql.types._
+import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil, Row, Workbook, Sheet => PSheet}
 import org.apache.spark.sql.{DataFrameReader, DataFrameWriter}
+import org.apache.spark.sql.types._
+
+import scala.util.{Failure, Success, Try}
 
 package object excel {
   type SheetRow = Seq[Cell]
@@ -44,6 +48,46 @@ package object excel {
             case CellType.BOOLEAN => cell.getBooleanCellValue
           }
       }
+    def stringValue: Option[String] = {
+      val dataFormatter = new DataFormatter()
+      cell.getCellType match {
+        case CellType.BLANK => None
+        case CellType.FORMULA =>
+          cell.getCachedFormulaResultType match {
+            case CellType.STRING => Option(cell.getRichStringCellValue).map(_.getString)
+            case CellType.NUMERIC => Option(cell.getNumericCellValue).map(_.toString)
+            case CellType.BLANK => None
+            case _ => Some(dataFormatter.formatCellValue(cell))
+          }
+        case CellType.BLANK => None
+        case _ => Some(dataFormatter.formatCellValue(cell))
+      }
+    }
+
+    def parseNumber(string: Option[String]): Option[Double] = string.filter(_.trim.nonEmpty).map(stringToDouble)
+    def numericValue: Option[Double] =
+      cell.getCellType match {
+        case CellType.BLANK => None
+        case CellType.NUMERIC => Option(cell.getNumericCellValue)
+        case CellType.STRING => parseNumber(Option(cell.getStringCellValue))
+        case CellType.FORMULA =>
+          cell.getCachedFormulaResultType match {
+            case CellType.NUMERIC => Option(cell.getNumericCellValue)
+            case CellType.STRING =>
+              parseNumber(Option(cell.getRichStringCellValue).map(_.getString))
+          }
+      }
+    def booleanValue: Option[Boolean] =
+      cell.getCellType match {
+        case CellType.BLANK => None
+        case CellType.BOOLEAN => Option(cell.getBooleanCellValue)
+        case CellType.STRING => Option(cell.getStringCellValue).map(_.toBoolean)
+      }
+    // TODO: We're losing precision here by first extracting a double and then converting
+    //       to a BigDecimal. The getNumericCellValue uses _cell.getV to get the String
+    //       value of a cell, but this is quite specific and might not port over to the
+    //       streaming implementation
+    def bigDecimalValue: Option[BigDecimal] = numericValue.map(new BigDecimal(_))
 
     def colName: String = cell.getStringCellValue
 
@@ -105,6 +149,12 @@ package object excel {
     }
   }
 
+  private def stringToDouble(value: String): Double = {
+    Try(value.toDouble) match {
+      case Success(d) => d
+      case Failure(_) => Double.NaN
+    }
+  }
   implicit class ExcelDataFrameWriter[T](val dataFrameWriter: DataFrameWriter[T]) extends AnyVal {
     def excel(
       header: Boolean = true,
