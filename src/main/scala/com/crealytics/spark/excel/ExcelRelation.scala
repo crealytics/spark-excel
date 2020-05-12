@@ -78,23 +78,6 @@ case class ExcelRelation(
       parallelize(result.map(Row.fromSeq))
     }
   }
-
-  private def getSparkType(cell: Cell): DataType = {
-    cell.getCellType match {
-      case CellType.FORMULA =>
-        cell.getCachedFormulaResultType match {
-          case CellType.STRING => StringType
-          case CellType.NUMERIC => DoubleType
-          case _ => NullType
-        }
-      case CellType.STRING if cell.getStringCellValue == "" => NullType
-      case CellType.STRING => StringType
-      case CellType.BOOLEAN => BooleanType
-      case CellType.NUMERIC => if (DateUtil.isCellDateFormatted(cell)) TimestampType else DoubleType
-      case CellType.BLANK => NullType
-    }
-  }
-
   private def parallelize[T : scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
 
   /**
@@ -102,62 +85,8 @@ case class ExcelRelation(
     */
   lazy val headerColumns: Seq[HeaderDataColumn] = {
     val firstRow = excerpt.head
-    val nonHeaderRows = if (header) excerpt.tail else excerpt
-
-    val fields = userSchema.getOrElse {
-      val dataTypes = if (this.inferSheetSchema) {
-        val headerIndices = firstRow.map(_.getColumnIndex)
-        val cellTypes: Seq[Seq[DataType]] = nonHeaderRows
-          .map { r =>
-            headerIndices.map(i => r.find(_.getColumnIndex == i).map(getSparkType).getOrElse(DataTypes.NullType))
-          }
-        InferSchema(cellTypes)
-      } else {
-        // By default fields are assumed to be StringType
-        excerpt.map(_.size).reduceOption(math.max) match {
-          case None => Array()
-          case Some(maxCellsPerRow) => {
-            (0 until maxCellsPerRow).map(_ => StringType: DataType).toArray
-          }
-        }
-      }
-
-      def colName(cell: Cell) = cell.getStringCellValue
-
-      val colNames = if (header) {
-        val headerNames = firstRow.map(colName)
-        val duplicates = {
-          val nonNullHeaderNames = headerNames.filter(_ != null)
-          nonNullHeaderNames.groupBy(identity).filter(_._2.size > 1).keySet
-        }
-
-        firstRow.zipWithIndex.map {
-          case (cell, index) =>
-            val value = colName(cell)
-            if (value == null || value.isEmpty) {
-              // When there are empty strings or the, put the index as the suffix.
-              s"_c$index"
-            } else if (duplicates.contains(value)) {
-              // When there are duplicates, put the index as the suffix.
-              s"$value$index"
-            } else {
-              value
-            }
-        }
-      } else {
-        firstRow.zipWithIndex.map {
-          case (_, index) =>
-            // Uses default column names, "_c#" where # is its position of fields
-            // when header option is disabled.
-            s"_c$index"
-        }
-      }
-      colNames.zip(dataTypes).map {
-        case (colName, dataType) =>
-          StructField(name = colName, dataType = dataType, nullable = true)
-      }
-    }
-
+    val sheetXHeader = if (header) new SheetWithHeader else new SheetNoHeader
+    val fields = userSchema.getOrElse(sheetXHeader.namesAndTypes(excerpt, this.inferSheetSchema))
     firstRow.zip(fields).map {
       case (cell, field) =>
         new HeaderDataColumn(field, cell.getColumnIndex, treatEmptyValuesAsNulls, timestampParser)

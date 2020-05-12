@@ -2,10 +2,12 @@ package com.crealytics.spark
 
 import com.norbitltd.spoiwo.model.Sheet
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy
-import org.apache.poi.ss.usermodel.{Cell, CellType, Row}
+import org.apache.poi.ss.usermodel.{Cell, CellType, DateUtil, Row}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrameReader, DataFrameWriter}
 
 package object excel {
+  type SheetRow = Seq[Cell]
   implicit class RichRow(val row: Row) extends AnyVal {
     def eachCellIterator(startColumn: Int, endColumn: Int): Iterator[Option[Cell]] =
       new Iterator[Option[Cell]] {
@@ -41,6 +43,23 @@ package object excel {
             case CellType.STRING => cell.getRichStringCellValue
             case CellType.BOOLEAN => cell.getBooleanCellValue
           }
+      }
+
+    def colName: String = cell.getStringCellValue
+
+    def sparkDataType: DataType =
+      cell.getCellType match {
+        case CellType.FORMULA =>
+          cell.getCachedFormulaResultType match {
+            case CellType.STRING => StringType
+            case CellType.NUMERIC => if (DateUtil.isCellDateFormatted(cell)) TimestampType else DoubleType
+            case _ => NullType
+          }
+        case CellType.STRING if cell.getStringCellValue == "" => NullType
+        case CellType.STRING => StringType
+        case CellType.BOOLEAN => BooleanType
+        case CellType.NUMERIC => if (DateUtil.isCellDateFormatted(cell)) TimestampType else DoubleType
+        case CellType.BLANK => NullType
       }
   }
 
