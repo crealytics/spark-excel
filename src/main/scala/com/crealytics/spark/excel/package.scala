@@ -117,6 +117,18 @@ package object excel {
     }
   }
 
+  implicit class RichWorkbook(val workBook: Workbook) extends AnyVal {
+
+    def findSheet(sheetName: Option[String]): Option[PSheet] =
+      sheetName
+        .flatMap(
+          sn =>
+            Try(Option(workBook.getSheetAt(sn.toInt))).toOption.flatten
+              .orElse(Option(workBook.getSheet(sn)))
+        )
+        .orElse(Try(workBook.getSheetAt(0)).toOption)
+  }
+
   implicit class ExcelDataFrameReader(val dataFrameReader: DataFrameReader) extends AnyVal {
     def excel(
       header: Boolean = true,
@@ -139,7 +151,7 @@ package object excel {
         "maxRowsInMemory" -> maxRowsInMemory,
         "excerptSize" -> excerptSize,
         "workbookPassword" -> workbookPassword
-      ).foldLeft(dataFrameReader.format("com.crealytics.spark.excel")) {
+      ).foldLeft(dataFrameReader.format("excel")) {
         case (dfReader, (key, value)) =>
           value match {
             case null => dfReader
@@ -162,15 +174,17 @@ package object excel {
       preHeader: String = null,
       dateFormat: String = null,
       timestampFormat: String = null,
-      workbookPassword: String = null
+      workbookPassword: String = null,
+      singleFile: Boolean = true
     ): DataFrameWriter[T] = {
+      val format = if (singleFile) "excel-single-file" else "excel"
       Map(
         "header" -> header,
         "dataAddress" -> dataAddress,
         "dateFormat" -> dateFormat,
         "timestampFormat" -> timestampFormat,
         "preHeader" -> preHeader
-      ).foldLeft(dataFrameWriter.format("com.crealytics.spark.excel")) {
+      ).foldLeft(dataFrameWriter.format(format)) {
         case (dfWriter, (key, value)) =>
           value match {
             case null => dfWriter

@@ -1,4 +1,5 @@
 package com.crealytics.spark.excel
+import java.io.File
 import java.sql.{Date, Timestamp}
 import java.time.{Instant, ZoneId, ZoneOffset}
 import java.time.temporal.ChronoUnit
@@ -42,6 +43,7 @@ case class ExampleData(
 trait Generators {
   val exampleDataSchema = ScalaReflection.schemaFor[ExampleData].dataType.asInstanceOf[StructType]
 
+  val fileNames = Gen.resultOf[Int, File] { _ => File.createTempFile("spark_excel_test_", ".xlsx") }
   private val dstTransitionDays =
     ZoneId.systemDefault().getRules.getTransitions.asScala.map(_.getInstant.truncatedTo(ChronoUnit.DAYS))
   def isDstTransitionDay(instant: Instant): Boolean = dstTransitionDays.contains(instant.truncatedTo(ChronoUnit.DAYS))

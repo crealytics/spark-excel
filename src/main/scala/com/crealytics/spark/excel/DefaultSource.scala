@@ -3,42 +3,16 @@ package com.crealytics.spark.excel
 import com.crealytics.spark.excel.Utils._
 import org.apache.hadoop.fs.Path
 import org.apache.poi.ss.util.{CellRangeAddress, CellReference}
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.execution.datasources.{FileIndex, HadoopFsRelation, PartitionDirectory}
 import org.apache.spark.sql.sources._
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext, SaveMode}
 
 import scala.util.Try
 
-class DefaultSource extends RelationProvider with SchemaRelationProvider with CreatableRelationProvider {
-
-  /**
-    * Creates a new relation for retrieving data from an Excel file
-    */
-  override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): ExcelRelation =
-    createRelation(sqlContext, parameters, null)
-
-  /**
-    * Creates a new relation for retrieving data from an Excel file
-    */
-  override def createRelation(
-    sqlContext: SQLContext,
-    parameters: Map[String, String],
-    schema: StructType
-  ): ExcelRelation = {
-    val wbReader = WorkbookReader(parameters, sqlContext.sparkContext.hadoopConfiguration)
-    val dataLocator = DataLocator(parameters)
-    ExcelRelation(
-      header = checkParameter(parameters, "header").toBoolean,
-      treatEmptyValuesAsNulls = parameters.get("treatEmptyValuesAsNulls").fold(false)(_.toBoolean),
-      userSchema = Option(schema),
-      inferSheetSchema = parameters.get("inferSchema").fold(false)(_.toBoolean),
-      addColorColumns = parameters.get("addColorColumns").fold(false)(_.toBoolean),
-      timestampFormat = parameters.get("timestampFormat"),
-      excerptSize = parameters.get("excerptSize").fold(10)(_.toInt),
-      dataLocator = dataLocator,
-      workbookReader = wbReader
-    )(sqlContext)
-  }
+class DefaultSource extends CreatableRelationProvider with DataSourceRegister {
+  def shortName(): String = "excel-single-file"
 
   override def createRelation(
     sqlContext: SQLContext,
@@ -59,7 +33,29 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
       dataLocator = DataLocator(parameters)
     ).save()
 
-    createRelation(sqlContext, parameters, data.schema)
+    HadoopFsRelation(
+      location = new FileIndex {
+        override def rootPaths: Seq[Path] = ???
+
+        override def listFiles(
+          partitionFilters: Seq[Expression],
+          dataFilters: Seq[Expression]
+        ): Seq[PartitionDirectory] = ???
+
+        override def inputFiles: Array[String] = Array(path)
+
+        override def refresh(): Unit = ???
+
+        override def sizeInBytes: Long = fs.getContentSummary(filesystemPath).getLength
+
+        override def partitionSchema: StructType = ???
+      },
+      partitionSchema = StructType(Array.empty[StructField]),
+      dataSchema = data.schema,
+      bucketSpec = None,
+      fileFormat = new ExcelFileFormat,
+      options = parameters
+    )(sqlContext.sparkSession)
   }
 
   // Forces a Parameter to exist, otherwise an exception is thrown.

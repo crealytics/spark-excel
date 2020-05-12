@@ -65,23 +65,39 @@ class IntegrationSuite
   }
 
   def runTests(maxRowsInMemory: Option[Int]) {
-    def writeThenRead(
+    def writeDf(
       df: DataFrame,
-      schema: Option[StructType] = Some(exampleDataSchema),
-      fileName: Option[String] = None,
-      saveMode: SaveMode = SaveMode.Overwrite,
-      dataAddress: Option[String] = None,
-      header: Boolean = true
-    ): DataFrame = {
-      val theFileName = fileName.getOrElse(File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath)
-
-      val writer = df.write.excel(dataAddress = s"'$sheetName'!A1", header = header).mode(saveMode)
+      saveMode: SaveMode,
+      dataAddress: Option[String],
+      header: Boolean,
+      theFileName: String,
+      singleFile: Boolean = true
+    ) = {
+      val writer = df
+        .coalesce(2)
+        .write
+        .excel(dataAddress = s"'$sheetName'!A1", header = header, singleFile = singleFile)
+        .mode(saveMode)
       val configuredWriter =
         Map("dataAddress" -> dataAddress).foldLeft(writer) {
           case (wri, (key, Some(value))) => wri.option(key, value)
           case (wri, _) => wri
         }
       configuredWriter.save(theFileName)
+    }
+
+    def writeThenRead(
+      df: DataFrame,
+      schema: Option[StructType] = Some(exampleDataSchema),
+      fileName: Option[String] = None,
+      saveMode: SaveMode = SaveMode.Overwrite,
+      dataAddress: Option[String] = None,
+      header: Boolean = true,
+      singleFile: Boolean = true
+    ): DataFrame = {
+      val theFileName = fileName.getOrElse(File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath)
+
+      writeDf(df, saveMode, dataAddress, header, theFileName, singleFile = singleFile)
 
       val reader = spark.read.excel(dataAddress = s"'$sheetName'!A1", header = header)
       val configuredReader = Map(
@@ -106,15 +122,16 @@ class IntegrationSuite
               df.withColumn(field.name, df(field.name).cast(dataType))
           }
       val expected = spark.createDataFrame(originalWithInferredColumnTypes.rdd, inferred.schema)
-      assertDataFrameEquals(expected, inferred)
+      assertEqualsAfterBasicTransformations(expected, inferred)
     }
 
     describe(s"with maxRowsInMemory = $maxRowsInMemory") {
       it("parses known datatypes correctly") {
-        forAll(rowsGen) { rows =>
-          val expected = spark.createDataset(rows).toDF
-          val actual = writeThenRead(expected)
-          assertDataFrameApproximateEquals(expected, actual, relTol = 1.0e-6)
+        forAll(rowsGen, fileNames) {
+          case (rows, fileName) =>
+            val expected = spark.createDataset(rows).toDF
+            val actual = writeThenRead(expected, fileName = Some(fileName.getAbsolutePath))
+            assertEqualsAfterBasicTransformations(expected, actual, relTol = 1.0e-6)
         }
       }
 
@@ -134,7 +151,11 @@ class IntegrationSuite
           val fields = expectedWithEmptyStr.schema.fields
           fields.update(fields.indexWhere(_.name == "aString"), StructField("aString", DataTypes.StringType, true))
 
-          assertDataFrameApproximateEquals(expectedWithEmptyStr, writeThenRead(expectedWithEmptyStr), relTol = 1.0e-6)
+          assertEqualsAfterBasicTransformations(
+            expectedWithEmptyStr,
+            writeThenRead(expectedWithEmptyStr),
+            relTol = 1.0e-6
+          )
         }
       }
 
@@ -165,6 +186,35 @@ class IntegrationSuite
         }
       }
 
+      it("handles different modes (PERMISSIVE, DROPMALFORMED, FAILFAST)") {
+        pending
+      }
+      describe("when working with multiple files") {
+        it("handles differing header column names correctly") {
+          pending
+        }
+        it("reads the data from multiple explicitly given files") {
+          forAll(rowsGen.filter(_.nonEmpty)) { rows =>
+            val original = spark.createDataset(rows).toDF
+            val subDfs = rows.zipWithIndex.groupBy(_._2 % 2).mapValues(r => spark.createDataset(r.map(_._1)).toDF)
+            val files = subDfs.map {
+              case (key, df) =>
+                val fileName = File.createTempFile(s"spark_excel_test_${key}_", ".xlsx").getAbsolutePath
+                writeDf(df, SaveMode.Overwrite, None, header = true, theFileName = fileName)
+                fileName
+            }
+            val inferred = spark.read.excel().load(files.toSeq: _*)
+            assertEqualAfterInferringTypes(original, inferred)
+          }
+        }
+        it("reads the data from multiple files in a directory", WIP) {
+          forAll(rowsGen.filter(_.size > 10), fileNames) { (rows, fileName) =>
+            val original = spark.createDataset(rows).toDF
+            val inferred = writeThenRead(original, fileName = Some(fileName.getAbsolutePath), singleFile = false)
+            assertEqualAfterInferringTypes(original, inferred)
+          }
+        }
+      }
       it("handles multi-line column headers correctly") {
         forAll(rowsGen.filter(_.nonEmpty)) { rows =>
           val original = spark.createDataset(rows).toDF
@@ -180,21 +230,20 @@ class IntegrationSuite
           val original = spark.createDataset(rows).toDF
           val expected = spark.createDataset(rows).toDF(renamedSchema.fieldNames: _*)
           val inferred = writeThenRead(original, schema = Some(renamedSchema))
-          assertDataFrameApproximateEquals(expected, inferred, relTol = 1.0e-6)
+          assertEqualsAfterBasicTransformations(expected, inferred, relTol = 1.0e-6)
         }
       }
 
       it("reads files without headers correctly") {
-        forAll(dataAndLocationGen.filter(_._1.nonEmpty)) {
-          case (rows, startCellAddress, endCellAddress) =>
+        forAll(dataAndLocationGen.filter(_._1.nonEmpty), fileNames) {
+          case ((rows, startCellAddress, endCellAddress), fileName) =>
             val original = spark.createDataset(rows).toDF
             val renamed = spark.createDataset(rows).toDF(original.schema.fieldNames.indices.map(i => s"_c$i"): _*)
-            val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
             val inferred = writeThenRead(
               original,
               schema = None,
               header = false,
-              fileName = Some(fileName),
+              fileName = Some(fileName.getAbsolutePath),
               dataAddress =
                 Some(s"'$sheetName'!${startCellAddress.formatAsString()}:${endCellAddress.formatAsString()}")
             )
@@ -203,7 +252,7 @@ class IntegrationSuite
       }
 
       it("reads files with missing cells correctly") {
-        forAll(rowsGen.filter(_.nonEmpty)) { rows =>
+        forAll(rowsGen.filter(_.nonEmpty), Gen.option(Gen.const("")).map(_.orNull)) { (rows, emptyValue) =>
           val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
           val numCols = 20
           /*
@@ -212,7 +261,7 @@ class IntegrationSuite
             but we also store the column names spark-excel should give them.
            */
           val (writtenHeaderNames, expectedHeaderNames) =
-            (0 until numCols).map(c => if (c % 3 == 0) ("", s"_c$c") else (s"header_$c", s"header_$c")).unzip
+            (0 until numCols).map(c => if (c % 3 == 0) (emptyValue, s"_c$c") else (s"header_$c", s"header_$c")).unzip
           val existingData = Sheet(
             name = sheetName,
             rows =
@@ -302,6 +351,34 @@ class IntegrationSuite
         }
       }
     }
+  }
+
+  private def setNullableStateForAllColumns(df: DataFrame, nullable: Boolean) = {
+    def set(st: StructType): StructType =
+      StructType(st.map {
+        case StructField(name, dataType, _, metadata) =>
+          val newDataType = dataType match {
+            case t: StructType => set(t)
+            case _ => dataType
+          }
+          StructField(name, newDataType, nullable = nullable, metadata)
+      })
+
+    val newSchema = set(df.schema)
+    df.sqlContext.createDataFrame(df.rdd, newSchema)
+  }
+
+  private def assertEqualsAfterBasicTransformations(
+    expected: DataFrame,
+    inferred: DataFrame,
+    relTol: Double = 0.0
+  ): Unit = {
+    val expectedNullable = setNullableStateForAllColumns(expected, true)
+    assertDataFrameApproximateEquals(
+      expectedNullable.orderBy(expected.schema.fieldNames.map(col): _*),
+      inferred.orderBy(expected.schema.fieldNames.map(col): _*),
+      relTol = relTol
+    )
   }
 
   private def assertNoDataOverwritten(

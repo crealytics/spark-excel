@@ -1,30 +1,32 @@
 package com.crealytics.spark.excel
+import com.crealytics.spark.excel.Utils.MapIncluding
+import com.norbitltd.spoiwo.model.HasIndex._
 import com.norbitltd.spoiwo.model.{
   CellDataFormat,
   CellRange,
   CellStyle,
-  HasIndex,
   Table,
   TableColumn,
   Cell => WriteCell,
   Row => WriteRow,
   Sheet => WriteSheet
 }
-import HasIndex._
-import com.crealytics.spark.excel.Utils.MapIncluding
 import org.apache.poi.ss.SpreadsheetVersion
-import org.apache.poi.ss.usermodel.{Cell, Row, Sheet, Workbook}
-import org.apache.poi.ss.util.{AreaReference, CellRangeAddress, CellReference}
+import org.apache.poi.ss.usermodel.Row.MissingCellPolicy
+import org.apache.poi.ss.usermodel.{Cell, Sheet, Workbook}
+import org.apache.poi.ss.util.{AreaReference, CellReference}
 import org.apache.poi.xssf.usermodel.{XSSFTable, XSSFWorkbook}
+import org.apache.spark.sql.types.Decimal
+import org.apache.spark.unsafe.types.UTF8String
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-trait DataLocator {
+trait DataLocator extends Serializable {
   def dateFormat: Option[String]
   def timestampFormat: Option[String]
-  val dateFrmt = dateFormat.getOrElse(ExcelFileSaver.DEFAULT_DATE_FORMAT)
-  val timestampFrmt = timestampFormat.getOrElse(ExcelFileSaver.DEFAULT_TIMESTAMP_FORMAT)
+  val dateFrmt = dateFormat.getOrElse(ExcelOutputWriter.DEFAULT_DATE_FORMAT)
+  val timestampFrmt = timestampFormat.getOrElse(ExcelOutputWriter.DEFAULT_TIMESTAMP_FORMAT)
   def readFrom(workbook: Workbook): Iterator[Seq[Cell]]
   def toSheet(header: Option[Seq[String]], data: Iterator[Seq[Any]], existingWorkbook: Workbook): WriteSheet
 }
@@ -75,24 +77,26 @@ trait AreaDataLocator extends DataLocator {
   def rowIndices(workbook: Workbook): Seq[Int]
   def sheetName(workbook: Workbook): Option[String]
 
-  def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet =
+  def findSheet(workBook: Workbook, sheetName: Option[String]): Option[Sheet] =
     sheetName
-      .map(
+      .flatMap(
         sn =>
           Try(Option(workBook.getSheetAt(sn.toInt))).toOption.flatten
             .orElse(Option(workBook.getSheet(sn)))
-            .getOrElse(throw new IllegalArgumentException(s"Unknown sheet $sn"))
       )
-      .getOrElse(workBook.getSheetAt(0))
+      .orElse(Try(workBook.getSheetAt(0)).toOption)
 
-  def readFromSheet(workbook: Workbook, name: Option[String]): Iterator[Vector[Cell]] = {
-    val sheet = findSheet(workbook, name)
-    val rowInd = rowIndices(workbook)
-    val colInd = columnIndices(workbook)
-    sheet.iterator.asScala
-      .filter(r => rowInd.contains(r.getRowNum))
-      .map(_.cellIterator().asScala.filter(c => colInd.contains(c.getColumnIndex)).to[Vector])
-  }
+  def readFromSheet(workbook: Workbook, name: Option[String]): Iterator[Seq[Cell]] =
+    workbook
+      .findSheet(name)
+      .get
+      .iterator
+      .asScala
+      .filter(r => rowIndices(workbook).contains(r.getRowNum))
+      .map(
+        r =>
+          columnIndices(workbook).filter(_ < r.getLastCellNum).map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK))
+      )
 
   override def toSheet(
     header: Option[Seq[String]],
@@ -122,6 +126,7 @@ trait AreaDataLocator extends DataLocator {
     a match {
       case t: java.sql.Timestamp => dateCell(t.getTime, timestampFormat)
       case d: java.sql.Date => dateCell(d.getTime, dateFormat)
+      case s: UTF8String => WriteCell(s.toString)
       case s: String => WriteCell(s)
       case f: Float => WriteCell(f.toDouble)
       case d: Double => WriteCell(d)
@@ -130,9 +135,11 @@ trait AreaDataLocator extends DataLocator {
       case s: Short => WriteCell(s.toInt)
       case i: Int => WriteCell(i)
       case l: Long => WriteCell(l)
+      case d: Decimal => WriteCell(d.toBigDecimal)
       case b: BigDecimal => WriteCell(b)
       case b: java.math.BigDecimal => WriteCell(BigDecimal(b))
       case null => WriteCell.Empty
+      case e => println(s"Don't know ${e.getClass}"); WriteCell(e.toString)
     }
 }
 
