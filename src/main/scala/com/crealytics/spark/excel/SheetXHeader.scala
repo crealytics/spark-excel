@@ -3,7 +3,7 @@ package com.crealytics.spark.excel
 import org.apache.spark.sql.types._
 
 sealed trait SheetXHeader {
-  def namesAndTypes(excerpt: Seq[SheetRow], inferSchema: Boolean = false): Seq[StructField] = {
+  def namesAndTypes(excerpt: Seq[SheetRow], inferSchema: Boolean = true): Seq[StructField] = {
     val dataTypes = if (inferSchema) {
       val cellTypes: Seq[Seq[DataType]] = dataRows(excerpt).map(_.map(_.sparkDataType))
       InferSchema(cellTypes)
