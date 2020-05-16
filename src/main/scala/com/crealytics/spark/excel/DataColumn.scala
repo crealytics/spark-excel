@@ -80,7 +80,8 @@ class HeaderDataColumn(
         stringValue.filterNot(_.isEmpty && treatEmptyValuesAsNulls)
       case t => throw new RuntimeException(s"Unsupported cast from $cell to $t")
     }
-    value.orElse(null)
+
+    value.orNull
   }
 
   private def stringToDouble(value: String): Double = {
