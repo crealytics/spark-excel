@@ -52,6 +52,12 @@ class EncryptedReadSuite extends AnyFunSpec with DataFrameSuiteBase with Matcher
       assertDataFrameEquals(expected, df)
     }
 
+    it("should read encrypted xlsx file with maxRowsInMem=1") {
+      val df = readFromResources("/spreadsheets/simple_encrypted.xlsx", "fooba", maxRowsInMemory = Some(1))
+
+      assertDataFrameEquals(expected, df)
+    }
+
     it("should read encrypted xls file") {
       val df = readFromResources("/spreadsheets/simple_encrypted.xls", "fooba")
 
