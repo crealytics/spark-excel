@@ -1,5 +1,9 @@
 Next
 ====
+
+0.13.2
+======
+- Change: Switch to the better maintained https://github.com/pjfanning/excel-streaming-reader
 - Bugfix: https://github.com/crealytics/spark-excel/pull/229
 
 0.13.1
