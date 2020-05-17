@@ -341,4 +341,5 @@ class IntegrationSuite
   }
   runTests(maxRowsInMemory = None)
   runTests(maxRowsInMemory = Some(20))
+  runTests(maxRowsInMemory = Some(1))
 }
