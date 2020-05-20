@@ -23,7 +23,7 @@ jobs:
         run: sbt ++${{ matrix.scala }} scalastyle "test:scalastyle"
   publish:
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
