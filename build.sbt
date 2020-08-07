@@ -47,7 +47,7 @@ publishThinShadedJar
 libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-core" % "2.0.0" % Test,
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.11.2" % Test,
-  "org.scalatest" %% "scalatest" % "3.2.0" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.1" % Test,
   "org.scalatestplus" %% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % Test,
   "org.scalacheck" %% "scalacheck" % "1.14.3" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5" % Test,
