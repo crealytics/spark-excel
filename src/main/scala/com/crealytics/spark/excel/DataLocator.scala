@@ -71,8 +71,8 @@ object DataLocator {
 }
 
 trait AreaDataLocator extends DataLocator {
-  def columnIndices(workbook: Workbook): Seq[Int]
-  def rowIndices(workbook: Workbook): Seq[Int]
+  def columnIndices(workbook: Workbook): Range
+  def rowIndices(workbook: Workbook): Range
   def sheetName(workbook: Workbook): Option[String]
 
   def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet =
@@ -143,8 +143,8 @@ class CellRangeAddressDataLocator(
 ) extends AreaDataLocator {
   private val sheetName = Option(dataAddress.getFirstCell.getSheetName)
 
-  def columnIndices(workbook: Workbook): Seq[Int] = (dataAddress.getFirstCell.getCol to dataAddress.getLastCell.getCol)
-  def rowIndices(workbook: Workbook): Seq[Int] = (dataAddress.getFirstCell.getRow to dataAddress.getLastCell.getRow)
+  def columnIndices(workbook: Workbook): Range = (dataAddress.getFirstCell.getCol to dataAddress.getLastCell.getCol)
+  def rowIndices(workbook: Workbook): Range = (dataAddress.getFirstCell.getRow to dataAddress.getLastCell.getRow)
 
   override def readFrom(workbook: Workbook): Iterator[Seq[Cell]] = readFromSheet(workbook, sheetName)
   override def sheetName(workbook: Workbook): Option[String] = sheetName
@@ -177,9 +177,9 @@ class TableDataLocator(
       )
     sheet.withTables(tableWithPotentialHeader)
   }
-  def columnIndices(workbook: Workbook): Seq[Int] =
+  def columnIndices(workbook: Workbook): Range =
     findTable(workbook).map(t => t.getStartColIndex to t.getEndColIndex).getOrElse(0 until Int.MaxValue)
-  override def rowIndices(workbook: Workbook): Seq[Int] =
+  override def rowIndices(workbook: Workbook): Range =
     findTable(workbook).map(t => t.getStartRowIndex to t.getEndRowIndex).getOrElse(0 until Int.MaxValue)
   override def sheetName(workbook: Workbook): Option[String] =
     findTable(workbook).map(_.getSheetName).orElse(Some(tableName))
