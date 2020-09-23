@@ -112,7 +112,7 @@ val df = spark.read.excel(
 or to read in the names dynamically:
 
 ```scala
-val sheetNames = WorkbookReader( Map("path") -> "Worktime.xlsx"
+val sheetNames = WorkbookReader( Map("path" -> "Worktime.xlsx")
                                , spark.sparkContext.hadoopConfiguration
                                ).sheetNames
 val df = spark.read.excel(
