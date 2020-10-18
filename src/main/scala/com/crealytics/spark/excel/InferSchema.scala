@@ -28,10 +28,9 @@ private[excel] object InferSchema {
     *     2. Merge row types to find common type
     *     3. Replace any null types with string type
     */
-  def apply(rowsRDD: RDD[Seq[DataType]]): Array[DataType] = {
+  def apply(rows: Seq[Seq[DataType]]): Array[DataType] = {
     val startType: Array[DataType] = Array.empty
-    val rootTypes: Array[DataType] = rowsRDD.aggregate(startType)(inferRowType _, mergeRowTypes)
-
+    val rootTypes: Array[DataType] = rows.aggregate(startType)(inferRowType _, mergeRowTypes)
     rootTypes.map {
       case z: NullType => StringType
       case other => other
