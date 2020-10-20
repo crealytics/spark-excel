@@ -10,7 +10,7 @@ scalaVersion := crossScalaVersions.value.head
 
 spName := "crealytics/spark-excel"
 
-sparkVersion := "2.4.4"
+sparkVersion := "2.4.7"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
@@ -27,11 +27,11 @@ libraryDependencies ++= Seq(
 shadedDeps ++= Seq(
   "org.apache.poi" ^ "poi" ^ "4.1.2",
   "org.apache.poi" ^ "poi-ooxml" ^ "4.1.2",
-  "com.norbitltd" ^^ "spoiwo" ^ "1.7.0",
-  "com.github.pjfanning" ^ "excel-streaming-reader" ^ "2.3.5",
+  "com.norbitltd" ^^ "spoiwo" ^ "1.8.0",
+  "com.github.pjfanning" ^ "excel-streaming-reader" ^ "2.3.4",
   "com.github.pjfanning" ^ "poi-shared-strings" ^ "1.0.4",
   "org.apache.commons" ^ "commons-compress" ^ "1.20",
-  "com.fasterxml.jackson.core" ^ "jackson-core" ^ "2.8.8",
+  "com.fasterxml.jackson.core" ^ "jackson-core" ^ "2.8.11",
 )
 
 shadeRenames ++= Seq(
