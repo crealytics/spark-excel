@@ -2,7 +2,7 @@ package com.crealytics.spark.excel
 
 import org.apache.poi.ss.usermodel.{Cell, Row}
 import org.scalacheck.Gen
-import org.scalacheck.Prop.BooleanOperators
+import org.scalacheck.Prop.propBoolean
 import org.scalamock.scalatest.MockFactory
 
 import scala.util.Try
