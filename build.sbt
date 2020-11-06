@@ -49,7 +49,7 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.11.3" % Test,
   "org.scalatest" %% "scalatest" % "3.2.3" % Test,
   "org.scalatestplus" %% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.14.3" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.15.1" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5" % Test,
   "com.github.nightscape" %% "spark-testing-base" % "c2bc44caf4" % Test,
   //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
