@@ -27,15 +27,17 @@ trait RowGenerator extends MockFactory {
 class RichRowSuite extends AnyFunSuite with ScalaCheckPropertyChecks with RowGenerator {
   test("Invalid cell range should throw an error") {
     forAll(rowGen) { g =>
-      (g.start > g.end) ==> Try {
-        g.row.eachCellIterator(g.start, g.end).next()
-      }.isFailure
+      whenever(g.start > g.end) {
+        Try {
+          g.row.eachCellIterator(g.start, g.end).next()
+        }.isFailure
+      }
     }
   }
 
   test("Valid cell range should iterate through all non-empty cells") {
     forAll(rowGen) { g =>
-      (g.start <= g.end && g.start < g.lastCellNum) ==> {
+      whenever(g.start <= g.end && g.start < g.lastCellNum) {
         val count = g.row.eachCellIterator(g.start, g.end).size
         count === Math.min(g.end, g.lastCellNum - 1) - g.start + 1
       }
@@ -44,7 +46,7 @@ class RichRowSuite extends AnyFunSuite with ScalaCheckPropertyChecks with RowGen
 
   test("Valid cell range should should not iterate through non-empty cells") {
     forAll(rowGen) { g =>
-      (g.start <= g.end && g.start >= g.lastCellNum) ==> {
+      whenever(g.start <= g.end && g.start >= g.lastCellNum) {
         g.row.eachCellIterator(g.start, g.end).size === 0
       }
     }
