@@ -6,5 +6,10 @@ project/project/
 *.swp
 .idea
 *.log
+
+.metals/
+project/metals.sbt
+**/.bsp/
 **/.bloop/
+
 private-key.pem

@@ -1,24 +1,18 @@
 package com.crealytics.spark.excel
 
-import com.crealytics.spark.excel.Utils._
 import org.apache.hadoop.fs.Path
-import org.apache.poi.ss.util.{CellRangeAddress, CellReference}
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SQLContext, SaveMode}
 
-import scala.util.Try
-
 class DefaultSource extends RelationProvider with SchemaRelationProvider with CreatableRelationProvider {
 
-  /**
-    * Creates a new relation for retrieving data from an Excel file
+  /** Creates a new relation for retrieving data from an Excel file
     */
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): ExcelRelation =
     createRelation(sqlContext, parameters, null)
 
-  /**
-    * Creates a new relation for retrieving data from an Excel file
+  /** Creates a new relation for retrieving data from an Excel file
     */
   override def createRelation(
     sqlContext: SQLContext,

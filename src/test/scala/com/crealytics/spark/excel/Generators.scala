@@ -1,7 +1,4 @@
 package com.crealytics.spark.excel
-import java.sql.{Date, Timestamp}
-import java.time.{Instant, ZoneId, ZoneOffset}
-import java.time.temporal.ChronoUnit
 
 import org.scalacheck.Arbitrary.{arbBigDecimal => _, arbLong => _, arbString => _, _}
 import org.scalacheck.ScalacheckShapeless._
@@ -11,7 +8,11 @@ import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.StructType
 import org.scalacheck.{Arbitrary, Gen}
 
+import java.sql.{Date, Timestamp}
+import java.time.temporal.ChronoUnit
+import java.time.{Instant, ZoneId, ZoneOffset}
 import scala.collection.JavaConverters._
+
 case class ExampleData(
   aBoolean: Boolean,
   aBooleanOption: Option[Boolean],
@@ -118,7 +119,7 @@ trait Generators {
     val columnsByIndex = columns.map(c => c.id -> Cell[String](value = c.name, index = c.id.toInt)).toMap
     sheet
       .withRows(sheet.rows.map {
-        case r if r.index.exists(_ == startCellAddress.getRow) =>
+        case r if r.index.contains(startCellAddress.getRow) =>
           val cellIndices = (r.cells.map(_.index.get) ++ columns.map(_.id.toInt)).toList.distinct.sorted
           r.withCells(cellIndices.map { ci =>
             columnsByIndex

@@ -17,11 +17,10 @@ trait WorkbookReader {
     res
   }
   def sheetNames: Seq[String] = {
-    withWorkbook(
-      workbook =>
-        for (sheetIx <- (0 until workbook.getNumberOfSheets())) yield {
-          workbook.getSheetAt(sheetIx).getSheetName()
-        }
+    withWorkbook(workbook =>
+      for (sheetIx <- (0 until workbook.getNumberOfSheets())) yield {
+        workbook.getSheetAt(sheetIx).getSheetName()
+      }
     )
   }
 }
@@ -47,8 +46,8 @@ class DefaultWorkbookReader(inputStreamProvider: => InputStream, workbookPasswor
     extends WorkbookReader {
   protected def openWorkbook(): Workbook =
     workbookPassword
-      .fold(WorkbookFactory.create(inputStreamProvider))(
-        password => WorkbookFactory.create(inputStreamProvider, password)
+      .fold(WorkbookFactory.create(inputStreamProvider))(password =>
+        WorkbookFactory.create(inputStreamProvider, password)
       )
 }
 
