@@ -1,16 +1,14 @@
 package com.crealytics.spark.excel
-import com.crealytics.tags.WIP
-import com.norbitltd.spoiwo.model.{CellRange, Sheet, Workbook}
-import org.apache.poi.ss.SpreadsheetVersion
-import org.apache.poi.ss.util.AreaReference
-import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
-import org.scalacheck.Gen
 
-import scala.collection.JavaConverters._
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import com.norbitltd.spoiwo.model.Workbook
+import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.scalacheck.Gen
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+
+import scala.collection.JavaConverters._
 
 class DataLocatorSuite extends AnyFunSpec with ScalaCheckPropertyChecks with Matchers with Generators {
   describe("with a table reference") {

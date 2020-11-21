@@ -1,20 +1,20 @@
 package com.crealytics.spark.excel
+
+import com.crealytics.spark.excel.Utils.MapIncluding
+import com.norbitltd.spoiwo.model.HasIndex._
 import com.norbitltd.spoiwo.model.{
   CellDataFormat,
   CellRange,
   CellStyle,
-  HasIndex,
   Table,
   TableColumn,
   Cell => WriteCell,
   Row => WriteRow,
   Sheet => WriteSheet
 }
-import HasIndex._
-import com.crealytics.spark.excel.Utils.MapIncluding
 import org.apache.poi.ss.SpreadsheetVersion
-import org.apache.poi.ss.usermodel.{Cell, Row, Sheet, Workbook}
-import org.apache.poi.ss.util.{AreaReference, CellRangeAddress, CellReference}
+import org.apache.poi.ss.usermodel.{Cell, Sheet, Workbook}
+import org.apache.poi.ss.util.{AreaReference, CellReference}
 import org.apache.poi.xssf.usermodel.{XSSFTable, XSSFWorkbook}
 
 import scala.collection.JavaConverters._
@@ -77,11 +77,10 @@ trait AreaDataLocator extends DataLocator {
 
   def findSheet(workBook: Workbook, sheetName: Option[String]): Sheet =
     sheetName
-      .map(
-        sn =>
-          Try(Option(workBook.getSheetAt(sn.toInt))).toOption.flatten
-            .orElse(Option(workBook.getSheet(sn)))
-            .getOrElse(throw new IllegalArgumentException(s"Unknown sheet $sn"))
+      .map(sn =>
+        Try(Option(workBook.getSheetAt(sn.toInt))).toOption.flatten
+          .orElse(Option(workBook.getSheet(sn)))
+          .getOrElse(throw new IllegalArgumentException(s"Unknown sheet $sn"))
       )
       .getOrElse(workBook.getSheetAt(0))
 
@@ -102,14 +101,13 @@ trait AreaDataLocator extends DataLocator {
     val colInd = columnIndices(existingWorkbook)
     val dataRows: List[WriteRow] = (header.iterator ++ data)
       .zip(rowIndices(existingWorkbook).iterator)
-      .map {
-        case (row, rowIdx) =>
-          WriteRow(
-            row.zip(colInd).map {
-              case (c, colIdx) => toCell(c, dateFrmt, timestampFrmt).withIndex(colIdx)
-            },
-            index = rowIdx
-          )
+      .map { case (row, rowIdx) =>
+        WriteRow(
+          row.zip(colInd).map { case (c, colIdx) =>
+            toCell(c, dateFrmt, timestampFrmt).withIndex(colIdx)
+          },
+          index = rowIdx
+        )
       }
       .toList
     sheetName(existingWorkbook).foldLeft(WriteSheet(rows = dataRows))(_ withSheetName _)
@@ -118,6 +116,7 @@ trait AreaDataLocator extends DataLocator {
   def dateCell(time: Long, format: String): WriteCell = {
     WriteCell(new java.util.Date(time), style = CellStyle(dataFormat = CellDataFormat(format)))
   }
+
   def toCell(a: Any, dateFormat: String, timestampFormat: String): WriteCell =
     a match {
       case t: java.sql.Timestamp => dateCell(t.getTime, timestampFormat)
@@ -172,8 +171,8 @@ class TableDataLocator(
     val table =
       Table(cellRange = CellRange(rowRange = (minRow, maxRow), columnRange = (minCol, maxCol)), name = tableName)
     val tableWithPotentialHeader =
-      header.foldLeft(table)(
-        (tbl, hdr) => tbl.withColumns(hdr.zipWithIndex.map { case (h, i) => TableColumn(h, i) }.toList)
+      header.foldLeft(table)((tbl, hdr) =>
+        tbl.withColumns(hdr.zipWithIndex.map { case (h, i) => TableColumn(h, i) }.toList)
       )
     sheet.withTables(tableWithPotentialHeader)
   }

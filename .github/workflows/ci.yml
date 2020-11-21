@@ -13,8 +13,8 @@ jobs:
             spark: "3.0.0"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: olafurpg/setup-scala@v5
+      - uses: actions/checkout@v2.3.4
+      - uses: olafurpg/setup-scala@v10
       - name: Test
         run: sbt -Dspark.testVersion=${{ matrix.spark  }} ++${{ matrix.scala }} test
       - name: Assembly

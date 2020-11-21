@@ -21,8 +21,7 @@ import org.apache.spark.sql.types._
 private[excel] object InferSchema {
   type CellType = Int
 
-  /**
-    * Similar to the JSON schema inference.
+  /** Similar to the JSON schema inference.
     * [[org.apache.spark.sql.execution.datasources.json.InferSchema]]
     *     1. Infer type of each row
     *     2. Merge row types to find common type
@@ -30,16 +29,16 @@ private[excel] object InferSchema {
     */
   def apply(rowsRDD: RDD[Seq[DataType]]): Array[DataType] = {
     val startType: Array[DataType] = Array.empty
-    val rootTypes: Array[DataType] = rowsRDD.aggregate(startType)(inferRowType _, mergeRowTypes)
+    val rootTypes: Array[DataType] = rowsRDD.aggregate(startType)(inferRowType, mergeRowTypes)
 
     rootTypes.map {
-      case z: NullType => StringType
+      case _: NullType => StringType
       case other => other
     }
   }
 
   private def inferRowType(rowSoFar: Array[DataType], next: Seq[DataType]): Array[DataType] = {
-    val maxLength = math.max(rowSoFar.size, next.size)
+    val maxLength = math.max(rowSoFar.length, next.size)
     val defaultDataType: Int => DataType = (_ => NullType)
     val filledRowSoFar = Array.tabulate(maxLength)(n => rowSoFar.applyOrElse[Int, DataType](n, defaultDataType))
     val filledNext = Array.tabulate(maxLength)(n => next.applyOrElse[Int, DataType](n, defaultDataType))
@@ -47,14 +46,12 @@ private[excel] object InferSchema {
   }
 
   private[excel] def mergeRowTypes(first: Array[DataType], second: Array[DataType]): Array[DataType] = {
-    first.zipAll(second, NullType, NullType).map {
-      case ((a, b)) =>
-        findTightestCommonType(a, b).getOrElse(NullType)
+    first.zipAll(second, NullType, NullType).map { case ((a, b)) =>
+      findTightestCommonType(a, b).getOrElse(NullType)
     }
   }
 
-  /**
-    * Infer type of string field. Given known type Double, and a string "1", there is no
+  /** Infer type of string field. Given known type Double, and a string "1", there is no
     * point checking if it is an Int, as the final type must be Double or higher.
     */
   private[excel] def inferField(typeSoFar: DataType, field: DataType): DataType = {
@@ -79,23 +76,21 @@ private[excel] object InferSchema {
     }
   }
 
-  /**
-    * Copied from internal Spark api
+  /** Copied from internal Spark api
     * [[org.apache.spark.sql.catalyst.analysis.HiveTypeCoercion]]
     */
   private val numericPrecedence: IndexedSeq[DataType] =
     IndexedSeq[DataType](ByteType, ShortType, IntegerType, LongType, FloatType, DoubleType, TimestampType)
 
-  /**
-    * Copied from internal Spark api
+  /** Copied from internal Spark api
     * [[org.apache.spark.sql.catalyst.analysis.HiveTypeCoercion]]
     */
   val findTightestCommonType: (DataType, DataType) => Option[DataType] = {
     case (t1, t2) if t1 == t2 => Some(t1)
     case (NullType, t1) => Some(t1)
     case (t1, NullType) => Some(t1)
-    case (StringType, t2) => Some(StringType)
-    case (t1, StringType) => Some(StringType)
+    case (StringType, _) => Some(StringType)
+    case (_, StringType) => Some(StringType)
 
     // Promote numeric types to the highest of the two and all numeric types to unlimited decimal
     case (t1, t2) if Seq(t1, t2).forall(numericPrecedence.contains) =>

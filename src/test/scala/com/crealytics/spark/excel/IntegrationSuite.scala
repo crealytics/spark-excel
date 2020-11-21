@@ -1,29 +1,21 @@
 package com.crealytics.spark.excel
 
-import java.io.{File, FileOutputStream}
-import java.sql.{Date, Timestamp}
-import java.time.temporal.ChronoUnit
-import java.time.{Instant, ZoneId, ZoneOffset}
-
 import cats.Monoid
 import cats.instances.all._
-import com.crealytics.tags.WIP
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import com.norbitltd.spoiwo.model.{Cell, CellRange, Sheet, Row => SRow, Table => STable}
 import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
 import org.apache.poi.ss.util.CellReference
-import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SaveMode}
-import org.scalacheck.{Arbitrary, Gen, Shrink}
+import org.scalacheck.Shrink
 import org.scalactic.anyvals.PosInt
-
-import scala.collection.JavaConverters._
-import scala.util.Random
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+
+import java.io.{File, FileOutputStream}
 
 class IntegrationSuite
     extends AnyFunSpec
@@ -101,9 +93,8 @@ class IntegrationSuite
       val originalWithInferredColumnTypes =
         original.schema
           .zip(expectedDataTypes(inferred).map(_._2))
-          .foldLeft(original) {
-            case (df, (field, dataType)) =>
-              df.withColumn(field.name, df(field.name).cast(dataType))
+          .foldLeft(original) { case (df, (field, dataType)) =>
+            df.withColumn(field.name, df(field.name).cast(dataType))
           }
       val expected = spark.createDataFrame(originalWithInferredColumnTypes.rdd, inferred.schema)
       assertDataFrameEquals(expected, inferred)
@@ -185,20 +176,18 @@ class IntegrationSuite
       }
 
       it("reads files without headers correctly") {
-        forAll(dataAndLocationGen.filter(_._1.nonEmpty)) {
-          case (rows, startCellAddress, endCellAddress) =>
-            val original = spark.createDataset(rows).toDF
-            val renamed = spark.createDataset(rows).toDF(original.schema.fieldNames.indices.map(i => s"_c$i"): _*)
-            val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
-            val inferred = writeThenRead(
-              original,
-              schema = None,
-              header = false,
-              fileName = Some(fileName),
-              dataAddress =
-                Some(s"'$sheetName'!${startCellAddress.formatAsString()}:${endCellAddress.formatAsString()}")
-            )
-            assertEqualAfterInferringTypes(renamed, inferred)
+        forAll(dataAndLocationGen.filter(_._1.nonEmpty)) { case (rows, startCellAddress, endCellAddress) =>
+          val original = spark.createDataset(rows).toDF
+          val renamed = spark.createDataset(rows).toDF(original.schema.fieldNames.indices.map(i => s"_c$i"): _*)
+          val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
+          val inferred = writeThenRead(
+            original,
+            schema = None,
+            header = false,
+            fileName = Some(fileName),
+            dataAddress = Some(s"'$sheetName'!${startCellAddress.formatAsString()}:${endCellAddress.formatAsString()}")
+          )
+          assertEqualAfterInferringTypes(renamed, inferred)
         }
       }
 
@@ -215,13 +204,13 @@ class IntegrationSuite
             (0 until numCols).map(c => if (c % 3 == 0) ("", s"_c$c") else (s"header_$c", s"header_$c")).unzip
           val existingData = Sheet(
             name = sheetName,
-            rows =
-              SRow(writtenHeaderNames.zipWithIndex.map { case (header, c) => Cell(header, index = c) }, index = 0) ::
-                (0 until 100)
-                  .map(
-                    r => SRow((0 until numCols).filter(_ % 2 == 0).map(c => Cell(s"$r,$c", index = c)), index = r + 1)
-                  )
-                  .to[List]
+            rows = SRow(
+              writtenHeaderNames.zipWithIndex.map { case (header, c) => Cell(header, index = c) },
+              index = 0
+            ) ::
+              (0 until 100)
+                .map(r => SRow((0 until numCols).filter(_ % 2 == 0).map(c => Cell(s"$r,$c", index = c)), index = r + 1))
+                .to[List]
           )
           existingData.convertAsXlsx.write(new FileOutputStream(new File(fileName)))
           val allData = spark.read
@@ -312,12 +301,11 @@ class IntegrationSuite
   ): Unit = {
     val nonOverwrittenData = existingData.withRows(existingData.rows.map { row =>
       row.withCells(
-        row.cells.filterNot(
-          c =>
-            c.index.get >= startCellAddress.getCol &&
-              c.index.get <= endCellAddress.getCol &&
-              row.index.get >= startCellAddress.getRow &&
-              row.index.get <= endCellAddress.getRow
+        row.cells.filterNot(c =>
+          c.index.get >= startCellAddress.getCol &&
+            c.index.get <= endCellAddress.getCol &&
+            row.index.get >= startCellAddress.getRow &&
+            row.index.get <= endCellAddress.getRow
         )
       )
     })

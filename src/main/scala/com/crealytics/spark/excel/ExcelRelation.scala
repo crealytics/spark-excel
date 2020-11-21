@@ -63,16 +63,14 @@ case class ExcelRelation(
       val allDataIterator = dataLocator.readFrom(workbook)
       val iter = if (header) allDataIterator.drop(1) else allDataIterator
       val rows: Iterator[Seq[Any]] = iter
-        .flatMap(
-          row =>
-            Try {
-              val values = lookups.map(l => l(row))
-              Some(values)
-            }.recover {
-              case e =>
-                // e.printStackTrace()
-                None
-            }.get
+        .flatMap(row =>
+          Try {
+            val values = lookups.map(l => l(row))
+            Some(values)
+          }.recover { case e =>
+            // e.printStackTrace()
+            None
+          }.get
         )
       val result = rows.to[Vector]
       parallelize(result.map(Row.fromSeq))
@@ -97,8 +95,7 @@ case class ExcelRelation(
 
   private def parallelize[T : scala.reflect.ClassTag](seq: Seq[T]): RDD[T] = sqlContext.sparkContext.parallelize(seq)
 
-  /**
-    * Generates a header from the given row which is null-safe and duplicate-safe.
+  /** Generates a header from the given row which is null-safe and duplicate-safe.
     */
   lazy val headerColumns: Seq[HeaderDataColumn] = {
     val firstRow = excerpt.head
@@ -131,36 +128,32 @@ case class ExcelRelation(
           nonNullHeaderNames.groupBy(identity).filter(_._2.size > 1).keySet
         }
 
-        firstRow.zipWithIndex.map {
-          case (cell, index) =>
-            val value = colName(cell)
-            if (value == null || value.isEmpty) {
-              // When there are empty strings or the, put the index as the suffix.
-              s"_c$index"
-            } else if (duplicates.contains(value)) {
-              // When there are duplicates, put the index as the suffix.
-              s"$value$index"
-            } else {
-              value
-            }
+        firstRow.zipWithIndex.map { case (cell, index) =>
+          val value = colName(cell)
+          if (value == null || value.isEmpty) {
+            // When there are empty strings or the, put the index as the suffix.
+            s"_c$index"
+          } else if (duplicates.contains(value)) {
+            // When there are duplicates, put the index as the suffix.
+            s"$value$index"
+          } else {
+            value
+          }
         }
       } else {
-        firstRow.zipWithIndex.map {
-          case (_, index) =>
-            // Uses default column names, "_c#" where # is its position of fields
-            // when header option is disabled.
-            s"_c$index"
+        firstRow.zipWithIndex.map { case (_, index) =>
+          // Uses default column names, "_c#" where # is its position of fields
+          // when header option is disabled.
+          s"_c$index"
         }
       }
-      colNames.zip(dataTypes).map {
-        case (colName, dataType) =>
-          StructField(name = colName, dataType = dataType, nullable = true)
+      colNames.zip(dataTypes).map { case (colName, dataType) =>
+        StructField(name = colName, dataType = dataType, nullable = true)
       }
     }
 
-    firstRow.zip(fields).map {
-      case (cell, field) =>
-        new HeaderDataColumn(field, cell.getColumnIndex, treatEmptyValuesAsNulls, timestampParser)
+    firstRow.zip(fields).map { case (cell, field) =>
+      new HeaderDataColumn(field, cell.getColumnIndex, treatEmptyValuesAsNulls, timestampParser)
     }
   }
 

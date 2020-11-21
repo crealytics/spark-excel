@@ -76,12 +76,11 @@ package object excel {
         "maxRowsInMemory" -> maxRowsInMemory,
         "excerptSize" -> excerptSize,
         "workbookPassword" -> workbookPassword
-      ).foldLeft(dataFrameReader.format("com.crealytics.spark.excel")) {
-        case (dfReader, (key, value)) =>
-          value match {
-            case null => dfReader
-            case v => dfReader.option(key, v.toString)
-          }
+      ).foldLeft(dataFrameReader.format("com.crealytics.spark.excel")) { case (dfReader, (key, value)) =>
+        value match {
+          case null => dfReader
+          case v => dfReader.option(key, v.toString)
+        }
       }
     }
   }
@@ -101,12 +100,11 @@ package object excel {
         "dateFormat" -> dateFormat,
         "timestampFormat" -> timestampFormat,
         "preHeader" -> preHeader
-      ).foldLeft(dataFrameWriter.format("com.crealytics.spark.excel")) {
-        case (dfWriter, (key, value)) =>
-          value match {
-            case null => dfWriter
-            case v => dfWriter.option(key, v.toString)
-          }
+      ).foldLeft(dataFrameWriter.format("com.crealytics.spark.excel")) { case (dfWriter, (key, value)) =>
+        value match {
+          case null => dfWriter
+          case v => dfWriter.option(key, v.toString)
+        }
       }
     }
   }
