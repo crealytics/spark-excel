@@ -4,6 +4,7 @@ A library for querying Excel files with Apache Spark, for Spark SQL and DataFram
 
 [![Build Status](https://github.com/crealytics/spark-excel/workflows/CI/badge.svg)](https://github.com/crealytics/spark-excel/actions)
 [![Sonatype Nexus](https://img.shields.io/nexus/s/https/oss.sonatype.org/com.crealytics/spark-excel_2.12.svg)](https://oss.sonatype.org/content/repositories/public/com/crealytics/spark-excel_2.12/)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/crealytics/spark-excel)
 
 ## Co-maintainers wanted
 Due to personal and professional constraints, the development of this library has been rather slow.
