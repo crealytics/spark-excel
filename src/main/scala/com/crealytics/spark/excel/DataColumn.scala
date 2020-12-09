@@ -32,7 +32,7 @@ class HeaderDataColumn(
     lazy val dataFormatter = new DataFormatter()
     // Overwrite ExcelGeneralNumberFormat with custom PlainNumberFormat.
     // See https://github.com/crealytics/spark-excel/issues/321
-    lazy val plainNumberFormat = PlainNumberFormat.getInstance()
+    lazy val plainNumberFormat = PlainNumberFormat
     dataFormatter.addFormat("General", plainNumberFormat)
     dataFormatter.addFormat("@", plainNumberFormat)
 
