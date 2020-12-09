@@ -15,6 +15,7 @@ case class ExcelRelation(
   dataLocator: DataLocator,
   header: Boolean,
   treatEmptyValuesAsNulls: Boolean,
+  usePlainNumberFormat: Boolean,
   inferSheetSchema: Boolean,
   addColorColumns: Boolean = true,
   userSchema: Option[StructType] = None,
@@ -153,7 +154,7 @@ case class ExcelRelation(
     }
 
     firstRow.zip(fields).map { case (cell, field) =>
-      new HeaderDataColumn(field, cell.getColumnIndex, treatEmptyValuesAsNulls, timestampParser)
+      new HeaderDataColumn(field, cell.getColumnIndex, treatEmptyValuesAsNulls, usePlainNumberFormat, timestampParser)
     }
   }
 
