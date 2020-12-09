@@ -1,5 +1,7 @@
 Next
 ====
+- Feature: Add PlainNumberFormat that does not round or use scientific notations for long numbers.
+           Can be enabled by setting `usePlainNumberFormat=true` when reading the excel file. 
 
 0.13.2
 ======

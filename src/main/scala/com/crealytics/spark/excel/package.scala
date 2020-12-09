@@ -59,6 +59,7 @@ package object excel {
       header: Boolean = true,
       treatEmptyValuesAsNulls: Boolean = false,
       inferSchema: Boolean = false,
+      usePlainNumberFormat: Boolean = false,
       addColorColumns: Boolean = false,
       dataAddress: String = null,
       timestampFormat: String = null,
@@ -69,6 +70,7 @@ package object excel {
       Map(
         "header" -> header,
         "treatEmptyValuesAsNulls" -> treatEmptyValuesAsNulls,
+        "usePlainNumberFormat" -> usePlainNumberFormat,
         "inferSchema" -> inferSchema,
         "addColorColumns" -> addColorColumns,
         "dataAddress" -> dataAddress,

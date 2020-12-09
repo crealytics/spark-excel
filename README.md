@@ -69,6 +69,7 @@ val df = spark.read
     .option("dataAddress", "'My Sheet'!B3:C35") // Optional, default: "A1"
     .option("header", "true") // Required
     .option("treatEmptyValuesAsNulls", "false") // Optional, default: true
+    .option("usePlainNumberFormat", "false") // Optional, default: false, If true, format the cells without rounding and scientific notations
     .option("inferSchema", "false") // Optional, default: false
     .option("addColorColumns", "true") // Optional, default: false
     .option("timestampFormat", "MM-dd-yyyy HH:mm:ss") // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
@@ -91,6 +92,7 @@ val df = spark.read.excel(
     header = true,  // Required
     dataAddress = "'My Sheet'!B3:C35", // Optional, default: "A1"
     treatEmptyValuesAsNulls = false,  // Optional, default: true
+    usePlainNumberFormat = false,  // Optional, default: false. If true, format the cells without rounding and scientific notations
     inferSchema = false,  // Optional, default: false
     addColorColumns = true,  // Optional, default: false
     timestampFormat = "MM-dd-yyyy HH:mm:ss",  // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]

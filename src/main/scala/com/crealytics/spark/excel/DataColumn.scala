@@ -20,6 +20,7 @@ class HeaderDataColumn(
   val field: StructField,
   val columnIndex: Int,
   treatEmptyValuesAsNulls: Boolean,
+  usePlainNumberFormat: Boolean,
   parseTimestamp: String => Timestamp
 ) extends DataColumn {
   def name: String = field.name
@@ -30,11 +31,13 @@ class HeaderDataColumn(
     }
 
     lazy val dataFormatter = new DataFormatter()
-    // Overwrite ExcelGeneralNumberFormat with custom PlainNumberFormat.
-    // See https://github.com/crealytics/spark-excel/issues/321
-    lazy val plainNumberFormat = PlainNumberFormat
-    dataFormatter.addFormat("General", plainNumberFormat)
-    dataFormatter.addFormat("@", plainNumberFormat)
+    if (usePlainNumberFormat) {
+      // Overwrite ExcelGeneralNumberFormat with custom PlainNumberFormat.
+      // See https://github.com/crealytics/spark-excel/issues/321
+      lazy val plainNumberFormat = PlainNumberFormat
+      dataFormatter.addFormat("General", plainNumberFormat)
+      dataFormatter.addFormat("@", plainNumberFormat)
+    }
 
     lazy val stringValue =
       cell.getCellType match {
