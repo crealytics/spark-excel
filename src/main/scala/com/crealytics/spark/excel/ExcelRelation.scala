@@ -1,6 +1,6 @@
 package com.crealytics.spark.excel
 
-import java.sql.Timestamp
+import java.sql.{Date, Timestamp}
 import java.text.SimpleDateFormat
 
 import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil, Row => _}
@@ -20,6 +20,7 @@ case class ExcelRelation(
   addColorColumns: Boolean = true,
   userSchema: Option[StructType] = None,
   timestampFormat: Option[String] = None,
+  dateFormat: Option[String] = None,
   excerptSize: Int = 10,
   workbookReader: WorkbookReader
 )(@transient val sqlContext: SQLContext)
@@ -45,6 +46,15 @@ case class ExcelRelation(
         (stringValue: String) => new Timestamp(parser.parse(stringValue).getTime)
       }
       .getOrElse((stringValue: String) => Timestamp.valueOf(stringValue))
+
+  private val dateParser: String => Date = {
+    dateFormat
+      .map { fmt =>
+        val parser = new SimpleDateFormat(fmt)
+        (stringValue: String) => new java.sql.Date(parser.parse(stringValue).getTime)
+      }
+      .getOrElse((stringValue: String) => Date.valueOf(stringValue))
+  }
 
   val columnNameRegex = s"(?s)^(.*?)(_color)?$$".r.unanchored
   private def columnExtractor(column: String): SheetRow => Any = {
@@ -154,7 +164,14 @@ case class ExcelRelation(
     }
 
     firstRow.zip(fields).map { case (cell, field) =>
-      new HeaderDataColumn(field, cell.getColumnIndex, treatEmptyValuesAsNulls, usePlainNumberFormat, timestampParser)
+      new HeaderDataColumn(
+        field,
+        cell.getColumnIndex,
+        treatEmptyValuesAsNulls,
+        usePlainNumberFormat,
+        timestampParser,
+        dateParser
+      )
     }
   }
 
