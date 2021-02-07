@@ -47,6 +47,7 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
       inferSheetSchema = parameters.get("inferSchema").fold(false)(_.toBoolean),
       addColorColumns = parameters.get("addColorColumns").fold(false)(_.toBoolean),
       timestampFormat = parameters.get("timestampFormat"),
+      dateFormat = parameters.get("dateFormat"),
       excerptSize = parameters.get("excerptSize").fold(10)(_.toInt),
       dataLocator = dataLocator,
       workbookReader = wbReader
