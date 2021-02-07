@@ -4,7 +4,7 @@ A library for querying Excel files with Apache Spark, for Spark SQL and DataFram
 
 [![Build Status](https://github.com/crealytics/spark-excel/workflows/CI/badge.svg)](https://github.com/crealytics/spark-excel/actions)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.crealytics/spark-excel_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.crealytics/spark-excel_2.12)
- 
+
 
 ## Co-maintainers wanted
 Due to personal and professional constraints, the development of this library has been rather slow.
@@ -61,7 +61,7 @@ $SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:<spark-ve
 * This package allows querying Excel spreadsheets as [Spark DataFrames](https://spark.apache.org/docs/latest/sql-programming-guide.html).
 * From spark-excel [0.14.0](https://github.com/crealytics/spark-excel/releases/tag/v0.14.0) (August 24, 2021), there are two implementation of spark-excel
     * Original Spark-Excel with Spark data source API 1.0
-    * Spark-Excel V2 with data source API V2.0+, which supports loading from multiple files, corrupted record handling and some improvement on handling data types. 
+    * Spark-Excel V2 with data source API V2.0+, which supports loading from multiple files, corrupted record handling and some improvement on handling data types.
       See below for further details
 
 To use V2 implementation, just change your .format from `.format("com.crealytics.spark.excel")` to `.format("excel")`.
@@ -89,6 +89,7 @@ val df = spark.read
     .option("inferSchema", "false") // Optional, default: false
     .option("addColorColumns", "true") // Optional, default: false
     .option("timestampFormat", "MM-dd-yyyy HH:mm:ss") // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
+    .option("dateFormat", "yyyyMMdd") // Optional, default: yyyy-MM-dd
     .option("maxRowsInMemory", 20) // Optional, default None. If set, uses a streaming reader which can help with big files (will fail if used with xls format files)
     .option("maxByteArraySize", 2147483647) // Optional, default None. See https://poi.apache.org/apidocs/5.0/org/apache/poi/util/IOUtils.html#setByteArrayMaxOverride-int-
     .option("tempFileThreshold", 10000000) // Optional, default None. Number of bytes at which a zip entry is regarded as too large for holding in memory and the data is put in a temp file instead
@@ -224,7 +225,7 @@ spark.read
 
 
 Because folders are supported you can read/write from/to a "partitioned" folder structure, just
-the same way as csv or parquet. Note that writing partitioned structures is only 
+the same way as csv or parquet. Note that writing partitioned structures is only
 available for spark >=3.0.1
 
 ````scala
