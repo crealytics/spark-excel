@@ -69,6 +69,7 @@ val df = spark.read
     .option("dataAddress", "'My Sheet'!B3:C35") // Optional, default: "A1"
     .option("header", "true") // Required
     .option("treatEmptyValuesAsNulls", "false") // Optional, default: true
+    .option("treatErrorsAsStrings", "true") // Optional, default: false. If true, will convert any ERROR cell values (e.g. #!N/A) to string. Otherwise, converted to null.
     .option("usePlainNumberFormat", "false") // Optional, default: false, If true, format the cells without rounding and scientific notations
     .option("inferSchema", "false") // Optional, default: false
     .option("addColorColumns", "true") // Optional, default: false
@@ -92,6 +93,7 @@ val df = spark.read.excel(
     header = true,  // Required
     dataAddress = "'My Sheet'!B3:C35", // Optional, default: "A1"
     treatEmptyValuesAsNulls = false,  // Optional, default: true
+    treatErrorsAsStrings = false, // Optional, default: false. If true, will convert any ERROR cell values (e.g. #!N/A) to string. Otherwise, converted to null.
     usePlainNumberFormat = false,  // Optional, default: false. If true, format the cells without rounding and scientific notations
     inferSchema = false,  // Optional, default: false
     addColorColumns = true,  // Optional, default: false
