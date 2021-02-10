@@ -51,25 +51,25 @@ class ErrorsAsStringsReadSuite extends AnyFunSpec with DataFrameSuiteBase with M
     }
 
     // We cannot set individual ERROR cells to null as the final inferred column type will always be StringType.
-    it("should read errors as null when treatErrorsAsStrings=false and inferSchema=true") {
-      val df = readFromResources(excelLocation, false, true)
-
-      // scalastyle:offprintln
-      println("actual")
-      // scalastyle:onprintln
-      df.printSchema()
-      df.show()
-
-      val expected = spark.createDataFrame(expectedDataErrorsAsNullInfer, expectedSchemaErrorsAsNullInfer)
-
-      // scalastyle:offprintln
-      println("expected")
-      // scalastyle:onprintln
-      expected.printSchema()
-      expected.show()
-
-      assertDataFrameEquals(expected, df)
-    }
+    //    it("should read errors as null when treatErrorsAsStrings=false and inferSchema=true") {
+    //      val df = readFromResources(excelLocation, false, true)
+    //
+    //      // scalastyle:offprintln
+    //      println("actual")
+    //      // scalastyle:onprintln
+    //      df.printSchema()
+    //      df.show()
+    //
+    //      val expected = spark.createDataFrame(expectedDataErrorsAsNullInfer, expectedSchemaErrorsAsNullInfer)
+    //
+    //      // scalastyle:offprintln
+    //      println("expected")
+    //      // scalastyle:onprintln
+    //      expected.printSchema()
+    //      expected.show()
+    //
+    //      assertDataFrameEquals(expected, df)
+    //    }
 
     it("should read errors in string format when treatErrorsAsStrings=true and inferSchema=false") {
       val df = readFromResources(excelLocation, true, false)
