@@ -12,26 +12,25 @@ import scala.collection.JavaConverters._
 
 object ErrorsAsStringsReadSuite {
   val expectedSchemaErrorsAsStringsInfer = StructType(
-    List(StructField("id", DoubleType, true), StructField("errors", StringType, true))
+    List(StructField("id", DoubleType, true), StructField("amount", StringType, true))
   )
-
   val expectedDataErrorsAsStringsInfer: util.List[Row] =
-    List(Row(1.0, "#N/A"), Row(2.0, "#NULL!")).asJava
+    List(Row(1.0, "#N/A"), Row(2.0, "#NULL!"), Row(3.0, "5")).asJava
 
   val expectedSchemaErrorsAsNullInfer = StructType(
-    List(StructField("id", DoubleType, true), StructField("errors", StringType, true))
+    List(StructField("id", DoubleType, true), StructField("amount", DoubleType, true))
   )
-
   val expectedDataErrorsAsNullInfer: util.List[Row] =
-    List(Row(1.0, null), Row(2.0, null)).asJava
+    List(Row(1.0, null), Row(2.0, null), Row(3.0, 5.0)).asJava
 
   val expectedSchemaNonInfer = StructType(
-    List(StructField("id", StringType, true), StructField("errors", StringType, true))
+    List(StructField("id", StringType, true), StructField("amount", StringType, true))
   )
+  val expectedDataErrorsAsStringsNonInfer: util.List[Row] =
+    List(Row("1", "#N/A"), Row("2", "#NULL!"), Row("3", "5")).asJava
 
-  val expectedDataErrorsNonInfer: util.List[Row] =
-    List(Row("1", "#N/A"), Row("2", "#NULL!")).asJava
-
+  val expectedDataErrorsAsNullNonInfer: util.List[Row] =
+    List(Row("1", null), Row("2", null), Row("3", "5")).asJava
   val excelLocation = "/spreadsheets/with_errors.xlsx"
 }
 
@@ -50,36 +49,21 @@ class ErrorsAsStringsReadSuite extends AnyFunSpec with DataFrameSuiteBase with M
       assertDataFrameEquals(expected, df)
     }
 
-    // We cannot set individual ERROR cells to null as the final inferred column type will always be StringType.
-    //    it("should read errors as null when treatErrorsAsStrings=false and inferSchema=true") {
-    //      val df = readFromResources(excelLocation, false, true)
-    //
-    //      // scalastyle:offprintln
-    //      println("actual")
-    //      // scalastyle:onprintln
-    //      df.printSchema()
-    //      df.show()
-    //
-    //      val expected = spark.createDataFrame(expectedDataErrorsAsNullInfer, expectedSchemaErrorsAsNullInfer)
-    //
-    //      // scalastyle:offprintln
-    //      println("expected")
-    //      // scalastyle:onprintln
-    //      expected.printSchema()
-    //      expected.show()
-    //
-    //      assertDataFrameEquals(expected, df)
-    //    }
+    it("should read errors as null when treatErrorsAsStrings=false and inferSchema=true") {
+      val df = readFromResources(excelLocation, false, true)
+      val expected = spark.createDataFrame(expectedDataErrorsAsNullInfer, expectedSchemaErrorsAsNullInfer)
+      assertDataFrameEquals(expected, df)
+    }
 
     it("should read errors in string format when treatErrorsAsStrings=true and inferSchema=false") {
       val df = readFromResources(excelLocation, true, false)
-      val expected = spark.createDataFrame(expectedDataErrorsNonInfer, expectedSchemaNonInfer)
+      val expected = spark.createDataFrame(expectedDataErrorsAsStringsNonInfer, expectedSchemaNonInfer)
       assertDataFrameEquals(expected, df)
     }
 
     it("should read errors in string format when treatErrorsAsStrings=false and inferSchema=false") {
       val df = readFromResources(excelLocation, false, false)
-      val expected = spark.createDataFrame(expectedDataErrorsNonInfer, expectedSchemaNonInfer)
+      val expected = spark.createDataFrame(expectedDataErrorsAsNullNonInfer, expectedSchemaNonInfer)
       assertDataFrameEquals(expected, df)
     }
   }

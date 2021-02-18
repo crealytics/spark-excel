@@ -156,7 +156,14 @@ case class ExcelRelation(
     }
 
     firstRow.zip(fields).map { case (cell, field) =>
-      new HeaderDataColumn(field, cell.getColumnIndex, treatEmptyValuesAsNulls, usePlainNumberFormat, timestampParser)
+      new HeaderDataColumn(
+        field,
+        cell.getColumnIndex,
+        treatEmptyValuesAsNulls,
+        usePlainNumberFormat,
+        timestampParser,
+        treatErrorsAsStrings
+      )
     }
   }
 

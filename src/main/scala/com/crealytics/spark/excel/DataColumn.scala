@@ -21,7 +21,8 @@ class HeaderDataColumn(
   val columnIndex: Int,
   treatEmptyValuesAsNulls: Boolean,
   usePlainNumberFormat: Boolean,
-  parseTimestamp: String => Timestamp
+  parseTimestamp: String => Timestamp,
+  treatErrorsAsStrings: Boolean
 ) extends DataColumn {
   def name: String = field.name
   def extractValue(cell: Cell): Any = {
@@ -37,6 +38,12 @@ class HeaderDataColumn(
       lazy val plainNumberFormat = PlainNumberFormat
       dataFormatter.addFormat("General", plainNumberFormat)
       dataFormatter.addFormat("@", plainNumberFormat)
+    }
+
+    if (cellType == CellType.ERROR && !treatErrorsAsStrings) {
+      return null
+    } else if (cellType == CellType.ERROR && treatErrorsAsStrings) {
+      return dataFormatter.formatCellValue(cell)
     }
 
     lazy val stringValue =
