@@ -1,6 +1,6 @@
 package com.crealytics.spark.excel
 import java.math.BigDecimal
-import java.sql.Timestamp
+import java.sql.{Date, Timestamp}
 
 import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil}
 import org.apache.spark.sql.types._
@@ -21,7 +21,8 @@ class HeaderDataColumn(
   val columnIndex: Int,
   treatEmptyValuesAsNulls: Boolean,
   usePlainNumberFormat: Boolean,
-  parseTimestamp: String => Timestamp
+  parseTimestamp: String => Timestamp,
+  parseDate: String => Date
 ) extends DataColumn {
   def name: String = field.name
   def extractValue(cell: Cell): Any = {
@@ -84,7 +85,13 @@ class HeaderDataColumn(
             numericValue.map(n => new Timestamp(DateUtil.getJavaDate(n).getTime))
           case _ => stringValue.filter(_.trim.nonEmpty).map(parseTimestamp)
         }
-      case _: DateType => numericValue.map(n => new java.sql.Date(DateUtil.getJavaDate(n).getTime))
+      case _: DateType =>
+        cellType match {
+          case CellType.NUMERIC | CellType.FORMULA =>
+            numericValue.map(n => new Date(DateUtil.getJavaDate(n).getTime))
+          case _ => stringValue.filter(_.trim.nonEmpty).map(parseDate)
+        }
+
       case _: StringType =>
         stringValue.filterNot(_.isEmpty && treatEmptyValuesAsNulls)
       case t => throw new RuntimeException(s"Unsupported cast from $cell to $t")
