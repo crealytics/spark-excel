@@ -58,7 +58,7 @@ package object excel {
     def excel(
       header: Boolean = true,
       treatEmptyValuesAsNulls: Boolean = false,
-      treatErrorsAsStrings: Boolean = false,
+      setErrorCellsToFallbackValues: Boolean = false,
       inferSchema: Boolean = false,
       usePlainNumberFormat: Boolean = false,
       addColorColumns: Boolean = false,
@@ -71,7 +71,7 @@ package object excel {
       Map(
         "header" -> header,
         "treatEmptyValuesAsNulls" -> treatEmptyValuesAsNulls,
-        "treatErrorsAsStrings" -> treatErrorsAsStrings,
+        "setErrorCellsToFallbackValues" -> setErrorCellsToFallbackValues,
         "usePlainNumberFormat" -> usePlainNumberFormat,
         "inferSchema" -> inferSchema,
         "addColorColumns" -> addColorColumns,

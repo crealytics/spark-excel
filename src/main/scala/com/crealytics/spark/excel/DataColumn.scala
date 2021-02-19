@@ -1,6 +1,7 @@
 package com.crealytics.spark.excel
 import java.math.BigDecimal
-import java.sql.Timestamp
+import java.sql.{Date, Timestamp}
+import java.time.Instant
 
 import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil}
 import org.apache.spark.sql.types._
@@ -17,12 +18,12 @@ trait DataColumn extends PartialFunction[Seq[Cell], Any] {
 }
 
 class HeaderDataColumn(
-  val field: StructField,
-  val columnIndex: Int,
-  treatEmptyValuesAsNulls: Boolean,
-  usePlainNumberFormat: Boolean,
-  parseTimestamp: String => Timestamp,
-  treatErrorsAsStrings: Boolean
+                          val field: StructField,
+                          val columnIndex: Int,
+                          treatEmptyValuesAsNulls: Boolean,
+                          usePlainNumberFormat: Boolean,
+                          parseTimestamp: String => Timestamp,
+                          setErrorCellsToFallbackValues: Boolean
 ) extends DataColumn {
   def name: String = field.name
   def extractValue(cell: Cell): Any = {
@@ -40,10 +41,8 @@ class HeaderDataColumn(
       dataFormatter.addFormat("@", plainNumberFormat)
     }
 
-    if (cellType == CellType.ERROR && !treatErrorsAsStrings) {
+    if (cellType == CellType.ERROR && !setErrorCellsToFallbackValues) {
       return null
-    } else if (cellType == CellType.ERROR && treatErrorsAsStrings) {
-      return dataFormatter.formatCellValue(cell)
     }
 
     lazy val stringValue =
@@ -76,24 +75,31 @@ class HeaderDataColumn(
     }
     lazy val bigDecimal = numericValue.map(new BigDecimal(_))
     val value: Option[Any] = field.dataType match {
-      case _: ByteType => numericValue.map(_.toByte)
-      case _: ShortType => numericValue.map(_.toShort)
-      case _: IntegerType => numericValue.map(_.toInt)
-      case _: LongType => numericValue.map(_.toLong)
-      case _: FloatType => numericValue.map(_.toFloat)
-      case _: DoubleType => numericValue
-      case _: BooleanType => booleanValue
+      case _: ByteType => if (cellType == CellType.ERROR) Some(0) else numericValue.map(_.toByte)
+      case _: ShortType => if (cellType == CellType.ERROR) Some(0) else numericValue.map(_.toShort)
+      case _: IntegerType => if (cellType == CellType.ERROR) Some(0) else numericValue.map(_.toInt)
+      case _: LongType => if (cellType == CellType.ERROR) Some(0.0) else numericValue.map(_.toLong)
+      case _: FloatType => if (cellType == CellType.ERROR) Some(0.0) else numericValue.map(_.toFloat)
+      case _: DoubleType => if (cellType == CellType.ERROR) Some(0.0) else numericValue
+      case _: BooleanType => if (cellType == CellType.ERROR) Some(false) else booleanValue
       case _: DecimalType =>
-        if (cellType == CellType.STRING && cell.getStringCellValue == "") None else bigDecimal
+        if (cellType == CellType.ERROR) Some(0.0)
+        else if (cellType == CellType.STRING && cell.getStringCellValue == "") None
+        else bigDecimal
       case _: TimestampType =>
         cellType match {
+          case CellType.ERROR =>
+            Some(Timestamp.from(Instant.EPOCH))
           case CellType.NUMERIC | CellType.FORMULA =>
             numericValue.map(n => new Timestamp(DateUtil.getJavaDate(n).getTime))
           case _ => stringValue.filter(_.trim.nonEmpty).map(parseTimestamp)
         }
-      case _: DateType => numericValue.map(n => new java.sql.Date(DateUtil.getJavaDate(n).getTime))
+      case _: DateType =>
+        if (cellType == CellType.ERROR) Some(new java.sql.Date(0))
+        else numericValue.map(n => new java.sql.Date(DateUtil.getJavaDate(n).getTime))
       case _: StringType =>
-        stringValue.filterNot(_.isEmpty && treatEmptyValuesAsNulls)
+        if (cellType == CellType.ERROR) Some("")
+        else stringValue.filterNot(_.isEmpty && treatEmptyValuesAsNulls)
       case t => throw new RuntimeException(s"Unsupported cast from $cell to $t")
     }
 

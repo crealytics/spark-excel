@@ -17,7 +17,7 @@ case class ExcelRelation(
   treatEmptyValuesAsNulls: Boolean,
   usePlainNumberFormat: Boolean,
   inferSheetSchema: Boolean,
-  treatErrorsAsStrings: Boolean,
+  setErrorCellsToFallbackValues: Boolean,
   addColorColumns: Boolean = true,
   userSchema: Option[StructType] = None,
   timestampFormat: Option[String] = None,
@@ -92,7 +92,7 @@ case class ExcelRelation(
       case CellType.BOOLEAN => BooleanType
       case CellType.NUMERIC => if (DateUtil.isCellDateFormatted(cell)) TimestampType else DoubleType
       case CellType.BLANK => NullType
-      case CellType.ERROR => if (treatErrorsAsStrings) StringType else NullType
+      case CellType.ERROR => NullType
     }
   }
 
@@ -162,7 +162,7 @@ case class ExcelRelation(
         treatEmptyValuesAsNulls,
         usePlainNumberFormat,
         timestampParser,
-        treatErrorsAsStrings
+        setErrorCellsToFallbackValues
       )
     }
   }
