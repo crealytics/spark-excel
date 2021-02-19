@@ -18,12 +18,12 @@ trait DataColumn extends PartialFunction[Seq[Cell], Any] {
 }
 
 class HeaderDataColumn(
-                          val field: StructField,
-                          val columnIndex: Int,
-                          treatEmptyValuesAsNulls: Boolean,
-                          usePlainNumberFormat: Boolean,
-                          parseTimestamp: String => Timestamp,
-                          setErrorCellsToFallbackValues: Boolean
+  val field: StructField,
+  val columnIndex: Int,
+  treatEmptyValuesAsNulls: Boolean,
+  usePlainNumberFormat: Boolean,
+  parseTimestamp: String => Timestamp,
+  setErrorCellsToFallbackValues: Boolean
 ) extends DataColumn {
   def name: String = field.name
   def extractValue(cell: Cell): Any = {
@@ -89,7 +89,7 @@ class HeaderDataColumn(
       case _: TimestampType =>
         cellType match {
           case CellType.ERROR =>
-            Some(Timestamp.from(Instant.EPOCH))
+            Some(new Timestamp(0))
           case CellType.NUMERIC | CellType.FORMULA =>
             numericValue.map(n => new Timestamp(DateUtil.getJavaDate(n).getTime))
           case _ => stringValue.filter(_.trim.nonEmpty).map(parseTimestamp)

@@ -1,7 +1,7 @@
 package com.crealytics.spark.excel
 
 import java.sql.Timestamp
-import java.time.Instant
+import java.time.{Instant, LocalDateTime}
 import java.util
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
@@ -13,11 +13,11 @@ import org.scalatest.matchers.should.Matchers
 import scala.collection.JavaConverters._
 
 object ErrorsAsStringsReadSuite {
-  val dummyTimestamp = new Timestamp(1613667600000L)
-  val epochTimestamp = new Timestamp(0)
-  val dummyText = "hello"
+  private val dummyTimestamp = Timestamp.valueOf(LocalDateTime.of(2021, 2, 19, 0, 0))
+  private val epochTimestamp = new Timestamp(0)
+  private val dummyText = "hello"
 
-  val expectedSchemaInfer = StructType(
+  private val expectedSchemaInfer = StructType(
     List(
       StructField("double", DoubleType, true),
       StructField("boolean", BooleanType, true),
@@ -25,7 +25,7 @@ object ErrorsAsStringsReadSuite {
       StructField("string", StringType, true)
     )
   )
-  val expectedDataErrorsAsStringsInfer: util.List[Row] =
+  private val expectedDataErrorsAsStringsInfer: util.List[Row] =
     List(
       Row(1.0, true, dummyTimestamp, dummyText),
       Row(2.0, false, dummyTimestamp, dummyText),
@@ -33,7 +33,7 @@ object ErrorsAsStringsReadSuite {
       Row(0.0, false, epochTimestamp, "")
     ).asJava
 
-  val expectedDataErrorsAsNullInfer: util.List[Row] =
+  private val expectedDataErrorsAsNullInfer: util.List[Row] =
     List(
       Row(1.0, true, dummyTimestamp, dummyText),
       Row(2.0, false, dummyTimestamp, dummyText),
@@ -41,7 +41,7 @@ object ErrorsAsStringsReadSuite {
       Row(null, null, null, null)
     ).asJava
 
-  val expectedSchemaNonInfer = StructType(
+  private val expectedSchemaNonInfer = StructType(
     List(
       StructField("double", StringType, true),
       StructField("boolean", StringType, true),
@@ -49,7 +49,7 @@ object ErrorsAsStringsReadSuite {
       StructField("string", StringType, true)
     )
   )
-  val expectedDataErrorsAsStringsNonInfer: util.List[Row] =
+  private val expectedDataErrorsAsStringsNonInfer: util.List[Row] =
     List(
       Row("1", "TRUE", "19\"-\"Feb\"-\"2021", dummyText),
       Row("2", "FALSE", "19\"-\"Feb\"-\"2021", dummyText),
@@ -57,7 +57,7 @@ object ErrorsAsStringsReadSuite {
       Row("", "", "", "")
     ).asJava
 
-  val expectedDataErrorsAsNullNonInfer: util.List[Row] =
+  private val expectedDataErrorsAsNullNonInfer: util.List[Row] =
     List(
       Row("1", "TRUE", "19\"-\"Feb\"-\"2021", "hello"),
       Row("2", "FALSE", "19\"-\"Feb\"-\"2021", "hello"),
@@ -65,7 +65,7 @@ object ErrorsAsStringsReadSuite {
       Row(null, null, null, null)
     ).asJava
 
-  val excelLocation = "/spreadsheets/with_errors_all_types.xlsx"
+  private val excelLocation = "/spreadsheets/with_errors_all_types.xlsx"
 }
 
 class ErrorsAsStringsReadSuite extends AnyFunSpec with DataFrameSuiteBase with Matchers {
@@ -74,8 +74,8 @@ class ErrorsAsStringsReadSuite extends AnyFunSpec with DataFrameSuiteBase with M
   def readFromResources(path: String, setErrorCellsToFallbackValues: Boolean, inferSchema: Boolean): DataFrame = {
     val url = getClass.getResource(path)
     spark.read
-        .excel(setErrorCellsToFallbackValues = setErrorCellsToFallbackValues, inferSchema = inferSchema, excerptSize = 3)
-        .load(url.getPath)
+      .excel(setErrorCellsToFallbackValues = setErrorCellsToFallbackValues, inferSchema = inferSchema, excerptSize = 3)
+      .load(url.getPath)
   }
 
   describe("spark-excel") {
@@ -93,9 +93,7 @@ class ErrorsAsStringsReadSuite extends AnyFunSpec with DataFrameSuiteBase with M
 
     it("should read errors in string format when setErrorCellsToFallbackValues=true and inferSchema=false") {
       val df = readFromResources(excelLocation, true, false)
-      df.printSchema()
       val expected = spark.createDataFrame(expectedDataErrorsAsStringsNonInfer, expectedSchemaNonInfer)
-      expected.printSchema()
       assertDataFrameEquals(expected, df)
     }
 
