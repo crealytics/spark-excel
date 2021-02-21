@@ -16,7 +16,7 @@ addSbtPlugin("org.hammerlab.sbt" % "assembly" % "5.0.0")
 
 addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.5")
 
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.13")
+addSbtPlugin("com.github.sbt" % "sbt-release" % "1.0.14")
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.5")
 
