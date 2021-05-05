@@ -1,7 +1,5 @@
 resolvers += Resolver.bintrayIvyRepo("s22s", "sbt-plugins")
 
-addSbtPlugin("org.spark-packages" % "sbt-spark-package" % "0.2.7-astraea.1")
-
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0" excludeAll(
   ExclusionRule(organization = "com.danieltrinh")))
 
