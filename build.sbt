@@ -2,19 +2,15 @@ name := "spark-excel"
 
 organization := "com.crealytics"
 
-crossScalaVersions := Seq("2.12.10", "2.11.12")
+crossScalaVersions := Seq("2.12.13", "2.11.12")
 
 scalaVersion := crossScalaVersions.value.head
 
-spName := "crealytics/spark-excel"
-
-sparkVersion := "2.4.7"
+lazy val sparkVersion = "2.4.7"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
 testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.value)
-
-sparkComponents := Seq("core", "sql", "hive")
 
 resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
@@ -40,6 +36,9 @@ shadeRenames ++= Seq(
 publishThinShadedJar
 
 libraryDependencies ++= Seq(
+  "org.apache.spark" %% "spark-core" % testSparkVersion.value % "provided",
+  "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "provided",
+  "org.apache.spark" %% "spark-hive" % testSparkVersion.value % "provided",
   "org.typelevel" %% "cats-core" % "2.0.0" % Test,
   "org.scalatest" %% "scalatest" % "3.2.8" % Test,
   "org.scalatestplus" %% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % Test,
@@ -50,15 +49,11 @@ libraryDependencies ++= Seq(
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % Test
 )
 
-fork in Test := true
-parallelExecution in Test := false
+Test / fork := true
+Test / parallelExecution := false
 javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
 
 publishMavenStyle := true
-
-spAppendScalaVersion := true
-
-spIncludeMaven := true
 
 publishTo := sonatypePublishToBundle.value
 
@@ -72,11 +67,11 @@ developers ++= List(Developer("nightscape", "Martin Mauch", "@nightscape", url("
 scmInfo := Some(ScmInfo(url("https://github.com/crealytics/spark-excel"), "git@github.com:crealytics/spark-excel.git"))
 
 // Skip tests during assembly
-test in assembly := {}
+assembly / test := {}
 
-addArtifact(artifact in (Compile, assembly), assembly)
+addArtifact(Compile / assembly / artifact, assembly)
 
-initialCommands in console := """
+console / initialCommands := """
   import org.apache.spark.sql._
   val spark = SparkSession.
     builder().

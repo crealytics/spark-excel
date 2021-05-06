@@ -1,2 +1,4 @@
-scalafmtCheck in ThisBuild := true
-scalafmtOnCompile in ThisBuild := true
+inThisBuild(Seq(
+  scalafmtCheck  := true,
+  scalafmtOnCompile  := true
+))
