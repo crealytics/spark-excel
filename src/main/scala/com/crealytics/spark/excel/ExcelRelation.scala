@@ -17,6 +17,7 @@ case class ExcelRelation(
   treatEmptyValuesAsNulls: Boolean,
   usePlainNumberFormat: Boolean,
   inferSheetSchema: Boolean,
+  setErrorCellsToFallbackValues: Boolean,
   addColorColumns: Boolean = true,
   userSchema: Option[StructType] = None,
   timestampFormat: Option[String] = None,
@@ -91,6 +92,7 @@ case class ExcelRelation(
       case CellType.BOOLEAN => BooleanType
       case CellType.NUMERIC => if (DateUtil.isCellDateFormatted(cell)) TimestampType else DoubleType
       case CellType.BLANK => NullType
+      case CellType.ERROR => NullType
     }
   }
 
@@ -154,7 +156,14 @@ case class ExcelRelation(
     }
 
     firstRow.zip(fields).map { case (cell, field) =>
-      new HeaderDataColumn(field, cell.getColumnIndex, treatEmptyValuesAsNulls, usePlainNumberFormat, timestampParser)
+      new HeaderDataColumn(
+        field,
+        cell.getColumnIndex,
+        treatEmptyValuesAsNulls,
+        usePlainNumberFormat,
+        timestampParser,
+        setErrorCellsToFallbackValues
+      )
     }
   }
 
