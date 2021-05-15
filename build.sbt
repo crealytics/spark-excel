@@ -40,7 +40,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "provided",
   "org.apache.spark" %% "spark-hive" % testSparkVersion.value % "provided",
   "org.typelevel" %% "cats-core" % "2.0.0" % Test,
-  "org.scalatest" %% "scalatest" % "3.2.8" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.9" % Test,
   "org.scalatestplus" %% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % Test,
   "org.scalacheck" %% "scalacheck" % "1.15.2" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5" % Test,
