@@ -6,7 +6,7 @@ addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0" excludeAll(
 
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.3")
 
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.9.1")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.9.2")
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
