@@ -2,7 +2,7 @@ name := "spark-excel"
 
 organization := "com.crealytics"
 
-crossScalaVersions := Seq("2.12.14", "2.11.12")
+crossScalaVersions := Seq("2.12.14")
 
 scalaVersion := crossScalaVersions.value.head
 
