@@ -1,7 +1,6 @@
 package com.crealytics.spark.excel
 
 import cats.Monoid
-import cats.instances.all._
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import com.norbitltd.spoiwo.model.{Cell, CellRange, Sheet, Row => SRow, Table => STable}
 import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
