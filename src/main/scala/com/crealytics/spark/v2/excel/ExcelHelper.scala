@@ -1,0 +1,107 @@
+/** Copyright 2016 - 2021 Martin Mauch (@nightscape)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  *     http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+package com.crealytics.spark.v2.excel
+
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.Path
+import org.apache.poi.ss.usermodel.Cell
+import org.apache.poi.ss.usermodel.CellType
+import org.apache.poi.ss.usermodel.DataFormatter
+import org.apache.poi.ss.usermodel.Workbook
+import org.apache.poi.ss.usermodel.WorkbookFactory
+
+import java.net.URI
+
+/* Excel parsing and utility methods*/
+object ExcelHelper {
+
+  /* For get cell string value*/
+  private val dataFormatter = new DataFormatter()
+
+  /** Cell string value extractor, which handle difference cell type
+    *
+    * @param cell to be extracted
+    * @return string value for given cell
+    */
+  def safeCellStringValue(cell: Cell): String =
+    cell.getCellType match {
+      case CellType.BLANK | CellType.ERROR | CellType._NONE => ""
+      case CellType.STRING => cell.getStringCellValue
+      case CellType.FORMULA =>
+        cell.getCachedFormulaResultType match {
+          case CellType.BLANK | CellType.ERROR | CellType._NONE => ""
+          case CellType.STRING => cell.getStringCellValue
+          case CellType.NUMERIC => cell.getNumericCellValue.toString
+          case _ => dataFormatter.formatCellValue(cell)
+        }
+      case _ => dataFormatter.formatCellValue(cell)
+    }
+
+  /** Get workbook
+    *
+    * @param conf Hadoop configuration
+    * @param uri to the file, this can be on any support file system back end
+    * @param password optional password to open workbook
+    * @return workbook
+    */
+  def getWorkbook(conf: Configuration, uri: URI, password: Option[String]): Workbook = {
+    val ins = FileSystem
+      .get(uri, conf)
+      .open(new Path(uri))
+
+    try password match {
+      case None =>
+        WorkbookFactory.create(ins)
+      case Some(password) =>
+        WorkbookFactory.create(ins, password)
+    } finally ins.close
+  }
+
+  /** Get column name by list of cells (row)
+    *
+    * @param firstRow column names will be based on this
+    * @param options excel option
+    * @return list of column names
+    */
+  def getColumnNames(firstRow: Vector[Cell], options: ExcelOptions): Vector[String] =
+    if (options.header) {
+      val headerNames = firstRow.map(ExcelHelper.safeCellStringValue)
+      val duplicates = {
+        val nonNullHeaderNames = headerNames.filter(_ != null)
+        nonNullHeaderNames.groupBy(identity).filter(_._2.size > 1).keySet
+      }
+
+      firstRow.zipWithIndex.map { case (cell, index) =>
+        val value = ExcelHelper.safeCellStringValue(cell)
+        if (value == null || value.isEmpty) {
+          /* When there are empty strings or the, put the index as the suffix.*/
+          s"_c$index"
+        } else if (duplicates.contains(value)) {
+          /* When there are duplicates, put the index as the suffix.*/
+          s"$value$index"
+        } else {
+          value
+        }
+      }
+    } else {
+      firstRow.zipWithIndex.map { case (_, index) =>
+        /** Uses default column names, "_c#" where # is its position of fields
+          * when header option is disabled.
+          */
+        s"_c$index"
+      }
+    }
+}
