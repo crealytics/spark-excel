@@ -82,7 +82,7 @@ class ExcelOptions(
   val timestampFormat: String =
     parameters.getOrElse("timestampFormat", s"${DateFormatter.defaultPattern}'T'HH:mm:ss[.SSS][XXX]")
 
-  val header = getBool("header")
+  val header = getBool("header", true)
   val inferSchema = getBool("inferSchema")
   val excerptSize = getInt("excerptSize")
 
