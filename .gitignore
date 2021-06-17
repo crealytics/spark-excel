@@ -11,5 +11,5 @@ project/project/
 project/metals.sbt
 **/.bsp/
 **/.bloop/
-
+.vscode
 private-key.pem
