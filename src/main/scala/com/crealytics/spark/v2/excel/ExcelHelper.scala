@@ -22,14 +22,44 @@ import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.DataFormatter
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
+import java.math.BigDecimal
+import java.text.FieldPosition
+import java.text.Format
+import java.text.ParsePosition
 
 import java.net.URI
 
+/** A format that formats a double as a plain string without rounding and
+  * scientific notation. All other operations are unsupported.
+  * @see [[org.apache.poi.ss.usermodel.ExcelGeneralNumberFormat]] and SSNFormat
+  * from [[org.apache.poi.ss.usermodel.DataFormatter]] from Apache POI.
+  */
+object PlainNumberFormat extends Format {
+
+  override def format(number: AnyRef, toAppendTo: StringBuffer, pos: FieldPosition): StringBuffer =
+    toAppendTo.append(new BigDecimal(number.toString).toPlainString)
+
+  override def parseObject(source: String, pos: ParsePosition): AnyRef =
+    throw new UnsupportedOperationException()
+}
+
 /* Excel parsing and utility methods*/
-object ExcelHelper {
+class ExcelHelper(options: ExcelOptions) {
 
   /* For get cell string value*/
-  private val dataFormatter = new DataFormatter()
+  private lazy val dataFormatter = {
+    val r = new DataFormatter()
+    if (options.usePlainNumberFormat) {
+
+      /** Overwrite ExcelGeneralNumberFormat with custom PlainNumberFormat.
+        * See https://github.com/crealytics/spark-excel/issues/321
+        */
+      val plainNumberFormat = PlainNumberFormat
+      r.addFormat("General", plainNumberFormat)
+      r.addFormat("@", plainNumberFormat)
+    }
+    r
+  }
 
   /** Cell string value extractor, which handle difference cell type
     *
@@ -57,12 +87,12 @@ object ExcelHelper {
     * @param password optional password to open workbook
     * @return workbook
     */
-  def getWorkbook(conf: Configuration, uri: URI, password: Option[String]): Workbook = {
+  def getWorkbook(conf: Configuration, uri: URI): Workbook = {
     val ins = FileSystem
       .get(uri, conf)
       .open(new Path(uri))
 
-    try password match {
+    try options.workbookPassword match {
       case None =>
         WorkbookFactory.create(ins)
       case Some(password) =>
@@ -76,16 +106,16 @@ object ExcelHelper {
     * @param options excel option
     * @return list of column names
     */
-  def getColumnNames(firstRow: Vector[Cell], options: ExcelOptions): Vector[String] =
+  def getColumnNames(firstRow: Vector[Cell]): Vector[String] =
     if (options.header) {
-      val headerNames = firstRow.map(ExcelHelper.safeCellStringValue)
+      val headerNames = firstRow.map(safeCellStringValue)
       val duplicates = {
         val nonNullHeaderNames = headerNames.filter(_ != null)
         nonNullHeaderNames.groupBy(identity).filter(_._2.size > 1).keySet
       }
 
       firstRow.zipWithIndex.map { case (cell, index) =>
-        val value = ExcelHelper.safeCellStringValue(cell)
+        val value = safeCellStringValue(cell)
         if (value == null || value.isEmpty) {
           /* When there are empty strings or the, put the index as the suffix.*/
           s"_c$index"
@@ -104,4 +134,8 @@ object ExcelHelper {
         s"_c$index"
       }
     }
+}
+
+object ExcelHelper {
+  def apply(options: ExcelOptions): ExcelHelper = new ExcelHelper(options)
 }

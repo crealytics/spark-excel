@@ -60,13 +60,11 @@ case class ExcelTable(
     inputPaths: Seq[FileStatus],
     parsedOptions: ExcelOptions
   ): StructType = {
+    val excelHelper = ExcelHelper(parsedOptions)
     val excelReader = DataLocator(parsedOptions)
 
-    val workbook = ExcelHelper.getWorkbook(
-      sparkSession.sqlContext.sparkContext.hadoopConfiguration,
-      inputPaths.head.getPath.toUri,
-      parsedOptions.workbookPassword
-    )
+    val workbook =
+      excelHelper.getWorkbook(sparkSession.sqlContext.sparkContext.hadoopConfiguration, inputPaths.head.getPath.toUri)
 
     /* Depend on number of rows configured to do schema inferring*/
     val rows =
@@ -79,7 +77,7 @@ case class ExcelTable(
     if (rows.isEmpty) StructType(Nil)
     else {
       val nonHeaderRows = if (parsedOptions.header) rows.tail else rows
-      val colNames = ExcelHelper.getColumnNames(rows.head, parsedOptions)
+      val colNames = excelHelper.getColumnNames(rows.head)
 
       (new ExcelInferSchema(parsedOptions)).infer(nonHeaderRows, colNames)
     }

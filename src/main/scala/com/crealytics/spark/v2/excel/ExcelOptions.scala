@@ -53,7 +53,7 @@ class ExcelOptions(
     }
   }
 
-  private def getBool(paramName: String, default: Boolean = false): Boolean = {
+  private def getBool(paramName: String, default: Boolean): Boolean = {
     val param = parameters.getOrElse(paramName, default.toString)
     if (param == null) {
       default
@@ -82,8 +82,8 @@ class ExcelOptions(
   val timestampFormat: String =
     parameters.getOrElse("timestampFormat", s"${DateFormatter.defaultPattern}'T'HH:mm:ss[.SSS][XXX]")
 
-  val header = getBool("header", true)
-  val inferSchema = getBool("inferSchema")
+  val header = getBool("header", default = true)
+  val inferSchema = getBool("inferSchema", default = false)
   val excerptSize = getInt("excerptSize")
 
   /** Forcibly apply the specified or inferred schema to datasource files.
@@ -100,8 +100,11 @@ class ExcelOptions(
   val positiveInf = parameters.getOrElse("positiveInf", "Inf")
   val negativeInf = parameters.getOrElse("negativeInf", "-Inf")
 
+  /* If true, format the cells without rounding and scientific notations*/
+  val usePlainNumberFormat = getBool("usePlainNumberFormat", default = false)
+
   /* Additional column for color*/
-  val addColorColumns = getBool("addColorColumns", false)
+  val addColorColumns = getBool("addColorColumns", default = false)
   val ignoreLeadingWhiteSpace =
     getBool("ignoreLeadingWhiteSpace", default = false)
   val ignoreTrailingWhiteSpace =

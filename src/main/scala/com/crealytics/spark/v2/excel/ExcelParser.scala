@@ -54,6 +54,11 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
   def this(schema: StructType, options: ExcelOptions) =
     this(schema, schema, options)
 
+  /** Handling detail about Excel, so the logic of ExcelParser is more on line
+    * with other file based data source
+    */
+  private val excelHelper = ExcelHelper(options)
+
   /** A `ValueConverter` is responsible for converting the given value to a
     * desired type.
     */
@@ -174,7 +179,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.NUMERIC => _.getNumericCellValue.toDouble
             case _ =>
-              ExcelHelper.safeCellStringValue(_) match {
+              excelHelper.safeCellStringValue(_) match {
                 case options.nanValue => Double.NaN
                 case options.negativeInf => Double.NegativeInfinity
                 case options.positiveInf => Double.PositiveInfinity
@@ -232,7 +237,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
       case _: StringType =>
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
-            UTF8String.fromString(ExcelHelper.safeCellStringValue(datum))
+            UTF8String.fromString(excelHelper.safeCellStringValue(datum))
           }
 
       case CalendarIntervalType =>
@@ -255,9 +260,6 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
       case CellType.BLANK | CellType.ERROR | CellType._NONE => null
       case CellType.STRING =>
         if (datum.getStringCellValue == options.nullValue) null
-        else converter.apply(datum)
-      case CellType.FORMULA =>
-        if (datum.getCachedFormulaResultType == CellType.ERROR) null
         else converter.apply(datum)
       case _ => converter.apply(datum)
     }

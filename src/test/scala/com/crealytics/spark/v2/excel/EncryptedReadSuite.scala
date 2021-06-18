@@ -51,7 +51,7 @@ class EncryptedReadSuite extends AnyFunSpec with DataFrameSuiteBase with Matcher
       .load(url.getPath)
   }
 
-  describe("spark-excel") {
+  describe("spark-excel-v2") {
     it("should read encrypted xslx file") {
       val df = readFromResources("/spreadsheets/simple_encrypted.xlsx", "fooba")
 
