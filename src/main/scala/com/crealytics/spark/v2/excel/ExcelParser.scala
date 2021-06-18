@@ -178,6 +178,20 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.NUMERIC => _.getNumericCellValue.toDouble
+            case CellType.FORMULA =>
+              _.getCachedFormulaResultType match {
+                case CellType.BLANK | CellType._NONE => null
+
+                /* Cell is an error-formula, and requested type is double*/
+                case CellType.ERROR => Double.NaN
+                case _ =>
+                  excelHelper.safeCellStringValue(d) match {
+                    case options.nanValue => Double.NaN
+                    case options.negativeInf => Double.NegativeInfinity
+                    case options.positiveInf => Double.PositiveInfinity
+                    case s => s.toDouble
+                  }
+              }
             case _ =>
               excelHelper.safeCellStringValue(_) match {
                 case options.nanValue => Double.NaN

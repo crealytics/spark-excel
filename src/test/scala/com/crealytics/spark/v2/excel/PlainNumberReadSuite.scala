@@ -33,18 +33,25 @@ object PlainNumberReadSuite {
     )
   )
 
+  /** Breaking change with V1: Keep row will all empty cells
+    * More detail: https://github.com/crealytics/spark-excel/issues/285
+    */
   val expectedPlainDataInferSchema: util.List[Row] = List(
     Row(12345678901d, "12345678901-123", "12/1/20"),
     Row(123456789012d, "123456789012", "0.01"),
     Row(-0.12345678901, "0.05", "0h 14m"),
-    Row(null, null, null)
+    Row(null, null, null),
+    Row(Double.NaN, "abc.def", null)
   ).asJava
 
+  /** Breaking change with V1: More data after row with all empty cells
+    */
   val expectedExcelDataInferSchema: util.List[Row] = List(
     Row(1.2345678901e10, "12345678901-123", "12/1/20"),
     Row(1.23456789012e11, "1.23457E+11", "0.01"), // values are displayed in scientific notation and rounded up
     Row(-0.12345678901, "0.05", "0h 14m"),
-    Row(null, null, null)
+    Row(null, null, null),
+    Row(Double.NaN, "abc.def", null)
   ).asJava
 
   val expectedNonInferredSchema = StructType(
