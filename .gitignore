@@ -13,3 +13,4 @@ project/metals.sbt
 **/.bloop/
 .vscode
 private-key.pem
+.~lock.*.xlsx#
