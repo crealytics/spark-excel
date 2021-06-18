@@ -72,9 +72,16 @@ class ExcelHelper(options: ExcelOptions) {
       case CellType.STRING => cell.getStringCellValue
       case CellType.FORMULA =>
         cell.getCachedFormulaResultType match {
-          case CellType.BLANK | CellType.ERROR | CellType._NONE => ""
+          case CellType.BLANK | CellType._NONE => ""
+
+          /** When the cell is an error-formula, and requested type is string,
+            * get actual formula itself
+            */
+          case CellType.ERROR => dataFormatter.formatCellValue(cell)
           case CellType.STRING => cell.getStringCellValue
           case CellType.NUMERIC => cell.getNumericCellValue.toString
+
+          /* Get what displayed on the cell, for all other cases*/
           case _ => dataFormatter.formatCellValue(cell)
         }
       case _ => dataFormatter.formatCellValue(cell)
