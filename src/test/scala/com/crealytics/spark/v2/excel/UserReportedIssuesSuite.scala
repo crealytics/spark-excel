@@ -14,21 +14,24 @@
   */
 package com.crealytics.spark.v2.excel
 
-import java.util
-
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import org.apache.spark.sql.{Row, _}
+import org.apache.spark.sql.Row
+import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.FunSuite
 
+import java.util
 import scala.collection.JavaConverters._
 
 object UserReportedIssuesSuite {
 
   /* Issue: https://github.com/crealytics/spark-excel/issues/285*/
   val expectedSchema_Issue285 = StructType(
-    List(StructField("1", StringType, true), StructField("2", StringType, true), StructField("3", StringType, true))
+    List(
+      StructField("1", StringType, true),
+      StructField("2", StringType, true),
+      StructField("3", StringType, true)
+    )
   )
 
   /** No change to the spark-excel, Apache POI also produce same result with
@@ -53,30 +56,73 @@ object UserReportedIssuesSuite {
       Row("B", "4", "5"),
       Row("C", "7", "8")
     ).asJava
+
+  /* With newly introduced keepUndefinedRows option*/
+  val expectedData_KeepUndefinedRows_Issue285: util.List[Row] =
+    List(
+      Row("File info", null, null),
+      Row("Info", "Info", "Info"),
+      Row(null, null, null),
+      Row("Metadata", null, null),
+      Row(null, null, null),
+      Row(null, "1", "2"),
+      Row("A", "1", "2"),
+      Row("B", "5", "6"),
+      Row("C", "9", "10"),
+      Row(null, null, null),
+      Row(null, null, null),
+      Row("Metadata", null, null),
+      Row(null, null, null),
+      Row(null, "1", "2"),
+      Row("A", "1", "2"),
+      Row("B", "4", "5"),
+      Row("C", "7", "8")
+    ).asJava
 }
 
-class UserReportedIssuesSuite extends AnyFunSpec with DataFrameSuiteBase with Matchers {
+class UserReportedIssuesSuite extends FunSuite with DataFrameSuiteBase {
   import UserReportedIssuesSuite._
 
-  def readFromResources(path: String, usePlainNumberFormat: Boolean, inferSchema: Boolean): DataFrame = {
+  def readFromResources(
+      path: String,
+      keepUndefinedRows: Boolean,
+      inferSchema: Boolean
+  ): DataFrame = {
     val url = getClass.getResource(path)
-    spark.read
-      .format("excel")
-      .option("header", false)
-      .option("treatEmptyValuesAsNulls", true)
-      .option("inferSchema", false)
-      .option("addColorColumns", false)
-      .option("ignoreLeadingWhiteSpace", true)
-      .option("ignoreTrailingWhiteSpace", true)
-      .schema(expectedSchema_Issue285)
-      .load(url.getPath)
+    if (inferSchema)
+      spark.read
+        .format("excel")
+        .option("header", false)
+        .option("inferSchema", true)
+        .option("keepUndefinedRows", keepUndefinedRows)
+        .load(url.getPath)
+    else
+      spark.read
+        .format("excel")
+        .option("header", false)
+        .option("inferSchema", true)
+        .option("keepUndefinedRows", keepUndefinedRows)
+        .schema(expectedSchema_Issue285)
+        .load(url.getPath)
   }
 
-  describe("spark-excel-v2") {
-    it("#285 keep emptied rows") {
-      val df = readFromResources("/spreadsheets/issue_285_bryce21.xlsx", true, true)
-      val expected = spark.createDataFrame(expectedData_Issue285, expectedSchema_Issue285)
-      assertDataFrameEquals(expected, df)
-    }
+  test("#285 undefined rows: no keep") {
+    val df =
+      readFromResources("/spreadsheets/issue_285_bryce21.xlsx", false, false)
+    val expected =
+      spark.createDataFrame(expectedData_Issue285, expectedSchema_Issue285)
+    assertDataFrameEquals(expected, df)
   }
+
+  test("#285 undefined rows: keep") {
+    val df =
+      readFromResources("/spreadsheets/issue_285_bryce21.xlsx", true, false)
+    val expected =
+      spark.createDataFrame(
+        expectedData_KeepUndefinedRows_Issue285,
+        expectedSchema_Issue285
+      )
+    assertDataFrameEquals(expected, df)
+  }
+
 }

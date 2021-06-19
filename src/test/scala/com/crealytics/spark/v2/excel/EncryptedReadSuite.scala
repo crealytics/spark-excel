@@ -14,13 +14,12 @@
   */
 package com.crealytics.spark.v2.excel
 
+import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import scala.collection.JavaConverters._
+import org.scalatest.FunSuite
 
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
+import scala.collection.JavaConverters._
 
 object EncryptedReadSuite {
   val simpleSchema = StructType(
@@ -35,7 +34,7 @@ object EncryptedReadSuite {
   val expectedData = List(Row(1.0d, 2.0d, 3.0d, 4.0d)).asJava
 }
 
-class EncryptedReadSuite extends AnyFunSpec with DataFrameSuiteBase with Matchers {
+class EncryptedReadSuite extends FunSuite with DataFrameSuiteBase {
   import EncryptedReadSuite._
 
   lazy val expected = spark.createDataFrame(expectedData, simpleSchema)
@@ -51,17 +50,15 @@ class EncryptedReadSuite extends AnyFunSpec with DataFrameSuiteBase with Matcher
       .load(url.getPath)
   }
 
-  describe("spark-excel-v2") {
-    it("should read encrypted xslx file") {
-      val df = readFromResources("/spreadsheets/simple_encrypted.xlsx", "fooba")
+  test("should read encrypted xslx file") {
+    val df = readFromResources("/spreadsheets/simple_encrypted.xlsx", "fooba")
 
-      assertDataFrameEquals(expected, df)
-    }
+    assertDataFrameEquals(expected, df)
+  }
 
-    it("should read encrypted xls file") {
-      val df = readFromResources("/spreadsheets/simple_encrypted.xls", "fooba")
+  test("should read encrypted xls file") {
+    val df = readFromResources("/spreadsheets/simple_encrypted.xls", "fooba")
 
-      assertDataFrameEquals(expected, df)
-    }
+    assertDataFrameEquals(expected, df)
   }
 }

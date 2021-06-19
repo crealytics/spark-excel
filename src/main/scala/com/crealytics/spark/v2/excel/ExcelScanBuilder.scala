@@ -25,16 +25,24 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
 case class ExcelScanBuilder(
-  sparkSession: SparkSession,
-  fileIndex: PartitioningAwareFileIndex,
-  schema: StructType,
-  dataSchema: StructType,
-  options: CaseInsensitiveStringMap
+    sparkSession: SparkSession,
+    fileIndex: PartitioningAwareFileIndex,
+    schema: StructType,
+    dataSchema: StructType,
+    options: CaseInsensitiveStringMap
 ) extends FileScanBuilder(sparkSession, fileIndex, dataSchema)
     with SupportsPushDownFilters {
 
   override def build(): Scan = {
-    ExcelScan(sparkSession, fileIndex, dataSchema, readDataSchema(), readPartitionSchema(), options, pushedFilters())
+    ExcelScan(
+      sparkSession,
+      fileIndex,
+      dataSchema,
+      readDataSchema(),
+      readPartitionSchema(),
+      options,
+      pushedFilters()
+    )
   }
 
   private var _pushedFilters: Array[Filter] = Array.empty

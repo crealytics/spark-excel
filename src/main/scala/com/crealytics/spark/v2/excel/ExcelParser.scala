@@ -28,6 +28,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
 import scala.util.control.NonFatal
+import org.apache.poi.ss.usermodel.DateUtil
 
 /** Constructs a parser for a given schema that translates Excel data to an
   * [[InternalRow]].
@@ -40,15 +41,23 @@ import scala.util.control.NonFatal
   * @param filters The pushdown filters that should be applied to converted
   *        values.
   */
-class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val options: ExcelOptions, filters: Seq[Filter])
-    extends Logging {
+class ExcelParser(
+    dataSchema: StructType,
+    requiredSchema: StructType,
+    val options: ExcelOptions,
+    filters: Seq[Filter]
+) extends Logging {
   require(
     requiredSchema.toSet.subsetOf(dataSchema.toSet),
     s"requiredSchema (${requiredSchema.catalogString}) should be the subset of " +
       s"dataSchema (${dataSchema.catalogString})."
   )
 
-  def this(dataSchema: StructType, requiredSchema: StructType, options: ExcelOptions) = {
+  def this(
+      dataSchema: StructType,
+      requiredSchema: StructType,
+      options: ExcelOptions
+  ) = {
     this(dataSchema, requiredSchema, options, Seq.empty)
   }
   def this(schema: StructType, options: ExcelOptions) =
@@ -76,7 +85,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
   private val requiredRow = Some(new GenericInternalRow(requiredSchema.length))
 
   /** Pre-allocated empty sequence returned when the parsed row cannot pass
-    * filters. We preallocate it avoid unnecessary allocations.
+    * filters. Pre-allocate it to avoid unnecessary allocations.
     */
   private val noRows = None
 
@@ -88,7 +97,13 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
     isParsing = true
   )
   private lazy val dateFormatter =
-    DateFormatter(options.dateFormat, options.zoneId, options.locale, legacyFormat = FAST_DATE_FORMAT, isParsing = true)
+    DateFormatter(
+      options.dateFormat,
+      options.zoneId,
+      options.locale,
+      legacyFormat = FAST_DATE_FORMAT,
+      isParsing = true
+    )
 
   /* Excel record is flat, it can use same filters with CSV*/
   private val pushedFilters = new OrderedFilters(filters, requiredSchema)
@@ -131,34 +146,38 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
     * For other nullable types, returns null if it is null or equals to the
     * value specified in `nullValue` option.
     */
-  private def makeConverter(name: String, dataType: DataType, nullable: Boolean): ValueConverter =
+  private def makeConverter(
+      name: String,
+      dataType: DataType,
+      nullable: Boolean
+  ): ValueConverter =
     dataType match {
       case _: ByteType =>
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.NUMERIC => _.getNumericCellValue.toByte
-            case _ => _.getStringCellValue.toByte
+            case _                => _.getStringCellValue.toByte
           })
 
       case _: ShortType =>
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.NUMERIC => _.getNumericCellValue.toShort
-            case _ => _.getStringCellValue.toShort
+            case _                => _.getStringCellValue.toShort
           })
 
       case _: IntegerType =>
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.NUMERIC => _.getNumericCellValue.toInt
-            case _ => _.getStringCellValue.toInt
+            case _                => _.getStringCellValue.toInt
           })
 
       case _: LongType =>
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.NUMERIC => _.getNumericCellValue.toLong
-            case _ => _.getStringCellValue.toLong
+            case _                => _.getStringCellValue.toLong
           })
 
       case _: FloatType =>
@@ -167,10 +186,10 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
             case CellType.NUMERIC => _.getNumericCellValue.toFloat
             case _ =>
               _.getStringCellValue match {
-                case options.nanValue => Float.NaN
+                case options.nanValue    => Float.NaN
                 case options.negativeInf => Float.NegativeInfinity
                 case options.positiveInf => Float.PositiveInfinity
-                case datum => datum.toFloat
+                case datum               => datum.toFloat
               }
           })
 
@@ -186,18 +205,18 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
                 case CellType.ERROR => Double.NaN
                 case _ =>
                   excelHelper.safeCellStringValue(d) match {
-                    case options.nanValue => Double.NaN
+                    case options.nanValue    => Double.NaN
                     case options.negativeInf => Double.NegativeInfinity
                     case options.positiveInf => Double.PositiveInfinity
-                    case s => s.toDouble
+                    case s                   => s.toDouble
                   }
               }
             case _ =>
               excelHelper.safeCellStringValue(_) match {
-                case options.nanValue => Double.NaN
+                case options.nanValue    => Double.NaN
                 case options.negativeInf => Double.NegativeInfinity
                 case options.positiveInf => Double.PositiveInfinity
-                case s => s.toDouble
+                case s                   => s.toDouble
               }
           })
 
@@ -205,29 +224,50 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.BOOLEAN => _.getBooleanCellValue
-            case _ => _.getStringCellValue.toBoolean
+            case _                => _.getStringCellValue.toBoolean
           })
 
       case dt: DecimalType =>
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
-            Decimal(decimalParser(datum.getStringCellValue), dt.precision, dt.scale)
+            Decimal(
+              decimalParser(datum.getStringCellValue),
+              dt.precision,
+              dt.scale
+            )
           }
 
       case _: TimestampType =>
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
-            try {
-              timestampFormatter.parse(datum.getStringCellValue)
-            } catch {
-              case NonFatal(e) =>
-                /** If fails to parse, then tries the way used in 2.0 and 1.x
-                  * for backwards compatibility.
-                  */
-                val str = DateTimeUtils.cleanLegacyTimestampStr(UTF8String.fromString(datum.getStringCellValue))
-                DateTimeUtils
-                  .stringToTimestamp(str, options.zoneId)
-                  .getOrElse(throw e)
+            if (DateUtil.isCellDateFormatted(datum)) {
+              /* Excel to spark precision*/
+              datum.getDateCellValue.getTime * 1000
+            } else {
+              datum.getCellType match {
+                case CellType.NUMERIC | CellType.FORMULA => {
+                  /* Excel to spark precision*/
+                  datum.getNumericCellValue * 1000
+                }
+                case _ => {
+                  val v = excelHelper.safeCellStringValue(datum)
+                  try {
+                    timestampFormatter.parse(v)
+                  } catch {
+                    case NonFatal(e) =>
+                      /** If fails to parse, then tries the way used in 2.0 and 1.x
+                        * for backwards compatibility.
+                        */
+                      val str = DateTimeUtils.cleanLegacyTimestampStr(
+                        UTF8String.fromString(v)
+                      )
+                      DateTimeUtils
+                        .stringToTimestamp(str, options.zoneId)
+                        .getOrElse(throw e)
+                  }
+                }
+              }
+
             }
           }
 
@@ -241,7 +281,9 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
                 /** If fails to parse, then tries the way used in 2.0 and 1.x
                   * for backwards compatibility.
                   */
-                val str = DateTimeUtils.cleanLegacyTimestampStr(UTF8String.fromString(datum.getStringCellValue))
+                val str = DateTimeUtils.cleanLegacyTimestampStr(
+                  UTF8String.fromString(datum.getStringCellValue)
+                )
                 DateTimeUtils
                   .stringToDate(str, options.zoneId)
                   .getOrElse(throw e)
@@ -257,21 +299,31 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
       case CalendarIntervalType =>
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
-            IntervalUtils.safeStringToInterval(UTF8String.fromString(datum.getStringCellValue))
+            IntervalUtils.safeStringToInterval(
+              UTF8String.fromString(datum.getStringCellValue)
+            )
           }
 
       /** We don't actually hit this exception though, we keep it for
-        * understandability
+        * understand ability
         */
       case _ =>
         throw new RuntimeException(s"Unsupported type: ${dataType.typeName}")
     }
 
-  private def nullSafeDatum(datum: Cell, name: String, nullable: Boolean, options: ExcelOptions)(
-    converter: ValueConverter
+  private def nullSafeDatum(
+      datum: Cell,
+      name: String,
+      nullable: Boolean,
+      options: ExcelOptions
+  )(
+      converter: ValueConverter
   ): Any = {
     val ret = datum.getCellType match {
-      case CellType.BLANK | CellType.ERROR | CellType._NONE => null
+      case CellType.BLANK | CellType._NONE => null
+      case CellType.ERROR =>
+        if (options.useNullForErrorCells) null
+        else converter.apply(datum)
       case CellType.STRING =>
         if (datum.getStringCellValue == options.nullValue) null
         else converter.apply(datum)
@@ -279,7 +331,9 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
     }
 
     if (ret == null && !nullable)
-      throw new RuntimeException(s"null value found but field $name is not nullable.")
+      throw new RuntimeException(
+        s"null value found but field $name is not nullable."
+      )
 
     ret
   }
@@ -300,7 +354,11 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
 
   private def convert(tokens: Vector[Cell]): Option[InternalRow] = {
     if (tokens == null) {
-      throw BadRecordException(() => getCurrentInput, () => None, new RuntimeException("Malformed Excel record"))
+      throw BadRecordException(
+        () => getCurrentInput,
+        () => None,
+        new RuntimeException("Malformed Excel record")
+      )
     }
 
     var badRecordException: Option[Throwable] =
@@ -319,8 +377,8 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
       *  1. Convert the tokens that correspond to the required schema.
       *  2. Apply the pushdown filters to `requiredRow`.
       */
-    var i = 0
-    val row = requiredRow.get
+    var i       = 0
+    val row     = requiredRow.get
     var skipRow = false
     while (i < requiredSchema.length) {
       try {
@@ -343,7 +401,11 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
       noRows
     } else {
       if (badRecordException.isDefined) {
-        throw BadRecordException(() => getCurrentInput, () => requiredRow.headOption, badRecordException.get)
+        throw BadRecordException(
+          () => getCurrentInput,
+          () => requiredRow.headOption,
+          badRecordException.get
+        )
       } else {
         requiredRow
       }
@@ -357,15 +419,17 @@ object ExcelParser {
     * iterator of rows.
     */
   def parseIterator(
-    rows: Iterator[Vector[Cell]],
-    parser: ExcelParser,
-    headerChecker: ExcelHeaderChecker,
-    schema: StructType
+      rows: Iterator[Vector[Cell]],
+      parser: ExcelParser,
+      headerChecker: ExcelHeaderChecker,
+      schema: StructType
   ): Iterator[InternalRow] = {
 
     /* Check the header (and pop one record) */
     if (parser.options.header) {
-      headerChecker.checkHeaderColumnNames(rows.next().map(_.getStringCellValue()))
+      headerChecker.checkHeaderColumnNames(
+        rows.next().map(_.getStringCellValue())
+      )
     }
 
     val safeParser = new FailureSafeParser[Vector[Cell]](
