@@ -37,43 +37,70 @@ import java.net.URI
   * @param parsedOptions Options for parsing Excel files.
   */
 case class ExcelPartitionReaderFactory(
-  sqlConf: SQLConf,
-  broadcastedConf: Broadcast[SerializableConfiguration],
-  dataSchema: StructType,
-  readDataSchema: StructType,
-  partitionSchema: StructType,
-  parsedOptions: ExcelOptions,
-  filters: Seq[Filter]
+    sqlConf: SQLConf,
+    broadcastedConf: Broadcast[SerializableConfiguration],
+    dataSchema: StructType,
+    readDataSchema: StructType,
+    partitionSchema: StructType,
+    parsedOptions: ExcelOptions,
+    filters: Seq[Filter]
 ) extends FilePartitionReaderFactory {
 
-  override def buildReader(file: PartitionedFile): PartitionReader[InternalRow] = {
+  override def buildReader(
+      file: PartitionedFile
+  ): PartitionReader[InternalRow] = {
     val conf = broadcastedConf.value.value
-    val actualDataSchema = StructType(dataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord))
-    val actualReadDataSchema = StructType(readDataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord))
-    val parser = new ExcelParser(actualDataSchema, actualReadDataSchema, parsedOptions, filters)
+    val actualDataSchema = StructType(
+      dataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord)
+    )
+    val actualReadDataSchema = StructType(
+      readDataSchema.filterNot(
+        _.name == parsedOptions.columnNameOfCorruptRecord
+      )
+    )
+    val parser = new ExcelParser(
+      actualDataSchema,
+      actualReadDataSchema,
+      parsedOptions,
+      filters
+    )
     val headerChecker =
-      new ExcelHeaderChecker(actualReadDataSchema, parsedOptions, source = s"Excel file: ${file.filePath}")
-    val iter = readFile(conf, file, parser, headerChecker, readDataSchema)
+      new ExcelHeaderChecker(
+        actualReadDataSchema,
+        parsedOptions,
+        source = s"Excel file: ${file.filePath}"
+      )
+    val iter       = readFile(conf, file, parser, headerChecker, readDataSchema)
     val fileReader = new PartitionReaderFromIterator[InternalRow](iter)
-    new PartitionReaderWithPartitionValues(fileReader, readDataSchema, partitionSchema, file.partitionValues)
+    new PartitionReaderWithPartitionValues(
+      fileReader,
+      readDataSchema,
+      partitionSchema,
+      file.partitionValues
+    )
   }
 
   private def readFile(
-    conf: Configuration,
-    file: PartitionedFile,
-    parser: ExcelParser,
-    headerChecker: ExcelHeaderChecker,
-    requiredSchema: StructType
+      conf: Configuration,
+      file: PartitionedFile,
+      parser: ExcelParser,
+      headerChecker: ExcelHeaderChecker,
+      requiredSchema: StructType
   ): Iterator[InternalRow] = {
     val excelHelper = ExcelHelper(parsedOptions)
     val excelReader = DataLocator(parsedOptions)
-    val workbook = excelHelper.getWorkbook(conf, URI.create(file.filePath))
+    val workbook    = excelHelper.getWorkbook(conf, URI.create(file.filePath))
 
     val rows =
       try excelReader.readFrom(workbook).toSeq
       finally workbook.close
 
-    ExcelParser.parseIterator(rows.toIterator, parser, headerChecker, requiredSchema)
+    ExcelParser.parseIterator(
+      rows.toIterator,
+      parser,
+      headerChecker,
+      requiredSchema
+    )
   }
 
 }

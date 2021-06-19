@@ -28,6 +28,10 @@ import java.text.Format
 import java.text.ParsePosition
 
 import java.net.URI
+import org.apache.poi.ss.util.AreaReference
+import org.apache.poi.ss.util.CellReference
+import org.apache.poi.ss.SpreadsheetVersion
+import scala.util.Try
 
 /** A format that formats a double as a plain string without rounding and
   * scientific notation. All other operations are unsupported.
@@ -36,7 +40,11 @@ import java.net.URI
   */
 object PlainNumberFormat extends Format {
 
-  override def format(number: AnyRef, toAppendTo: StringBuffer, pos: FieldPosition): StringBuffer =
+  override def format(
+      number: AnyRef,
+      toAppendTo: StringBuffer,
+      pos: FieldPosition
+  ): StringBuffer =
     toAppendTo.append(new BigDecimal(number.toString).toPlainString)
 
   override def parseObject(source: String, pos: ParsePosition): AnyRef =
@@ -68,8 +76,8 @@ class ExcelHelper(options: ExcelOptions) {
     */
   def safeCellStringValue(cell: Cell): String =
     cell.getCellType match {
-      case CellType.BLANK | CellType.ERROR | CellType._NONE => ""
-      case CellType.STRING => cell.getStringCellValue
+      case CellType.BLANK | CellType._NONE => ""
+      case CellType.STRING                 => cell.getStringCellValue
       case CellType.FORMULA =>
         cell.getCachedFormulaResultType match {
           case CellType.BLANK | CellType._NONE => ""
@@ -77,8 +85,8 @@ class ExcelHelper(options: ExcelOptions) {
           /** When the cell is an error-formula, and requested type is string,
             * get actual formula itself
             */
-          case CellType.ERROR => dataFormatter.formatCellValue(cell)
-          case CellType.STRING => cell.getStringCellValue
+          case CellType.ERROR   => cell.getCellFormula
+          case CellType.STRING  => cell.getStringCellValue
           case CellType.NUMERIC => cell.getNumericCellValue.toString
 
           /* Get what displayed on the cell, for all other cases*/
@@ -141,6 +149,27 @@ class ExcelHelper(options: ExcelOptions) {
         s"_c$index"
       }
     }
+
+  /** Get parsed range address from given ExcelOption
+    *
+    * @return parsed area reference
+    */
+  def parsedRangeAddress(): AreaReference = Try {
+    val cellRef = new CellReference(options.dataAddress)
+    new AreaReference(
+      cellRef,
+      new CellReference(
+        cellRef.getSheetName,
+        SpreadsheetVersion.EXCEL2007.getLastRowIndex,
+        SpreadsheetVersion.EXCEL2007.getLastColumnIndex,
+        false,
+        false
+      ),
+      SpreadsheetVersion.EXCEL2007
+    )
+  }.getOrElse(
+    new AreaReference(options.dataAddress, SpreadsheetVersion.EXCEL2007)
+  )
 }
 
 object ExcelHelper {

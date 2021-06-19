@@ -51,23 +51,31 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
       toStructFields(rootTypes, header)
     } else {
       /* By default fields are assumed to be StringType*/
-      header.map(fieldName => StructField(fieldName, StringType, nullable = true))
+      header.map(fieldName =>
+        StructField(fieldName, StringType, nullable = true)
+      )
     }
 
     StructType(fields)
   }
 
-  private def toStructFields(fieldTypes: Vector[DataType], header: Vector[String]): Vector[StructField] = {
+  private def toStructFields(
+      fieldTypes: Vector[DataType],
+      header: Vector[String]
+  ): Vector[StructField] = {
     header.zip(fieldTypes).map { case (thisHeader, rootType) =>
       val dType = rootType match {
         case _: NullType => StringType
-        case other => other
+        case other       => other
       }
       StructField(thisHeader, dType, nullable = true)
     }
   }
 
-  private def inferRowType(rowSoFar: Vector[DataType], next: Vector[Cell]): Vector[DataType] =
+  private def inferRowType(
+      rowSoFar: Vector[DataType],
+      next: Vector[Cell]
+  ): Vector[DataType] =
     Range(0, rowSoFar.length)
       .map(i =>
         if (i < next.length) inferField(rowSoFar(i), next(i))
@@ -75,7 +83,10 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
       )
       .to[Vector]
 
-  private def mergeRowTypes(first: Vector[DataType], second: Vector[DataType]): Vector[DataType] = {
+  private def mergeRowTypes(
+      first: Vector[DataType],
+      second: Vector[DataType]
+  ): Vector[DataType] = {
     first.zipAll(second, NullType, NullType).map { case (a, b) =>
       compatibleType(a, b).getOrElse(NullType)
     }
@@ -89,12 +100,12 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     val typeElemInfer = field.getCellType match {
       case CellType.FORMULA =>
         field.getCachedFormulaResultType match {
-          case CellType.STRING => StringType
+          case CellType.STRING  => StringType
           case CellType.NUMERIC => DoubleType
-          case _ => NullType
+          case _                => NullType
         }
       case CellType.BLANK | CellType.ERROR | CellType._NONE => NullType
-      case CellType.BOOLEAN => BooleanType
+      case CellType.BOOLEAN                                 => BooleanType
       case CellType.NUMERIC =>
         if (DateUtil.isCellDateFormatted(field)) TimestampType else DoubleType
       case CellType.STRING => {
@@ -102,16 +113,18 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
         if (v == options.nullValue) NullType
         else {
           typeSoFar match {
-            case NullType => tryParseInteger(v)
-            case IntegerType => tryParseInteger(v)
-            case LongType => tryParseLong(v)
+            case NullType       => tryParseInteger(v)
+            case IntegerType    => tryParseInteger(v)
+            case LongType       => tryParseLong(v)
             case _: DecimalType => tryParseDecimal(v)
-            case DoubleType => tryParseDouble(v)
-            case TimestampType => tryParseTimestamp(v)
-            case BooleanType => tryParseBoolean(v)
-            case StringType => StringType
+            case DoubleType     => tryParseDouble(v)
+            case TimestampType  => tryParseTimestamp(v)
+            case BooleanType    => tryParseBoolean(v)
+            case StringType     => StringType
             case other: DataType =>
-              throw new UnsupportedOperationException(s"Unexpected data type $other")
+              throw new UnsupportedOperationException(
+                s"Unexpected data type $other"
+              )
           }
         }
       }
@@ -201,7 +214,8 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
   /** The following pattern matching represents additional type promotion rules
     * that are Excel specific.
     */
-  private val findCompatibleTypeForExcel: (DataType, DataType) => Option[DataType] = {
+  private val findCompatibleTypeForExcel
+      : (DataType, DataType) => Option[DataType] = {
     case (StringType, _) => Some(StringType)
     case (_, StringType) => Some(StringType)
 

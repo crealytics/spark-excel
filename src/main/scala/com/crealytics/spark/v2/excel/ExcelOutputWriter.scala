@@ -20,8 +20,12 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.OutputWriter
 import org.apache.spark.sql.types.StructType
 
-class ExcelOutputWriter(path: String, dataSchema: StructType, context: TaskAttemptContext, params: ExcelOptions)
-    extends OutputWriter
+class ExcelOutputWriter(
+    path: String,
+    dataSchema: StructType,
+    context: TaskAttemptContext,
+    params: ExcelOptions
+) extends OutputWriter
     with Logging {
 
   override def write(row: InternalRow): Unit = ???

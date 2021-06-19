@@ -27,18 +27,23 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
 import scala.collection.JavaConverters._
 
 case class ExcelTable(
-  name: String,
-  sparkSession: SparkSession,
-  options: CaseInsensitiveStringMap,
-  paths: Seq[String],
-  userSpecifiedSchema: Option[StructType]
+    name: String,
+    sparkSession: SparkSession,
+    options: CaseInsensitiveStringMap,
+    paths: Seq[String],
+    userSpecifiedSchema: Option[StructType]
 ) extends FileTable(sparkSession, options, paths, userSpecifiedSchema) {
 
-  override def newScanBuilder(options: CaseInsensitiveStringMap): ExcelScanBuilder =
+  override def newScanBuilder(
+      options: CaseInsensitiveStringMap
+  ): ExcelScanBuilder =
     ExcelScanBuilder(sparkSession, fileIndex, schema, dataSchema, options)
 
   override def inferSchema(files: Seq[FileStatus]): Option[StructType] = {
-    val parsedOptions = new ExcelOptions(options.asScala.toMap, sparkSession.sessionState.conf.sessionLocalTimeZone)
+    val parsedOptions = new ExcelOptions(
+      options.asScala.toMap,
+      sparkSession.sessionState.conf.sessionLocalTimeZone
+    )
 
     if (files.nonEmpty) Some(infer(sparkSession, files, parsedOptions))
     else None
@@ -52,24 +57,29 @@ case class ExcelTable(
   override def formatName: String = "Excel"
 
   override def fallbackFileFormat: Class[_ <: FileFormat] =
-    throw new UnsupportedOperationException("Excel does not support V1 File Format")
+    throw new UnsupportedOperationException(
+      "Excel does not support V1 File Format"
+    )
 
   /* Actual doing schema inferring*/
   private def infer(
-    sparkSession: SparkSession,
-    inputPaths: Seq[FileStatus],
-    parsedOptions: ExcelOptions
+      sparkSession: SparkSession,
+      inputPaths: Seq[FileStatus],
+      parsedOptions: ExcelOptions
   ): StructType = {
     val excelHelper = ExcelHelper(parsedOptions)
     val excelReader = DataLocator(parsedOptions)
 
     val workbook =
-      excelHelper.getWorkbook(sparkSession.sqlContext.sparkContext.hadoopConfiguration, inputPaths.head.getPath.toUri)
+      excelHelper.getWorkbook(
+        sparkSession.sqlContext.sparkContext.hadoopConfiguration,
+        inputPaths.head.getPath.toUri
+      )
 
     /* Depend on number of rows configured to do schema inferring*/
     val rows =
       try parsedOptions.excerptSize match {
-        case None => excelReader.readFrom(workbook).toSeq
+        case None        => excelReader.readFrom(workbook).toSeq
         case Some(count) => excelReader.readFrom(workbook).slice(0, count).toSeq
       } finally workbook.close
 
@@ -77,7 +87,7 @@ case class ExcelTable(
     if (rows.isEmpty) StructType(Nil)
     else {
       val nonHeaderRows = if (parsedOptions.header) rows.tail else rows
-      val colNames = excelHelper.getColumnNames(rows.head)
+      val colNames      = excelHelper.getColumnNames(rows.head)
 
       (new ExcelInferSchema(parsedOptions)).infer(nonHeaderRows, colNames)
     }

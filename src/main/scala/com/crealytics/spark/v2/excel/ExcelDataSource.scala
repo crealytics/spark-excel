@@ -25,19 +25,30 @@ class ExcelDataSource extends FileDataSourceV2 {
   override def shortName(): String = "excel"
 
   override def fallbackFileFormat: Class[_ <: FileFormat] =
-    throw new UnsupportedOperationException("Crealytics Excel does not support V1 File Format API")
+    throw new UnsupportedOperationException(
+      "Crealytics Excel does not support V1 File Format API"
+    )
 
   override def getTable(options: CaseInsensitiveStringMap): Table = {
-    val paths = getPaths(options)
-    val tableName = getTableName(options, paths)
+    val paths               = getPaths(options)
+    val tableName           = getTableName(options, paths)
     val optionsWithoutPaths = getOptionsWithoutPaths(options)
     ExcelTable(tableName, sparkSession, optionsWithoutPaths, paths, None)
   }
 
-  override def getTable(options: CaseInsensitiveStringMap, schema: StructType): Table = {
-    val paths = getPaths(options)
-    val tableName = getTableName(options, paths)
+  override def getTable(
+      options: CaseInsensitiveStringMap,
+      schema: StructType
+  ): Table = {
+    val paths               = getPaths(options)
+    val tableName           = getTableName(options, paths)
     val optionsWithoutPaths = getOptionsWithoutPaths(options)
-    ExcelTable(tableName, sparkSession, optionsWithoutPaths, paths, Some(schema))
+    ExcelTable(
+      tableName,
+      sparkSession,
+      optionsWithoutPaths,
+      paths,
+      Some(schema)
+    )
   }
 }

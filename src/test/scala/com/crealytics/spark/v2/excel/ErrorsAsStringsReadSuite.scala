@@ -14,21 +14,20 @@
   */
 package com.crealytics.spark.v2.excel
 
-import java.sql.Timestamp
-import java.time.{Instant, LocalDateTime}
-import java.util
-
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import org.apache.spark.sql.{Row, _}
+import org.apache.spark.sql.Row
+import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.FunSuite
 
+import java.sql.Timestamp
+import java.time.LocalDateTime
+import java.util
 import scala.collection.JavaConverters._
 
 object ErrorsAsStringsReadSuite {
-  private val dummyTimestamp = Timestamp.valueOf(LocalDateTime.of(2021, 2, 19, 0, 0))
-  private val epochTimestamp = new Timestamp(0)
+  private val dummyTimestamp =
+    Timestamp.valueOf(LocalDateTime.of(2021, 2, 19, 0, 0))
   private val dummyText = "hello"
 
   private val expectedSchemaInfer = StructType(
@@ -39,13 +38,6 @@ object ErrorsAsStringsReadSuite {
       StructField("string", StringType, true)
     )
   )
-  private val expectedDataErrorsAsStringsInfer: util.List[Row] =
-    List(
-      Row(1.0, true, dummyTimestamp, dummyText),
-      Row(2.0, false, dummyTimestamp, dummyText),
-      Row(0.0, false, epochTimestamp, ""),
-      Row(0.0, false, epochTimestamp, "")
-    ).asJava
 
   private val expectedDataErrorsAsNullInfer: util.List[Row] =
     List(
@@ -53,6 +45,14 @@ object ErrorsAsStringsReadSuite {
       Row(2.0, false, dummyTimestamp, dummyText),
       Row(null, null, null, null),
       Row(null, null, null, null)
+    ).asJava
+
+  private val expectedDataErrorsAsStringsInfer: util.List[Row] =
+    List(
+      Row(1.0, true, dummyTimestamp, dummyText),
+      Row(2.0, false, dummyTimestamp, dummyText),
+      Row(null, null, null, "#NULL!"),
+      Row(null, null, null, "#N/A")
     ).asJava
 
   private val expectedSchemaNonInfer = StructType(
@@ -63,13 +63,6 @@ object ErrorsAsStringsReadSuite {
       StructField("string", StringType, true)
     )
   )
-  private val expectedDataErrorsAsStringsNonInfer: util.List[Row] =
-    List(
-      Row("1", "TRUE", "19\"-\"Feb\"-\"2021", dummyText),
-      Row("2", "FALSE", "19\"-\"Feb\"-\"2021", dummyText),
-      Row("", "", "", ""),
-      Row("", "", "", "")
-    ).asJava
 
   private val expectedDataErrorsAsNullNonInfer: util.List[Row] =
     List(
@@ -79,44 +72,82 @@ object ErrorsAsStringsReadSuite {
       Row(null, null, null, null)
     ).asJava
 
+  private val expectedDataErrorsAsStringsNonInfer: util.List[Row] =
+    List(
+      Row("1", "TRUE", "19\"-\"Feb\"-\"2021", dummyText),
+      Row("2", "FALSE", "19\"-\"Feb\"-\"2021", dummyText),
+      Row("#NULL!", "#NULL!", "#NULL!", "#NULL!"),
+      Row("#N/A", "#N/A", "#N/A", "#N/A")
+    ).asJava
+
   private val excelLocation = "/spreadsheets/with_errors_all_types.xlsx"
 }
 
-class ErrorsAsStringsReadSuite extends AnyFunSpec with DataFrameSuiteBase with Matchers {
+/** Breaking change with V1:
+  *  For Spark String Type field, Error Cell has an option to either get
+  *  original-formual-string or null as any other Spark Types
+  *
+  * Related issues: Support ERROR cell type when using inferSchema=true
+  *  link: https://github.com/crealytics/spark-excel/pull/343
+  */
+class ErrorsAsStringsReadSuite extends FunSuite with DataFrameSuiteBase {
   import ErrorsAsStringsReadSuite._
 
-  def readFromResources(path: String, setErrorCellsToFallbackValues: Boolean, inferSchema: Boolean): DataFrame = {
+  def readFromResources(
+      path: String,
+      useNullForErrorCells: Boolean,
+      inferSchema: Boolean
+  ): DataFrame = {
     val url = getClass.getResource(path)
     spark.read
       .format("excel")
       .option("inferSchema", inferSchema)
-      .option("excerptSize", 3)
+      .option("useNullForErrorCells", useNullForErrorCells)
       .load(url.getPath)
   }
 
-  describe("spark-excel-v2") {
-    it("should read errors in string format when setErrorCellsToFallbackValues=true and inferSchema=true") {
-      val df = readFromResources(excelLocation, true, true)
-      val expected = spark.createDataFrame(expectedDataErrorsAsStringsInfer, expectedSchemaInfer)
-      assertDataFrameEquals(expected, df)
-    }
-
-    it("should read errors as null when setErrorCellsToFallbackValues=false and inferSchema=true") {
-      val df = readFromResources(excelLocation, false, true)
-      val expected = spark.createDataFrame(expectedDataErrorsAsNullInfer, expectedSchemaInfer)
-      assertDataFrameEquals(expected, df)
-    }
-
-    it("should read errors in string format when setErrorCellsToFallbackValues=true and inferSchema=false") {
-      val df = readFromResources(excelLocation, true, false)
-      val expected = spark.createDataFrame(expectedDataErrorsAsStringsNonInfer, expectedSchemaNonInfer)
-      assertDataFrameEquals(expected, df)
-    }
-
-    it("should read errors in string format when setErrorCellsToFallbackValues=false and inferSchema=false") {
-      val df = readFromResources(excelLocation, false, false)
-      val expected = spark.createDataFrame(expectedDataErrorsAsNullNonInfer, expectedSchemaNonInfer)
-      assertDataFrameEquals(expected, df)
-    }
+  test(
+    "should read error cells as null when useNullForErrorCells=true and inferSchema=true"
+  ) {
+    val df = readFromResources(excelLocation, true, true)
+    val expected = spark.createDataFrame(
+      expectedDataErrorsAsNullInfer,
+      expectedSchemaInfer
+    )
+    assertDataFrameEquals(expected, df)
   }
+
+  test(
+    "should read errors as null for non-string type only when useNullForErrorCells=false and inferSchema=true"
+  ) {
+    val df = readFromResources(excelLocation, false, true)
+    val expected = spark.createDataFrame(
+      expectedDataErrorsAsStringsInfer,
+      expectedSchemaInfer
+    )
+    assertDataFrameEquals(expected, df)
+  }
+
+  test(
+    "should read errors in string format when useNullForErrorCells=true and inferSchema=false"
+  ) {
+    val df = readFromResources(excelLocation, true, false)
+    val expected = spark.createDataFrame(
+      expectedDataErrorsAsNullNonInfer,
+      expectedSchemaNonInfer
+    )
+    assertDataFrameEquals(expected, df)
+  }
+
+  test(
+    "should read errors in string format when useNullForErrorCells=false and inferSchema=false"
+  ) {
+    val df = readFromResources(excelLocation, false, false)
+    val expected = spark.createDataFrame(
+      expectedDataErrorsAsStringsNonInfer,
+      expectedSchemaNonInfer
+    )
+    assertDataFrameEquals(expected, df)
+  }
+
 }

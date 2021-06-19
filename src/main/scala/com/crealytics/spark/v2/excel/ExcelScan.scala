@@ -30,15 +30,15 @@ import org.apache.spark.util.SerializableConfiguration
 import scala.collection.JavaConverters._
 
 case class ExcelScan(
-  sparkSession: SparkSession,
-  fileIndex: PartitioningAwareFileIndex,
-  dataSchema: StructType,
-  readDataSchema: StructType,
-  readPartitionSchema: StructType,
-  options: CaseInsensitiveStringMap,
-  pushedFilters: Array[Filter],
-  partitionFilters: Seq[Expression] = Seq.empty,
-  dataFilters: Seq[Expression] = Seq.empty
+    sparkSession: SparkSession,
+    fileIndex: PartitioningAwareFileIndex,
+    dataSchema: StructType,
+    readDataSchema: StructType,
+    readPartitionSchema: StructType,
+    options: CaseInsensitiveStringMap,
+    pushedFilters: Array[Filter],
+    partitionFilters: Seq[Expression] = Seq.empty,
+    dataFilters: Seq[Expression] = Seq.empty
 ) extends TextBasedFileScan(sparkSession, options) {
 
   private lazy val parsedOptions: ExcelOptions = new ExcelOptions(
@@ -58,7 +58,10 @@ case class ExcelScan(
     /** Check a field requirement for corrupt records here to throw
       * an exception in a driver side
       */
-    ExprUtils.verifyColumnNameOfCorruptRecord(dataSchema, parsedOptions.columnNameOfCorruptRecord)
+    ExprUtils.verifyColumnNameOfCorruptRecord(
+      dataSchema,
+      parsedOptions.columnNameOfCorruptRecord
+    )
 
     if (
       readDataSchema.length == 1 &&
@@ -76,7 +79,9 @@ case class ExcelScan(
     val hadoopConf =
       sparkSession.sessionState.newHadoopConfWithOptions(caseSensitiveMap)
 
-    val broadcastedConf = sparkSession.sparkContext.broadcast(new SerializableConfiguration(hadoopConf))
+    val broadcastedConf = sparkSession.sparkContext.broadcast(
+      new SerializableConfiguration(hadoopConf)
+    )
 
     /** The partition values are already truncated in `FileScan.partitions`.
       * We should use `readPartitionSchema` as the partition schema here.
@@ -92,7 +97,10 @@ case class ExcelScan(
     )
   }
 
-  override def withFilters(partitionFilters: Seq[Expression], dataFilters: Seq[Expression]): FileScan =
+  override def withFilters(
+      partitionFilters: Seq[Expression],
+      dataFilters: Seq[Expression]
+  ): FileScan =
     this.copy(partitionFilters = partitionFilters, dataFilters = dataFilters)
 
   override def equals(obj: Any): Boolean =
@@ -106,7 +114,11 @@ case class ExcelScan(
   override def hashCode(): Int = super.hashCode()
 
   override def description(): String = {
-    super.description() + ", PushedFilters: " + pushedFilters.mkString("[", ", ", "]")
+    super.description() + ", PushedFilters: " + pushedFilters.mkString(
+      "[",
+      ", ",
+      "]"
+    )
   }
 
   override def getMetaData(): Map[String, String] = {

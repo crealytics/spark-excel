@@ -25,30 +25,44 @@ import java.time.ZoneId
 import java.util.Locale
 
 class ExcelOptions(
-  @transient val parameters: CaseInsensitiveMap[String],
-  defaultTimeZoneId: String,
-  defaultColumnNameOfCorruptRecord: String
+    @transient val parameters: CaseInsensitiveMap[String],
+    defaultTimeZoneId: String,
+    defaultColumnNameOfCorruptRecord: String
 ) extends Serializable {
 
   def this(parameters: Map[String, String], defaultTimeZoneId: String) = {
-    this(CaseInsensitiveMap(parameters), defaultTimeZoneId, SQLConf.get.columnNameOfCorruptRecord)
+    this(
+      CaseInsensitiveMap(parameters),
+      defaultTimeZoneId,
+      SQLConf.get.columnNameOfCorruptRecord
+    )
   }
 
-  def this(parameters: Map[String, String], defaultTimeZoneId: String, defaultColumnNameOfCorruptRecord: String) = {
-    this(CaseInsensitiveMap(parameters), defaultTimeZoneId, defaultColumnNameOfCorruptRecord)
+  def this(
+      parameters: Map[String, String],
+      defaultTimeZoneId: String,
+      defaultColumnNameOfCorruptRecord: String
+  ) = {
+    this(
+      CaseInsensitiveMap(parameters),
+      defaultTimeZoneId,
+      defaultColumnNameOfCorruptRecord
+    )
   }
 
   private def getInt(paramName: String): Option[Int] = {
     val paramValue = parameters.get(paramName)
     paramValue match {
-      case None => None
+      case None       => None
       case Some(null) => None
       case Some(value) =>
         try {
           Some(value.toInt)
         } catch {
           case _: NumberFormatException =>
-            throw new RuntimeException(s"$paramName should be an integer. Found $value")
+            throw new RuntimeException(
+              s"$paramName should be an integer. Found $value"
+            )
         }
     }
   }
@@ -70,7 +84,9 @@ class ExcelOptions(
   val parseMode: ParseMode =
     parameters.get("mode").map(ParseMode.fromString).getOrElse(PermissiveMode)
 
-  val zoneId: ZoneId = DateTimeUtils.getZoneId(parameters.getOrElse(DateTimeUtils.TIMEZONE_OPTION, defaultTimeZoneId))
+  val zoneId: ZoneId = DateTimeUtils.getZoneId(
+    parameters.getOrElse(DateTimeUtils.TIMEZONE_OPTION, defaultTimeZoneId)
+  )
 
   /* A language tag in IETF BCP 47 format*/
   val locale: Locale =
@@ -80,28 +96,40 @@ class ExcelOptions(
     parameters.getOrElse("dateFormat", DateFormatter.defaultPattern)
 
   val timestampFormat: String =
-    parameters.getOrElse("timestampFormat", s"${DateFormatter.defaultPattern}'T'HH:mm:ss[.SSS][XXX]")
+    parameters.getOrElse(
+      "timestampFormat",
+      s"${DateFormatter.defaultPattern}'T'HH:mm:ss[.SSS][XXX]"
+    )
 
-  val header = getBool("header", default = true)
+  val header      = getBool("header", default = true)
   val inferSchema = getBool("inferSchema", default = false)
   val excerptSize = getInt("excerptSize")
 
-  /** Forcibly apply the specified or inferred schema to datasource files.
+  /** Forcibly apply the specified or inferred schema to data files.
     * If the option is enabled, headers of ABC files will be ignored.
     */
   val enforceSchema = getBool("enforceSchema", default = true)
 
   /* Name for column of corrupted records*/
   val columnNameOfCorruptRecord =
-    parameters.getOrElse("columnNameOfCorruptRecord", defaultColumnNameOfCorruptRecord)
+    parameters.getOrElse(
+      "columnNameOfCorruptRecord",
+      defaultColumnNameOfCorruptRecord
+    )
 
-  val nullValue = parameters.getOrElse("nullValue", "")
-  val nanValue = parameters.getOrElse("nanValue", "NaN")
+  val nullValue   = parameters.getOrElse("nullValue", "")
+  val nanValue    = parameters.getOrElse("nanValue", "NaN")
   val positiveInf = parameters.getOrElse("positiveInf", "Inf")
   val negativeInf = parameters.getOrElse("negativeInf", "-Inf")
 
   /* If true, format the cells without rounding and scientific notations*/
   val usePlainNumberFormat = getBool("usePlainNumberFormat", default = false)
+
+  /* If true, keep undefined (Excel) rows*/
+  val keepUndefinedRows = getBool("keepUndefinedRows", default = false)
+
+  /* Use null value for error cells*/
+  val useNullForErrorCells = getBool("useNullForErrorCells", default = false)
 
   /* Additional column for color*/
   val addColorColumns = getBool("addColorColumns", default = false)
