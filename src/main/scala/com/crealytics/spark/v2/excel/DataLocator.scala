@@ -36,25 +36,18 @@ trait DataLocator {
     if (options.keepUndefinedRows) {
       rowInd.iterator.map(rid => {
         val r = sheet.getRow(rid)
-        if (r == null) {
-          Vector.empty[Cell]
-        } else {
-          colInd
-            .filter(_ < r.getLastCellNum())
-            .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK))
-            .to[Vector]
+        if (r == null) { Vector.empty[Cell] }
+        else {
+          colInd.filter(_ < r.getLastCellNum())
+            .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK)).to[Vector]
         }
       })
 
     } else {
-      sheet.iterator.asScala
-        .filter(r => rowInd.contains(r.getRowNum))
-        .map(r =>
-          colInd
-            .filter(_ < r.getLastCellNum())
-            .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK))
-            .to[Vector]
-        )
+      sheet.iterator.asScala.filter(r => rowInd.contains(r.getRowNum)).map(r =>
+        colInd.filter(_ < r.getLastCellNum())
+          .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK)).to[Vector]
+      )
     }
   }
 }
@@ -63,10 +56,8 @@ object DataLocator {
   def apply(options: ExcelOptions): DataLocator = {
     val tableAddressRegex = """(.*)\[(.*)\]""".r
     options.dataAddress match {
-      case tableAddressRegex(tableName, _) =>
-        new TableDataLocator(options, tableName)
-      case _ =>
-        new CellRangeAddressDataLocator(options)
+      case tableAddressRegex(tableName, _) => new TableDataLocator(options, tableName)
+      case _                               => new CellRangeAddressDataLocator(options)
     }
   }
 }
@@ -75,26 +66,21 @@ object DataLocator {
   *
   * @param options user specified excel option
   */
-class CellRangeAddressDataLocator(
-    val options: ExcelOptions
-) extends DataLocator {
+class CellRangeAddressDataLocator(val options: ExcelOptions) extends DataLocator {
 
   override def readFrom(workbook: Workbook): Iterator[Vector[Cell]] = {
-    val sheet  = findSheet(workbook, sheetName)
+    val sheet = findSheet(workbook, sheetName)
     val rowInd = rowIndices(sheet)
     val colInd = columnIndices(sheet)
 
     actualReadFromSheet(options, sheet, rowInd, colInd)
   }
 
-  private def findSheet(workbook: Workbook, name: Option[String]): Sheet =
-    name
-      .map(sn =>
-        Try(Option(workbook.getSheetAt(sn.toInt))).toOption.flatten
-          .orElse(Option(workbook.getSheet(sn)))
-          .getOrElse(throw new IllegalArgumentException(s"Unknown sheet $sn"))
-      )
-      .getOrElse(workbook.getSheetAt(0))
+  private def findSheet(workbook: Workbook, name: Option[String]): Sheet = name.map(sn =>
+    Try(Option(workbook.getSheetAt(sn.toInt))).toOption.flatten
+      .orElse(Option(workbook.getSheet(sn)))
+      .getOrElse(throw new IllegalArgumentException(s"Unknown sheet $sn"))
+  ).getOrElse(workbook.getSheetAt(0))
 
   private val dataAddress = ExcelHelper(options).parsedRangeAddress()
 
@@ -112,12 +98,11 @@ class CellRangeAddressDataLocator(
   *
   * @param options user specified excel option
   */
-class TableDataLocator(val options: ExcelOptions, tableName: String)
-    extends DataLocator {
+class TableDataLocator(val options: ExcelOptions, tableName: String) extends DataLocator {
   override def readFrom(workbook: Workbook): Iterator[Vector[Cell]] = {
-    val xwb    = workbook.asInstanceOf[XSSFWorkbook]
-    val table  = xwb.getTable(tableName)
-    val sheet  = table.getXSSFSheet()
+    val xwb = workbook.asInstanceOf[XSSFWorkbook]
+    val table = xwb.getTable(tableName)
+    val sheet = table.getXSSFSheet()
     val rowInd = (table.getStartRowIndex to table.getEndRowIndex)
     val colInd = (table.getStartColIndex to table.getEndColIndex)
 

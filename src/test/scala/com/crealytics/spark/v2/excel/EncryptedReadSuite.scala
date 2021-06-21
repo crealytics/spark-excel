@@ -22,14 +22,12 @@ import org.scalatest.FunSuite
 import scala.collection.JavaConverters._
 
 object EncryptedReadSuite {
-  val simpleSchema = StructType(
-    List(
-      StructField("A", DoubleType, true),
-      StructField("B", DoubleType, true),
-      StructField("C", DoubleType, true),
-      StructField("D", DoubleType, true)
-    )
-  )
+  val simpleSchema = StructType(List(
+    StructField("A", DoubleType, true),
+    StructField("B", DoubleType, true),
+    StructField("C", DoubleType, true),
+    StructField("D", DoubleType, true)
+  ))
 
   val expectedData = List(Row(1.0d, 2.0d, 3.0d, 4.0d)).asJava
 }
@@ -41,13 +39,9 @@ class EncryptedReadSuite extends FunSuite with DataFrameSuiteBase {
 
   def readFromResources(path: String, password: String): DataFrame = {
     val url = getClass.getResource(path)
-    spark.read
-      .format("excel")
-      .option("dataAddress", "Sheet1!A1")
-      .option("treatEmptyValuesAsNulls", true)
-      .option("workbookPassword", password)
-      .option("inferSchema", true)
-      .load(url.getPath)
+    spark.read.format("excel").option("dataAddress", "Sheet1!A1")
+      .option("treatEmptyValuesAsNulls", true).option("workbookPassword", password)
+      .option("inferSchema", true).load(url.getPath)
   }
 
   test("should read encrypted xslx file") {

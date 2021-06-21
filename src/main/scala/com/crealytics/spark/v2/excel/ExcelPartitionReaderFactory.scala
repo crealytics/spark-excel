@@ -46,31 +46,19 @@ case class ExcelPartitionReaderFactory(
     filters: Seq[Filter]
 ) extends FilePartitionReaderFactory {
 
-  override def buildReader(
-      file: PartitionedFile
-  ): PartitionReader[InternalRow] = {
+  override def buildReader(file: PartitionedFile): PartitionReader[InternalRow] = {
     val conf = broadcastedConf.value.value
-    val actualDataSchema = StructType(
-      dataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord)
-    )
-    val actualReadDataSchema = StructType(
-      readDataSchema.filterNot(
-        _.name == parsedOptions.columnNameOfCorruptRecord
-      )
-    )
-    val parser = new ExcelParser(
-      actualDataSchema,
+    val actualDataSchema =
+      StructType(dataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord))
+    val actualReadDataSchema =
+      StructType(readDataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord))
+    val parser = new ExcelParser(actualDataSchema, actualReadDataSchema, parsedOptions, filters)
+    val headerChecker = new ExcelHeaderChecker(
       actualReadDataSchema,
       parsedOptions,
-      filters
+      source = s"Excel file: ${file.filePath}"
     )
-    val headerChecker =
-      new ExcelHeaderChecker(
-        actualReadDataSchema,
-        parsedOptions,
-        source = s"Excel file: ${file.filePath}"
-      )
-    val iter       = readFile(conf, file, parser, headerChecker, readDataSchema)
+    val iter = readFile(conf, file, parser, headerChecker, readDataSchema)
     val fileReader = new PartitionReaderFromIterator[InternalRow](iter)
     new PartitionReaderWithPartitionValues(
       fileReader,
@@ -89,18 +77,13 @@ case class ExcelPartitionReaderFactory(
   ): Iterator[InternalRow] = {
     val excelHelper = ExcelHelper(parsedOptions)
     val excelReader = DataLocator(parsedOptions)
-    val workbook    = excelHelper.getWorkbook(conf, URI.create(file.filePath))
+    val workbook = excelHelper.getWorkbook(conf, URI.create(file.filePath))
 
     val rows =
       try excelReader.readFrom(workbook).toSeq
       finally workbook.close
 
-    ExcelParser.parseIterator(
-      rows.toIterator,
-      parser,
-      headerChecker,
-      requiredSchema
-    )
+    ExcelParser.parseIterator(rows.toIterator, parser, headerChecker, requiredSchema)
   }
 
 }

@@ -44,12 +44,9 @@ class ExcelWriteBuilder(
           path: String,
           dataSchema: StructType,
           context: TaskAttemptContext
-      ): OutputWriter = {
-        new ExcelOutputWriter(path, dataSchema, context, excelOptions)
-      }
+      ): OutputWriter = { new ExcelOutputWriter(path, dataSchema, context, excelOptions) }
 
-      override def getFileExtension(context: TaskAttemptContext): String =
-        ".xlsx"
+      override def getFileExtension(context: TaskAttemptContext): String = ".xlsx"
     }
   }
 }
