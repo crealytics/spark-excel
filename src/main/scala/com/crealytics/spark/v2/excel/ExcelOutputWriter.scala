@@ -25,8 +25,7 @@ class ExcelOutputWriter(
     dataSchema: StructType,
     context: TaskAttemptContext,
     params: ExcelOptions
-) extends OutputWriter
-    with Logging {
+) extends OutputWriter with Logging {
 
   override def write(row: InternalRow): Unit = ???
 

@@ -58,10 +58,7 @@ case class ExcelScan(
     /** Check a field requirement for corrupt records here to throw
       * an exception in a driver side
       */
-    ExprUtils.verifyColumnNameOfCorruptRecord(
-      dataSchema,
-      parsedOptions.columnNameOfCorruptRecord
-    )
+    ExprUtils.verifyColumnNameOfCorruptRecord(dataSchema, parsedOptions.columnNameOfCorruptRecord)
 
     if (
       readDataSchema.length == 1 &&
@@ -76,12 +73,10 @@ case class ExcelScan(
     val caseSensitiveMap = options.asCaseSensitiveMap.asScala.toMap
 
     /* Hadoop Configurations are case sensitive.*/
-    val hadoopConf =
-      sparkSession.sessionState.newHadoopConfWithOptions(caseSensitiveMap)
+    val hadoopConf = sparkSession.sessionState.newHadoopConfWithOptions(caseSensitiveMap)
 
-    val broadcastedConf = sparkSession.sparkContext.broadcast(
-      new SerializableConfiguration(hadoopConf)
-    )
+    val broadcastedConf = sparkSession.sparkContext
+      .broadcast(new SerializableConfiguration(hadoopConf))
 
     /** The partition values are already truncated in `FileScan.partitions`.
       * We should use `readPartitionSchema` as the partition schema here.
@@ -100,25 +95,18 @@ case class ExcelScan(
   override def withFilters(
       partitionFilters: Seq[Expression],
       dataFilters: Seq[Expression]
-  ): FileScan =
-    this.copy(partitionFilters = partitionFilters, dataFilters = dataFilters)
+  ): FileScan = this.copy(partitionFilters = partitionFilters, dataFilters = dataFilters)
 
-  override def equals(obj: Any): Boolean =
-    obj match {
-      case c: ExcelScan =>
-        super.equals(c) && dataSchema == c.dataSchema && options == c.options &&
-          equivalentFilters(pushedFilters, c.pushedFilters)
-      case _ => false
-    }
+  override def equals(obj: Any): Boolean = obj match {
+    case c: ExcelScan => super.equals(c) && dataSchema == c.dataSchema && options == c.options &&
+        equivalentFilters(pushedFilters, c.pushedFilters)
+    case _ => false
+  }
 
   override def hashCode(): Int = super.hashCode()
 
   override def description(): String = {
-    super.description() + ", PushedFilters: " + pushedFilters.mkString(
-      "[",
-      ", ",
-      "]"
-    )
+    super.description() + ", PushedFilters: " + pushedFilters.mkString("[", ", ", "]")
   }
 
   override def getMetaData(): Map[String, String] = {

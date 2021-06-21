@@ -42,19 +42,16 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     *     3. Replace any null types with string type
     */
   def infer(tokens: Seq[Vector[Cell]], header: Vector[String]): StructType = {
-    val fields = if (options.inferSchema) {
-      val startType: Vector[DataType] =
-        Vector.fill[DataType](header.length)(NullType)
-      val rootTypes: Vector[DataType] =
-        tokens.aggregate(startType)(inferRowType, mergeRowTypes)
+    val fields =
+      if (options.inferSchema) {
+        val startType: Vector[DataType] = Vector.fill[DataType](header.length)(NullType)
+        val rootTypes: Vector[DataType] = tokens.aggregate(startType)(inferRowType, mergeRowTypes)
 
-      toStructFields(rootTypes, header)
-    } else {
-      /* By default fields are assumed to be StringType*/
-      header.map(fieldName =>
-        StructField(fieldName, StringType, nullable = true)
-      )
-    }
+        toStructFields(rootTypes, header)
+      } else {
+        /* By default fields are assumed to be StringType*/
+        header.map(fieldName => StructField(fieldName, StringType, nullable = true))
+      }
 
     StructType(fields)
   }
@@ -72,21 +69,13 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     }
   }
 
-  private def inferRowType(
-      rowSoFar: Vector[DataType],
-      next: Vector[Cell]
-  ): Vector[DataType] =
-    Range(0, rowSoFar.length)
-      .map(i =>
-        if (i < next.length) inferField(rowSoFar(i), next(i))
-        else compatibleType(rowSoFar(i), NullType).getOrElse(StringType)
-      )
-      .to[Vector]
+  private def inferRowType(rowSoFar: Vector[DataType], next: Vector[Cell]): Vector[DataType] =
+    Range(0, rowSoFar.length).map(i =>
+      if (i < next.length) inferField(rowSoFar(i), next(i))
+      else compatibleType(rowSoFar(i), NullType).getOrElse(StringType)
+    ).to[Vector]
 
-  private def mergeRowTypes(
-      first: Vector[DataType],
-      second: Vector[DataType]
-  ): Vector[DataType] = {
+  private def mergeRowTypes(first: Vector[DataType], second: Vector[DataType]): Vector[DataType] = {
     first.zipAll(second, NullType, NullType).map { case (a, b) =>
       compatibleType(a, b).getOrElse(NullType)
     }
@@ -98,8 +87,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     */
   private def inferField(typeSoFar: DataType, field: Cell): DataType = {
     val typeElemInfer = field.getCellType match {
-      case CellType.FORMULA =>
-        field.getCachedFormulaResultType match {
+      case CellType.FORMULA => field.getCachedFormulaResultType match {
           case CellType.STRING  => StringType
           case CellType.NUMERIC => DoubleType
           case _                => NullType
@@ -122,9 +110,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
             case BooleanType    => tryParseBoolean(v)
             case StringType     => StringType
             case other: DataType =>
-              throw new UnsupportedOperationException(
-                s"Unexpected data type $other"
-              )
+              throw new UnsupportedOperationException(s"Unexpected data type $other")
           }
         }
       }
@@ -134,29 +120,21 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
   }
 
   /* Special handling the default locale for backward compatibility*/
-  private val decimalParser = if (options.locale == Locale.US) { s: String =>
-    new java.math.BigDecimal(s)
-  } else {
-    ExprUtils.getDecimalParser(options.locale)
-  }
+  private val decimalParser =
+    if (options.locale == Locale.US) { s: String => new java.math.BigDecimal(s) }
+    else { ExprUtils.getDecimalParser(options.locale) }
 
   private def isInfOrNan(field: String): Boolean = {
     field == options.nanValue || field == options.negativeInf || field == options.positiveInf
   }
 
   private def tryParseInteger(field: String): DataType =
-    if ((allCatch opt field.toInt).isDefined) {
-      IntegerType
-    } else {
-      tryParseLong(field)
-    }
+    if ((allCatch opt field.toInt).isDefined) { IntegerType }
+    else { tryParseLong(field) }
 
   private def tryParseLong(field: String): DataType =
-    if ((allCatch opt field.toLong).isDefined) {
-      LongType
-    } else {
-      tryParseDecimal(field)
-    }
+    if ((allCatch opt field.toLong).isDefined) { LongType }
+    else { tryParseDecimal(field) }
 
   private def tryParseDecimal(field: String): DataType = {
     val decimalTry = allCatch opt {
@@ -173,57 +151,42 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
           *   2. scale is bigger than precision.
           */
         DecimalType(bigDecimal.precision, bigDecimal.scale)
-      } else {
-        tryParseDouble(field)
-      }
+      } else { tryParseDouble(field) }
     }
     decimalTry.getOrElse(tryParseDouble(field))
   }
 
   private def tryParseDouble(field: String): DataType =
-    if ((allCatch opt field.toDouble).isDefined || isInfOrNan(field)) {
-      DoubleType
-    } else {
-      tryParseTimestamp(field)
-    }
+    if ((allCatch opt field.toDouble).isDefined || isInfOrNan(field)) { DoubleType }
+    else { tryParseTimestamp(field) }
 
   /* This case infers a custom `dataFormat` is set.*/
   private def tryParseTimestamp(field: String): DataType =
-    if ((allCatch opt timestampParser.parse(field)).isDefined) {
-      TimestampType
-    } else {
-      tryParseBoolean(field)
-    }
+    if ((allCatch opt timestampParser.parse(field)).isDefined) { TimestampType }
+    else { tryParseBoolean(field) }
 
   private def tryParseBoolean(field: String): DataType =
-    if ((allCatch opt field.toBoolean).isDefined) {
-      BooleanType
-    } else {
-      StringType
-    }
+    if ((allCatch opt field.toBoolean).isDefined) { BooleanType }
+    else { StringType }
 
   /** Returns the common data type given two input data types so that the return
     * type is compatible with both input data types.
     */
   private def compatibleType(t1: DataType, t2: DataType): Option[DataType] = {
-    TypeCoercion
-      .findTightestCommonType(t1, t2)
-      .orElse(findCompatibleTypeForExcel(t1, t2))
+    TypeCoercion.findTightestCommonType(t1, t2).orElse(findCompatibleTypeForExcel(t1, t2))
   }
 
   /** The following pattern matching represents additional type promotion rules
     * that are Excel specific.
     */
-  private val findCompatibleTypeForExcel
-      : (DataType, DataType) => Option[DataType] = {
+  private val findCompatibleTypeForExcel: (DataType, DataType) => Option[DataType] = {
     case (StringType, _) => Some(StringType)
     case (_, StringType) => Some(StringType)
 
     /** Double support larger range than fixed decimal, DecimalType.Maximum
       * should be enough in most case, also have better precision.
       */
-    case (DoubleType, _: DecimalType) | (_: DecimalType, DoubleType) =>
-      Some(DoubleType)
+    case (DoubleType, _: DecimalType) | (_: DecimalType, DoubleType) => Some(DoubleType)
 
     case (t1: DecimalType, t2: DecimalType) =>
       val scale = math.max(t1.scale, t2.scale)
@@ -231,9 +194,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
       if (range + scale > 38) {
         /* DecimalType can't support precision > 38*/
         Some(DoubleType)
-      } else {
-        Some(DecimalType(range + scale, scale))
-      }
+      } else { Some(DecimalType(range + scale, scale)) }
     case _ => None
   }
 }

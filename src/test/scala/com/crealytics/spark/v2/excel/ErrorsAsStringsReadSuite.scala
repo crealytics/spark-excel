@@ -26,59 +26,50 @@ import java.util
 import scala.collection.JavaConverters._
 
 object ErrorsAsStringsReadSuite {
-  private val dummyTimestamp =
-    Timestamp.valueOf(LocalDateTime.of(2021, 2, 19, 0, 0))
+  private val dummyTimestamp = Timestamp.valueOf(LocalDateTime.of(2021, 2, 19, 0, 0))
   private val dummyText = "hello"
 
-  private val expectedSchemaInfer = StructType(
-    List(
-      StructField("double", DoubleType, true),
-      StructField("boolean", BooleanType, true),
-      StructField("timestamp", TimestampType, true),
-      StructField("string", StringType, true)
-    )
-  )
+  private val expectedSchemaInfer = StructType(List(
+    StructField("double", DoubleType, true),
+    StructField("boolean", BooleanType, true),
+    StructField("timestamp", TimestampType, true),
+    StructField("string", StringType, true)
+  ))
 
-  private val expectedDataErrorsAsNullInfer: util.List[Row] =
-    List(
-      Row(1.0, true, dummyTimestamp, dummyText),
-      Row(2.0, false, dummyTimestamp, dummyText),
-      Row(null, null, null, null),
-      Row(null, null, null, null)
-    ).asJava
+  private val expectedDataErrorsAsNullInfer: util.List[Row] = List(
+    Row(1.0, true, dummyTimestamp, dummyText),
+    Row(2.0, false, dummyTimestamp, dummyText),
+    Row(null, null, null, null),
+    Row(null, null, null, null)
+  ).asJava
 
-  private val expectedDataErrorsAsStringsInfer: util.List[Row] =
-    List(
-      Row(1.0, true, dummyTimestamp, dummyText),
-      Row(2.0, false, dummyTimestamp, dummyText),
-      Row(null, null, null, "#NULL!"),
-      Row(null, null, null, "#N/A")
-    ).asJava
+  private val expectedDataErrorsAsStringsInfer: util.List[Row] = List(
+    Row(1.0, true, dummyTimestamp, dummyText),
+    Row(2.0, false, dummyTimestamp, dummyText),
+    Row(null, null, null, "#NULL!"),
+    Row(null, null, null, "#N/A")
+  ).asJava
 
-  private val expectedSchemaNonInfer = StructType(
-    List(
-      StructField("double", StringType, true),
-      StructField("boolean", StringType, true),
-      StructField("timestamp", StringType, true),
-      StructField("string", StringType, true)
-    )
-  )
+  private val expectedSchemaNonInfer = StructType(List(
+    StructField("double", StringType, true),
+    StructField("boolean", StringType, true),
+    StructField("timestamp", StringType, true),
+    StructField("string", StringType, true)
+  ))
 
-  private val expectedDataErrorsAsNullNonInfer: util.List[Row] =
-    List(
-      Row("1", "TRUE", "19\"-\"Feb\"-\"2021", "hello"),
-      Row("2", "FALSE", "19\"-\"Feb\"-\"2021", "hello"),
-      Row(null, null, null, null),
-      Row(null, null, null, null)
-    ).asJava
+  private val expectedDataErrorsAsNullNonInfer: util.List[Row] = List(
+    Row("1", "TRUE", """19"-"Feb"-"2021""", "hello"),
+    Row("2", "FALSE", """19"-"Feb"-"2021""", "hello"),
+    Row(null, null, null, null),
+    Row(null, null, null, null)
+  ).asJava
 
-  private val expectedDataErrorsAsStringsNonInfer: util.List[Row] =
-    List(
-      Row("1", "TRUE", "19\"-\"Feb\"-\"2021", dummyText),
-      Row("2", "FALSE", "19\"-\"Feb\"-\"2021", dummyText),
-      Row("#NULL!", "#NULL!", "#NULL!", "#NULL!"),
-      Row("#N/A", "#N/A", "#N/A", "#N/A")
-    ).asJava
+  private val expectedDataErrorsAsStringsNonInfer: util.List[Row] = List(
+    Row("1", "TRUE", """19"-"Feb"-"2021""", dummyText),
+    Row("2", "FALSE", """19"-"Feb"-"2021""", dummyText),
+    Row("#NULL!", "#NULL!", "#NULL!", "#NULL!"),
+    Row("#N/A", "#N/A", "#N/A", "#N/A")
+  ).asJava
 
   private val excelLocation = "/spreadsheets/with_errors_all_types.xlsx"
 }
@@ -99,21 +90,13 @@ class ErrorsAsStringsReadSuite extends FunSuite with DataFrameSuiteBase {
       inferSchema: Boolean
   ): DataFrame = {
     val url = getClass.getResource(path)
-    spark.read
-      .format("excel")
-      .option("inferSchema", inferSchema)
-      .option("useNullForErrorCells", useNullForErrorCells)
-      .load(url.getPath)
+    spark.read.format("excel").option("inferSchema", inferSchema)
+      .option("useNullForErrorCells", useNullForErrorCells).load(url.getPath)
   }
 
-  test(
-    "should read error cells as null when useNullForErrorCells=true and inferSchema=true"
-  ) {
+  test("should read error cells as null when useNullForErrorCells=true and inferSchema=true") {
     val df = readFromResources(excelLocation, true, true)
-    val expected = spark.createDataFrame(
-      expectedDataErrorsAsNullInfer,
-      expectedSchemaInfer
-    )
+    val expected = spark.createDataFrame(expectedDataErrorsAsNullInfer, expectedSchemaInfer)
     assertDataFrameEquals(expected, df)
   }
 
@@ -121,21 +104,13 @@ class ErrorsAsStringsReadSuite extends FunSuite with DataFrameSuiteBase {
     "should read errors as null for non-string type only when useNullForErrorCells=false and inferSchema=true"
   ) {
     val df = readFromResources(excelLocation, false, true)
-    val expected = spark.createDataFrame(
-      expectedDataErrorsAsStringsInfer,
-      expectedSchemaInfer
-    )
+    val expected = spark.createDataFrame(expectedDataErrorsAsStringsInfer, expectedSchemaInfer)
     assertDataFrameEquals(expected, df)
   }
 
-  test(
-    "should read errors in string format when useNullForErrorCells=true and inferSchema=false"
-  ) {
+  test("should read errors in string format when useNullForErrorCells=true and inferSchema=false") {
     val df = readFromResources(excelLocation, true, false)
-    val expected = spark.createDataFrame(
-      expectedDataErrorsAsNullNonInfer,
-      expectedSchemaNonInfer
-    )
+    val expected = spark.createDataFrame(expectedDataErrorsAsNullNonInfer, expectedSchemaNonInfer)
     assertDataFrameEquals(expected, df)
   }
 
@@ -143,10 +118,8 @@ class ErrorsAsStringsReadSuite extends FunSuite with DataFrameSuiteBase {
     "should read errors in string format when useNullForErrorCells=false and inferSchema=false"
   ) {
     val df = readFromResources(excelLocation, false, false)
-    val expected = spark.createDataFrame(
-      expectedDataErrorsAsStringsNonInfer,
-      expectedSchemaNonInfer
-    )
+    val expected = spark
+      .createDataFrame(expectedDataErrorsAsStringsNonInfer, expectedSchemaNonInfer)
     assertDataFrameEquals(expected, df)
   }
 

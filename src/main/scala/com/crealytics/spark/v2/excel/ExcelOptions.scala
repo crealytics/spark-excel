@@ -25,30 +25,21 @@ import java.time.ZoneId
 import java.util.Locale
 
 class ExcelOptions(
-    @transient val parameters: CaseInsensitiveMap[String],
+    @transient
+    val parameters: CaseInsensitiveMap[String],
     defaultTimeZoneId: String,
     defaultColumnNameOfCorruptRecord: String
 ) extends Serializable {
 
   def this(parameters: Map[String, String], defaultTimeZoneId: String) = {
-    this(
-      CaseInsensitiveMap(parameters),
-      defaultTimeZoneId,
-      SQLConf.get.columnNameOfCorruptRecord
-    )
+    this(CaseInsensitiveMap(parameters), defaultTimeZoneId, SQLConf.get.columnNameOfCorruptRecord)
   }
 
   def this(
       parameters: Map[String, String],
       defaultTimeZoneId: String,
       defaultColumnNameOfCorruptRecord: String
-  ) = {
-    this(
-      CaseInsensitiveMap(parameters),
-      defaultTimeZoneId,
-      defaultColumnNameOfCorruptRecord
-    )
-  }
+  ) = { this(CaseInsensitiveMap(parameters), defaultTimeZoneId, defaultColumnNameOfCorruptRecord) }
 
   private def getInt(paramName: String): Option[Int] = {
     val paramValue = parameters.get(paramName)
@@ -56,52 +47,38 @@ class ExcelOptions(
       case None       => None
       case Some(null) => None
       case Some(value) =>
-        try {
-          Some(value.toInt)
-        } catch {
+        try { Some(value.toInt) }
+        catch {
           case _: NumberFormatException =>
-            throw new RuntimeException(
-              s"$paramName should be an integer. Found $value"
-            )
+            throw new RuntimeException(s"$paramName should be an integer. Found $value")
         }
     }
   }
 
   private def getBool(paramName: String, default: Boolean): Boolean = {
     val param = parameters.getOrElse(paramName, default.toString)
-    if (param == null) {
-      default
-    } else if (param.toLowerCase(Locale.ROOT) == "true") {
-      true
-    } else if (param.toLowerCase(Locale.ROOT) == "false") {
-      false
-    } else {
-      throw new Exception(s"$paramName flag can be true or false")
-    }
+    if (param == null) { default }
+    else if (param.toLowerCase(Locale.ROOT) == "true") { true }
+    else if (param.toLowerCase(Locale.ROOT) == "false") { false }
+    else { throw new Exception(s"$paramName flag can be true or false") }
   }
 
   /* Parsing mode, how to handle corrupted record. Default to permissive*/
-  val parseMode: ParseMode =
-    parameters.get("mode").map(ParseMode.fromString).getOrElse(PermissiveMode)
+  val parseMode: ParseMode = parameters.get("mode").map(ParseMode.fromString)
+    .getOrElse(PermissiveMode)
 
-  val zoneId: ZoneId = DateTimeUtils.getZoneId(
-    parameters.getOrElse(DateTimeUtils.TIMEZONE_OPTION, defaultTimeZoneId)
-  )
+  val zoneId: ZoneId = DateTimeUtils
+    .getZoneId(parameters.getOrElse(DateTimeUtils.TIMEZONE_OPTION, defaultTimeZoneId))
 
   /* A language tag in IETF BCP 47 format*/
-  val locale: Locale =
-    parameters.get("locale").map(Locale.forLanguageTag).getOrElse(Locale.US)
+  val locale: Locale = parameters.get("locale").map(Locale.forLanguageTag).getOrElse(Locale.US)
 
-  val dateFormat: String =
-    parameters.getOrElse("dateFormat", DateFormatter.defaultPattern)
+  val dateFormat: String = parameters.getOrElse("dateFormat", DateFormatter.defaultPattern)
 
-  val timestampFormat: String =
-    parameters.getOrElse(
-      "timestampFormat",
-      s"${DateFormatter.defaultPattern}'T'HH:mm:ss[.SSS][XXX]"
-    )
+  val timestampFormat: String = parameters
+    .getOrElse("timestampFormat", s"${DateFormatter.defaultPattern}'T'HH:mm:ss[.SSS][XXX]")
 
-  val header      = getBool("header", default = true)
+  val header = getBool("header", default = true)
   val inferSchema = getBool("inferSchema", default = false)
   val excerptSize = getInt("excerptSize")
 
@@ -111,14 +88,11 @@ class ExcelOptions(
   val enforceSchema = getBool("enforceSchema", default = true)
 
   /* Name for column of corrupted records*/
-  val columnNameOfCorruptRecord =
-    parameters.getOrElse(
-      "columnNameOfCorruptRecord",
-      defaultColumnNameOfCorruptRecord
-    )
+  val columnNameOfCorruptRecord = parameters
+    .getOrElse("columnNameOfCorruptRecord", defaultColumnNameOfCorruptRecord)
 
-  val nullValue   = parameters.getOrElse("nullValue", "")
-  val nanValue    = parameters.getOrElse("nanValue", "NaN")
+  val nullValue = parameters.getOrElse("nullValue", "")
+  val nanValue = parameters.getOrElse("nanValue", "NaN")
   val positiveInf = parameters.getOrElse("positiveInf", "Inf")
   val negativeInf = parameters.getOrElse("negativeInf", "-Inf")
 
@@ -133,10 +107,8 @@ class ExcelOptions(
 
   /* Additional column for color*/
   val addColorColumns = getBool("addColorColumns", default = false)
-  val ignoreLeadingWhiteSpace =
-    getBool("ignoreLeadingWhiteSpace", default = false)
-  val ignoreTrailingWhiteSpace =
-    getBool("ignoreTrailingWhiteSpace", default = false)
+  val ignoreLeadingWhiteSpace = getBool("ignoreLeadingWhiteSpace", default = false)
+  val ignoreTrailingWhiteSpace = getBool("ignoreTrailingWhiteSpace", default = false)
 
   /* Data address, default to everything*/
   val dataAddress = parameters.getOrElse("dataAddress", "A1")

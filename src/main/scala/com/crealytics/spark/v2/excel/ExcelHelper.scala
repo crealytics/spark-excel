@@ -40,11 +40,7 @@ import scala.util.Try
   */
 object PlainNumberFormat extends Format {
 
-  override def format(
-      number: AnyRef,
-      toAppendTo: StringBuffer,
-      pos: FieldPosition
-  ): StringBuffer =
+  override def format(number: AnyRef, toAppendTo: StringBuffer, pos: FieldPosition): StringBuffer =
     toAppendTo.append(new BigDecimal(number.toString).toPlainString)
 
   override def parseObject(source: String, pos: ParsePosition): AnyRef =
@@ -74,26 +70,24 @@ class ExcelHelper(options: ExcelOptions) {
     * @param cell to be extracted
     * @return string value for given cell
     */
-  def safeCellStringValue(cell: Cell): String =
-    cell.getCellType match {
-      case CellType.BLANK | CellType._NONE => ""
-      case CellType.STRING                 => cell.getStringCellValue
-      case CellType.FORMULA =>
-        cell.getCachedFormulaResultType match {
-          case CellType.BLANK | CellType._NONE => ""
+  def safeCellStringValue(cell: Cell): String = cell.getCellType match {
+    case CellType.BLANK | CellType._NONE => ""
+    case CellType.STRING                 => cell.getStringCellValue
+    case CellType.FORMULA => cell.getCachedFormulaResultType match {
+        case CellType.BLANK | CellType._NONE => ""
 
-          /** When the cell is an error-formula, and requested type is string,
-            * get actual formula itself
-            */
-          case CellType.ERROR   => cell.getCellFormula
-          case CellType.STRING  => cell.getStringCellValue
-          case CellType.NUMERIC => cell.getNumericCellValue.toString
+        /** When the cell is an error-formula, and requested type is string,
+          * get actual formula itself
+          */
+        case CellType.ERROR   => cell.getCellFormula
+        case CellType.STRING  => cell.getStringCellValue
+        case CellType.NUMERIC => cell.getNumericCellValue.toString
 
-          /* Get what displayed on the cell, for all other cases*/
-          case _ => dataFormatter.formatCellValue(cell)
-        }
-      case _ => dataFormatter.formatCellValue(cell)
-    }
+        /* Get what displayed on the cell, for all other cases*/
+        case _ => dataFormatter.formatCellValue(cell)
+      }
+    case _ => dataFormatter.formatCellValue(cell)
+  }
 
   /** Get workbook
     *
@@ -103,15 +97,11 @@ class ExcelHelper(options: ExcelOptions) {
     * @return workbook
     */
   def getWorkbook(conf: Configuration, uri: URI): Workbook = {
-    val ins = FileSystem
-      .get(uri, conf)
-      .open(new Path(uri))
+    val ins = FileSystem.get(uri, conf).open(new Path(uri))
 
     try options.workbookPassword match {
-      case None =>
-        WorkbookFactory.create(ins)
-      case Some(password) =>
-        WorkbookFactory.create(ins, password)
+      case None           => WorkbookFactory.create(ins)
+      case Some(password) => WorkbookFactory.create(ins, password)
     } finally ins.close
   }
 
@@ -137,9 +127,7 @@ class ExcelHelper(options: ExcelOptions) {
         } else if (duplicates.contains(value)) {
           /* When there are duplicates, put the index as the suffix.*/
           s"$value$index"
-        } else {
-          value
-        }
+        } else { value }
       }
     } else {
       firstRow.zipWithIndex.map { case (_, index) =>
@@ -167,9 +155,7 @@ class ExcelHelper(options: ExcelOptions) {
       ),
       SpreadsheetVersion.EXCEL2007
     )
-  }.getOrElse(
-    new AreaReference(options.dataAddress, SpreadsheetVersion.EXCEL2007)
-  )
+  }.getOrElse(new AreaReference(options.dataAddress, SpreadsheetVersion.EXCEL2007))
 }
 
 object ExcelHelper {

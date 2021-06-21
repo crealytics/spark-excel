@@ -30,8 +30,7 @@ case class ExcelScanBuilder(
     schema: StructType,
     dataSchema: StructType,
     options: CaseInsensitiveStringMap
-) extends FileScanBuilder(sparkSession, fileIndex, dataSchema)
-    with SupportsPushDownFilters {
+) extends FileScanBuilder(sparkSession, fileIndex, dataSchema) with SupportsPushDownFilters {
 
   override def build(): Scan = {
     ExcelScan(
