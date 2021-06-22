@@ -83,6 +83,17 @@ object ProjectionAndFilterPushdownSuite {
     Row("Jesse Thomas", 12.0d, 1.0d, "CA873", "Nguyễn Thị Teresa Teng", null)
   ).asJava
 
+  /* Filtering, with same schemas as in projection*/
+  val expectedDataFilterInferSchema_01: util.List[Row] = List(
+    Row(4.0d, 12.0d, "CA883", "Phạm Thanh Mai", 7000.0d, 4000.0d, null, null, "Jesse Thomas"),
+    Row(4.0d, 12.0d, "CA884", "Hoàng Ngọc Hà", 8000.0d, null, null, null, "Teresa Teng"),
+    Row(4.0d, 12.0d, "CA885", "Lê Minh Ngọc", 15000.0d, 12000.0d, null, null, "Teresa Teng")
+  ).asJava
+
+  val expectedDataFilterInferSchema_02: util.List[Row] = List(
+    Row(4.0d, 12.0d, "CA883", "Phạm Thanh Mai", 7000.0d, 4000.0d, null, null, "Jesse Thomas"),
+    Row(4.0d, 12.0d, "CA885", "Lê Minh Ngọc", 15000.0d, 12000.0d, null, null, "Teresa Teng")
+  ).asJava
 }
 
 class ProjectionAndFilterPushdownSuite extends FunSuite with DataFrameSuiteBase {
@@ -116,5 +127,28 @@ class ProjectionAndFilterPushdownSuite extends FunSuite with DataFrameSuiteBase 
       .createDataFrame(expectedProjectionDataInferSchema_02, expectedProjectionInferredSchema_02)
 
     assertDataFrameEquals(expected, df)
+  }
+
+  test("filter with one column inferSchema=true") {
+    val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", true)
+      .filter("Day = 4")
+    val expected = spark.createDataFrame(expectedDataFilterInferSchema_01, expectedInferredSchema)
+
+    assertDataFrameEquals(expected, df)
+  }
+
+  test("filter with two columns inferSchema=true") {
+    val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", true)
+      .filter("Day = 4 and `Extra Option 1` is not null")
+    val expected = spark.createDataFrame(expectedDataFilterInferSchema_02, expectedInferredSchema)
+
+    assertDataFrameEquals(expected, df)
+  }
+
+  test("filter and count matched inferSchema=true") {
+    val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", true)
+      .filter("Staff = 'Teresa Teng'")
+
+    assert(df.count() == 16)
   }
 }

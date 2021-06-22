@@ -74,10 +74,28 @@ object UserReportedIssuesSuite {
     Row("B", "4", "5"),
     Row("C", "7", "8")
   ).asJava
+
+  /** Issue: https://github.com/crealytics/spark-excel/issues/162
+    * Spark-excel still infers to Double-Type, however, user can provide custom
+    * scheme and Spark-excel should load to IntegerType or LongType accordingly
+    */
+  val userDefined_Issue162 = StructType(List(
+    StructField("ID", IntegerType, true),
+    StructField("address", StringType, true),
+    StructField("Pin", IntegerType, true)
+  ))
+
+  val expectedData_Issue162: util.List[Row] = List(
+    Row(123123, "Asdadsas, Xyxyxy, 123xyz", 123132),
+    Row(123124, "Asdadsas1, Xyxyxy, 123xyz", 123133)
+  ).asJava
+
 }
 
 class UserReportedIssuesSuite extends FunSuite with DataFrameSuiteBase {
   import UserReportedIssuesSuite._
+
+  private val dataRoot = getClass.getResource("/spreadsheets").getPath
 
   def readFromResources(
       path: String,
@@ -98,11 +116,10 @@ class UserReportedIssuesSuite extends FunSuite with DataFrameSuiteBase {
     assertDataFrameEquals(expected, df)
   }
 
-  test("#285 undefined rows: keep") {
-    val df = readFromResources("/spreadsheets/issue_285_bryce21.xlsx", true, false)
-    val expected = spark
-      .createDataFrame(expectedData_KeepUndefinedRows_Issue285, expectedSchema_Issue285)
+  test("#162 load integer values with user defined schema") {
+    val df = spark.read.format("excel").option("header", true).schema(userDefined_Issue162)
+      .load(s"$dataRoot/issue_162_nihar_gharat.xlsx")
+    val expected = spark.createDataFrame(expectedData_Issue162, userDefined_Issue162)
     assertDataFrameEquals(expected, df)
   }
-
 }
