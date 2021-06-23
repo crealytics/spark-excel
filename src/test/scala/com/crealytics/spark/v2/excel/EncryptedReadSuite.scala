@@ -23,13 +23,13 @@ import scala.collection.JavaConverters._
 
 object EncryptedReadSuite {
   val simpleSchema = StructType(List(
-    StructField("A", DoubleType, true),
-    StructField("B", DoubleType, true),
-    StructField("C", DoubleType, true),
-    StructField("D", DoubleType, true)
+    StructField("A", IntegerType, true),
+    StructField("B", IntegerType, true),
+    StructField("C", IntegerType, true),
+    StructField("D", IntegerType, true)
   ))
 
-  val expectedData = List(Row(1.0d, 2.0d, 3.0d, 4.0d)).asJava
+  val expectedData = List(Row(1, 2, 3, 4)).asJava
 }
 
 class EncryptedReadSuite extends FunSuite with DataFrameSuiteBase {

@@ -36,39 +36,39 @@ import java.nio.file.Paths
 
 object GlobPartitionAndFileNameSuite {
   val expectedInferredSchema = StructType(List(
-    StructField("Day", DoubleType, true),
-    StructField("Month", DoubleType, true),
+    StructField("Day", IntegerType, true),
+    StructField("Month", IntegerType, true),
     StructField("Customer ID", StringType, true),
     StructField("Customer Name", StringType, true),
-    StructField("Standard Package", DoubleType, true),
-    StructField("Extra Option 1", DoubleType, true),
-    StructField("Extra Option 2", DoubleType, true),
-    StructField("Extra Option 3", DoubleType, true),
+    StructField("Standard Package", IntegerType, true),
+    StructField("Extra Option 1", IntegerType, true),
+    StructField("Extra Option 2", IntegerType, true),
+    StructField("Extra Option 3", IntegerType, true),
     StructField("Staff", StringType, true)
   ))
 
   val expectedWithFilenameSchema = StructType(List(
-    StructField("Day", DoubleType, true),
-    StructField("Month", DoubleType, true),
+    StructField("Day", IntegerType, true),
+    StructField("Month", IntegerType, true),
     StructField("Customer ID", StringType, true),
     StructField("Customer Name", StringType, true),
-    StructField("Standard Package", DoubleType, true),
-    StructField("Extra Option 1", DoubleType, true),
-    StructField("Extra Option 2", DoubleType, true),
-    StructField("Extra Option 3", DoubleType, true),
+    StructField("Standard Package", IntegerType, true),
+    StructField("Extra Option 1", IntegerType, true),
+    StructField("Extra Option 2", IntegerType, true),
+    StructField("Extra Option 3", IntegerType, true),
     StructField("Staff", StringType, true),
     StructField("file_name", StringType, false)
   ))
 
   val expectedWithPartitionSchema = StructType(List(
-    StructField("Day", DoubleType, true),
-    StructField("Month", DoubleType, true),
+    StructField("Day", IntegerType, true),
+    StructField("Month", IntegerType, true),
     StructField("Customer ID", StringType, true),
     StructField("Customer Name", StringType, true),
-    StructField("Standard Package", DoubleType, true),
-    StructField("Extra Option 1", DoubleType, true),
-    StructField("Extra Option 2", DoubleType, true),
-    StructField("Extra Option 3", DoubleType, true),
+    StructField("Standard Package", IntegerType, true),
+    StructField("Extra Option 1", IntegerType, true),
+    StructField("Extra Option 2", IntegerType, true),
+    StructField("Extra Option 3", IntegerType, true),
     StructField("Staff", StringType, true),
     StructField("Quarter", IntegerType, true)
   ))

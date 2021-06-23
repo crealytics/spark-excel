@@ -30,22 +30,22 @@ object ErrorsAsStringsReadSuite {
   private val dummyText = "hello"
 
   private val expectedSchemaInfer = StructType(List(
-    StructField("double", DoubleType, true),
+    StructField("double", IntegerType, true),
     StructField("boolean", BooleanType, true),
     StructField("timestamp", TimestampType, true),
     StructField("string", StringType, true)
   ))
 
   private val expectedDataErrorsAsNullInfer: util.List[Row] = List(
-    Row(1.0, true, dummyTimestamp, dummyText),
-    Row(2.0, false, dummyTimestamp, dummyText),
+    Row(1, true, dummyTimestamp, dummyText),
+    Row(2, false, dummyTimestamp, dummyText),
     Row(null, null, null, null),
     Row(null, null, null, null)
   ).asJava
 
   private val expectedDataErrorsAsStringsInfer: util.List[Row] = List(
-    Row(1.0, true, dummyTimestamp, dummyText),
-    Row(2.0, false, dummyTimestamp, dummyText),
+    Row(1, true, dummyTimestamp, dummyText),
+    Row(2, false, dummyTimestamp, dummyText),
     Row(null, null, null, "#NULL!"),
     Row(null, null, null, "#N/A")
   ).asJava

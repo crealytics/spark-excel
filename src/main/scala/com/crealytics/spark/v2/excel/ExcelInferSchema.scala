@@ -85,35 +85,49 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     * there is no point checking if it is an Int, as the final type must be
     * Double or higher.
     */
+  private def inferTypeOfStringValue(typeSoFar: DataType, value: String): DataType = {
+    if (value == null || value.isEmpty || value == options.nullValue) { typeSoFar }
+    else {
+      val typeElemInfer = typeSoFar match {
+        case NullType       => tryParseInteger(value)
+        case IntegerType    => tryParseInteger(value)
+        case LongType       => tryParseLong(value)
+        case _: DecimalType => tryParseDecimal(value)
+        case DoubleType     => tryParseDouble(value)
+        case TimestampType  => tryParseTimestamp(value)
+        case BooleanType    => tryParseBoolean(value)
+        case StringType     => StringType
+        case other: DataType =>
+          throw new UnsupportedOperationException(s"Unexpected data type $other")
+      }
+      compatibleType(typeSoFar, typeElemInfer).getOrElse(StringType)
+    }
+  }
+
+  /** Infer type of Double value */
+  private def inferTypeOfDoubleValue(typeSoFar: DataType, value: Double): DataType = {
+    val typeElemInfer =
+      if (value.isValidInt) IntegerType
+      else if (value == value.longValue()) LongType
+      else DoubleType
+
+    compatibleType(typeSoFar, typeElemInfer).getOrElse(DoubleType)
+  }
+
+  /** Infer type of Cell field */
   private def inferField(typeSoFar: DataType, field: Cell): DataType = {
     val typeElemInfer = field.getCellType match {
       case CellType.FORMULA => field.getCachedFormulaResultType match {
-          case CellType.STRING  => StringType
-          case CellType.NUMERIC => DoubleType
+          case CellType.STRING  => inferTypeOfStringValue(typeSoFar, field.getStringCellValue)
+          case CellType.NUMERIC => inferTypeOfDoubleValue(typeSoFar, field.getNumericCellValue)
           case _                => NullType
         }
       case CellType.BLANK | CellType.ERROR | CellType._NONE => NullType
       case CellType.BOOLEAN                                 => BooleanType
       case CellType.NUMERIC =>
-        if (DateUtil.isCellDateFormatted(field)) TimestampType else DoubleType
-      case CellType.STRING => {
-        val v = field.getStringCellValue
-        if (v == options.nullValue) NullType
-        else {
-          typeSoFar match {
-            case NullType       => tryParseInteger(v)
-            case IntegerType    => tryParseInteger(v)
-            case LongType       => tryParseLong(v)
-            case _: DecimalType => tryParseDecimal(v)
-            case DoubleType     => tryParseDouble(v)
-            case TimestampType  => tryParseTimestamp(v)
-            case BooleanType    => tryParseBoolean(v)
-            case StringType     => StringType
-            case other: DataType =>
-              throw new UnsupportedOperationException(s"Unexpected data type $other")
-          }
-        }
-      }
+        if (DateUtil.isCellDateFormatted(field)) TimestampType
+        else inferTypeOfDoubleValue(typeSoFar, field.getNumericCellValue)
+      case CellType.STRING => inferTypeOfStringValue(typeSoFar, field.getStringCellValue)
     }
 
     compatibleType(typeSoFar, typeElemInfer).getOrElse(StringType)
