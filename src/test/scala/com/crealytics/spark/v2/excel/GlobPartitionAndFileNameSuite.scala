@@ -35,43 +35,49 @@ import java.nio.file.Paths
   */
 
 object GlobPartitionAndFileNameSuite {
-  val expectedInferredSchema = StructType(List(
-    StructField("Day", IntegerType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true),
-    StructField("Extra Option 1", IntegerType, true),
-    StructField("Extra Option 2", IntegerType, true),
-    StructField("Extra Option 3", IntegerType, true),
-    StructField("Staff", StringType, true)
-  ))
+  val expectedInferredSchema = StructType(
+    List(
+      StructField("Day", IntegerType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true),
+      StructField("Extra Option 1", IntegerType, true),
+      StructField("Extra Option 2", IntegerType, true),
+      StructField("Extra Option 3", IntegerType, true),
+      StructField("Staff", StringType, true)
+    )
+  )
 
-  val expectedWithFilenameSchema = StructType(List(
-    StructField("Day", IntegerType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true),
-    StructField("Extra Option 1", IntegerType, true),
-    StructField("Extra Option 2", IntegerType, true),
-    StructField("Extra Option 3", IntegerType, true),
-    StructField("Staff", StringType, true),
-    StructField("file_name", StringType, false)
-  ))
+  val expectedWithFilenameSchema = StructType(
+    List(
+      StructField("Day", IntegerType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true),
+      StructField("Extra Option 1", IntegerType, true),
+      StructField("Extra Option 2", IntegerType, true),
+      StructField("Extra Option 3", IntegerType, true),
+      StructField("Staff", StringType, true),
+      StructField("file_name", StringType, false)
+    )
+  )
 
-  val expectedWithPartitionSchema = StructType(List(
-    StructField("Day", IntegerType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true),
-    StructField("Extra Option 1", IntegerType, true),
-    StructField("Extra Option 2", IntegerType, true),
-    StructField("Extra Option 3", IntegerType, true),
-    StructField("Staff", StringType, true),
-    StructField("Quarter", IntegerType, true)
-  ))
+  val expectedWithPartitionSchema = StructType(
+    List(
+      StructField("Day", IntegerType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true),
+      StructField("Extra Option 1", IntegerType, true),
+      StructField("Extra Option 2", IntegerType, true),
+      StructField("Extra Option 3", IntegerType, true),
+      StructField("Staff", StringType, true),
+      StructField("Quarter", IntegerType, true)
+    )
+  )
 }
 
 class GlobPartitionAndFileNameSuite extends FunSuite with DataFrameSuiteBase {
@@ -79,8 +85,11 @@ class GlobPartitionAndFileNameSuite extends FunSuite with DataFrameSuiteBase {
 
   private val dataRoot = getClass.getResource("/spreadsheets").getPath
 
-  def readFromResources(path: String, inferSchema: Boolean): DataFrame = spark.read.format("excel")
-    .option("header", true).option("inferSchema", inferSchema).load(path)
+  def readFromResources(path: String, inferSchema: Boolean): DataFrame = spark.read
+    .format("excel")
+    .option("header", true)
+    .option("inferSchema", inferSchema)
+    .load(path)
 
   test("read multiple files must infer correct schema with inferSchema=true") {
     val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/*.xlsx", true)
@@ -95,8 +104,13 @@ class GlobPartitionAndFileNameSuite extends FunSuite with DataFrameSuiteBase {
     assert(df.schema == expectedWithFilenameSchema)
 
     /* And validate list of filename*/
-    val names = df.select("file_name").distinct.collect.map(r => r.getString(0))
-      .map(p => Paths.get(p).getFileName.toString).toSet
+    val names = df
+      .select("file_name")
+      .distinct
+      .collect
+      .map(r => r.getString(0))
+      .map(p => Paths.get(p).getFileName.toString)
+      .toSet
 
     assert(names == Set[String]("ca_10.xlsx", "ca_11.xlsx", "ca_12.xlsx"))
   }

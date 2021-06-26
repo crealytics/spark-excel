@@ -24,10 +24,13 @@ class ExcelOutputWriter(
     path: String,
     dataSchema: StructType,
     context: TaskAttemptContext,
-    params: ExcelOptions
+    options: ExcelOptions
 ) extends OutputWriter with Logging {
 
-  override def write(row: InternalRow): Unit = ???
+  private val gen = new ExcelGenerator(path, dataSchema, context, options)
+  if (options.header) { gen.writeHeaders() }
 
-  override def close(): Unit = ???
+  override def write(row: InternalRow): Unit = gen.write(row)
+
+  override def close(): Unit = gen.close()
 }
