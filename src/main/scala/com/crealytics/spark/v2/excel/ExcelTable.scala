@@ -23,7 +23,8 @@ import org.apache.spark.sql.execution.datasources.v2.FileTable
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
-
+import org.apache.spark.sql.connector.catalog.TableCapability
+import org.apache.spark.sql.connector.catalog.TableCapability._
 import scala.collection.JavaConverters._
 
 case class ExcelTable(
@@ -53,6 +54,9 @@ case class ExcelTable(
 
   override def fallbackFileFormat: Class[_ <: FileFormat] =
     throw new UnsupportedOperationException("Excel does not support V1 File Format")
+
+  override def capabilities: java.util.Set[TableCapability] =
+    Set(ACCEPT_ANY_SCHEMA, BATCH_READ, BATCH_WRITE, OVERWRITE_BY_FILTER, TRUNCATE).asJava
 
   /* Actual doing schema inferring*/
   private def infer(

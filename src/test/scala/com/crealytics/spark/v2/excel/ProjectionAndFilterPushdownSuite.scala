@@ -28,17 +28,19 @@ import scala.collection.JavaConverters._
 object ProjectionAndFilterPushdownSuite {
 
   /* No projection*/
-  val expectedInferredSchema = StructType(List(
-    StructField("Day", IntegerType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true),
-    StructField("Extra Option 1", IntegerType, true),
-    StructField("Extra Option 2", IntegerType, true),
-    StructField("Extra Option 3", IntegerType, true),
-    StructField("Staff", StringType, true)
-  ))
+  val expectedInferredSchema = StructType(
+    List(
+      StructField("Day", IntegerType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true),
+      StructField("Extra Option 1", IntegerType, true),
+      StructField("Extra Option 2", IntegerType, true),
+      StructField("Extra Option 3", IntegerType, true),
+      StructField("Staff", StringType, true)
+    )
+  )
 
   val expectedDataInferSchema: util.List[Row] = List(
     Row(1, 12, "CA869", "Phạm Uyển Trinh", null, null, 2200, null, "Ella Fitzgerald"),
@@ -49,13 +51,15 @@ object ProjectionAndFilterPushdownSuite {
   ).asJava
 
   /* Subset of columns, same order*/
-  val expectedProjectionInferredSchema_01 = StructType(List(
-    StructField("Day", IntegerType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Staff", StringType, true)
-  ))
+  val expectedProjectionInferredSchema_01 = StructType(
+    List(
+      StructField("Day", IntegerType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Staff", StringType, true)
+    )
+  )
 
   val expectedProjectionDataInferSchema_01: util.List[Row] = List(
     Row(1, 12, "CA869", "Phạm Uyển Trinh", "Ella Fitzgerald"),
@@ -66,14 +70,16 @@ object ProjectionAndFilterPushdownSuite {
   ).asJava
 
   /* Subset of columns, out of order*/
-  val expectedProjectionInferredSchema_02 = StructType(List(
-    StructField("Staff", StringType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Day", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true)
-  ))
+  val expectedProjectionInferredSchema_02 = StructType(
+    List(
+      StructField("Staff", StringType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Day", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true)
+    )
+  )
 
   val expectedProjectionDataInferSchema_02: util.List[Row] = List(
     Row("Ella Fitzgerald", 12, 1, "CA869", "Phạm Uyển Trinh", null),
@@ -101,8 +107,11 @@ class ProjectionAndFilterPushdownSuite extends FunSuite with DataFrameSuiteBase 
 
   private val dataRoot = getClass.getResource("/spreadsheets").getPath
 
-  def readFromResources(path: String, inferSchema: Boolean): DataFrame = spark.read.format("excel")
-    .option("header", true).option("inferSchema", inferSchema).load(path)
+  def readFromResources(path: String, inferSchema: Boolean): DataFrame = spark.read
+    .format("excel")
+    .option("header", true)
+    .option("inferSchema", inferSchema)
+    .load(path)
 
   test("no projection check first 5 rows with inferSchema=true") {
     val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", true).limit(5)
@@ -113,7 +122,8 @@ class ProjectionAndFilterPushdownSuite extends FunSuite with DataFrameSuiteBase 
 
   test("projection with subset of columns, same order and inferSchema=true") {
     val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", true)
-      .select("Day", "Month", "Customer ID", "Customer Name", "Staff").limit(5)
+      .select("Day", "Month", "Customer ID", "Customer Name", "Staff")
+      .limit(5)
     val expected = spark
       .createDataFrame(expectedProjectionDataInferSchema_01, expectedProjectionInferredSchema_01)
 
@@ -122,7 +132,8 @@ class ProjectionAndFilterPushdownSuite extends FunSuite with DataFrameSuiteBase 
 
   test("projection with subset of columns, out of order and inferSchema=true") {
     val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", true)
-      .select("Staff", "Month", "Day", "Customer ID", "Customer Name", "Standard Package").limit(5)
+      .select("Staff", "Month", "Day", "Customer ID", "Customer Name", "Standard Package")
+      .limit(5)
     val expected = spark
       .createDataFrame(expectedProjectionDataInferSchema_02, expectedProjectionInferredSchema_02)
 
