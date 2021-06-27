@@ -69,30 +69,30 @@ object NumericTypesSuite {
   ).asJava
 }
 
-class NumericTypesSuite extends FunSuite with DataFrameSuiteBase {
+class NumericTypesSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import NumericTypesSuite._
 
-  private val dataRoot = getClass.getResource("/spreadsheets").getPath
-
-  def readFromResources(path: String, schema: StructType): DataFrame = spark.read.format("excel")
-    .option("header", true).schema(schema).load(path)
-
   test("load with user defined schema with Integer types") {
-    val df =
-      readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", userDefinedSchema_01)
-        .limit(5)
+    val df = readFromResources(
+      spark,
+      path = "ca_dataset/2019/Quarter=4/ca_12.xlsx",
+      options = Map("header" -> true),
+      schema = userDefinedSchema_01
+    ).limit(5)
     val expected = spark.createDataFrame(expectedData_01, userDefinedSchema_01)
 
     assertDataFrameEquals(expected, df)
   }
 
   test("load with user defined schema with both Integer and Long types") {
-    val df =
-      readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", userDefinedSchema_02)
-        .limit(5)
+    val df = readFromResources(
+      spark,
+      path = "ca_dataset/2019/Quarter=4/ca_12.xlsx",
+      options = Map("header" -> true),
+      schema = userDefinedSchema_02
+    ).limit(5)
     val expected = spark.createDataFrame(expectedData_02, userDefinedSchema_02)
 
     assertDataFrameEquals(expected, df)
   }
-
 }

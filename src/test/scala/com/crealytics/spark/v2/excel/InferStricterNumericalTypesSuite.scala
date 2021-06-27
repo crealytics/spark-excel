@@ -42,49 +42,47 @@ object InferStricterNumericalTypesSuite {
   ).asJava
 }
 
-class InferStricterNumericalTypesSuite extends FunSuite with DataFrameSuiteBase {
+class InferStricterNumericalTypesSuite
+    extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import InferStricterNumericalTypesSuite._
 
-  def readFromResources(
-      path: String,
-      usePlainNumberFormat: Boolean,
-      inferSchema: Boolean
-  ): DataFrame = {
-    val url = getClass.getResource(path)
-    spark.read.format("excel").option("usePlainNumberFormat", usePlainNumberFormat)
-      .option("inferSchema", inferSchema).load(url.getPath)
-  }
-
-  test(
-    "should get stricter types for numerical values usePlainNumberFormat=true and inferSchema=true (xlxs)"
-  ) {
-    val df = readFromResources("/spreadsheets/infer_stricter_numerical_types.xlsx", true, true)
+  test("stricter numerical types usePlainNumberFormat=true and inferSchema=true (xlxs)") {
+    val df = readFromResources(
+      spark,
+      path = "infer_stricter_numerical_types.xlsx",
+      options = Map("usePlainNumberFormat" -> true, "inferSchema" -> true)
+    )
     val expected = spark.createDataFrame(expectedDataInferSchema, expectedInferredSchema)
     assertDataFrameEquals(expected, df)
   }
 
-  test(
-    "should get stricter types for numerical values usePlainNumberFormat=false and inferSchema=true (xlxs)"
-  ) {
-    val df = readFromResources("/spreadsheets/infer_stricter_numerical_types.xlsx", false, true)
+  test("stricter numerical types usePlainNumberFormat=false and inferSchema=true (xlxs)") {
+    val df = readFromResources(
+      spark,
+      path = "infer_stricter_numerical_types.xlsx",
+      options = Map("usePlainNumberFormat" -> false, "inferSchema" -> true)
+    )
     val expected = spark.createDataFrame(expectedDataInferSchema, expectedInferredSchema)
     assertDataFrameEquals(expected, df)
   }
 
-  test(
-    "should get stricter types for numerical values usePlainNumberFormat=true and inferSchema=true (xls)"
-  ) {
-    val df = readFromResources("/spreadsheets/infer_stricter_numerical_types.xls", true, true)
+  test("stricter numerical types usePlainNumberFormat=true and inferSchema=true (xls)") {
+    val df = readFromResources(
+      spark,
+      path = "infer_stricter_numerical_types.xls",
+      options = Map("usePlainNumberFormat" -> true, "inferSchema" -> true)
+    )
     val expected = spark.createDataFrame(expectedDataInferSchema, expectedInferredSchema)
     assertDataFrameEquals(expected, df)
   }
 
-  test(
-    "should get stricter types for numerical values usePlainNumberFormat=false and inferSchema=true (xls)"
-  ) {
-    val df = readFromResources("/spreadsheets/infer_stricter_numerical_types.xls", false, true)
+  test("stricter numerical types usePlainNumberFormat=false and inferSchema=true (xls)") {
+    val df = readFromResources(
+      spark,
+      path = "infer_stricter_numerical_types.xls",
+      options = Map("usePlainNumberFormat" -> false, "inferSchema" -> true)
+    )
     val expected = spark.createDataFrame(expectedDataInferSchema, expectedInferredSchema)
     assertDataFrameEquals(expected, df)
   }
-
 }
