@@ -18,7 +18,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
 import scala.collection.JavaConverters._
@@ -69,7 +69,7 @@ object TableReadSuite {
 
 }
 
-class TableReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class TableReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import TableReadSuite._
 
   test("named-table SmallCity with testing data from Apache POI upstream tests") {

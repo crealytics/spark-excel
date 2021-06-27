@@ -17,7 +17,7 @@ package com.crealytics.spark.v2.excel
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.collection.JavaConverters._
 
@@ -34,7 +34,7 @@ object EncryptedReadSuite {
   val expectedData = List(Row(1, 2, 3, 4)).asJava
 }
 
-class EncryptedReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class EncryptedReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import EncryptedReadSuite._
 
   lazy val expected = spark.createDataFrame(expectedData, simpleSchema)

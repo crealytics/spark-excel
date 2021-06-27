@@ -18,7 +18,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
 import scala.collection.JavaConverters._
@@ -61,7 +61,7 @@ object AreaReferenceReadSuite {
 
 }
 
-class AreaReferenceReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class AreaReferenceReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import AreaReferenceReadSuite._
 
   test("AreaReference from diffrence sheet with testing data from Apache POI upstream tests") {

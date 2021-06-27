@@ -67,11 +67,14 @@ class HeaderDataColumn(
             case CellType.NUMERIC => Option(cell.getNumericCellValue)
             case CellType.STRING =>
               parseNumber(Option(cell.getRichStringCellValue).map(_.getString))
+            case _ => throw new RuntimeException(s"Unsupported numeric value extraction from formula $cell")
           }
+        case _ => throw new RuntimeException(s"Unsupported numeric value extraction from $cell")
       }
     lazy val booleanValue = cell.getCellType match {
       case CellType.BOOLEAN => Option(cell.getBooleanCellValue)
       case CellType.STRING => Option(cell.getStringCellValue).map(_.toBoolean)
+      case _ => throw new RuntimeException(s"Unsupported boolean value extraction from $cell")
     }
     lazy val bigDecimal = numericValue.map(new BigDecimal(_))
     val value: Option[Any] = field.dataType match {
