@@ -29,12 +29,14 @@ object ErrorsAsStringsReadSuite {
   private val dummyTimestamp = Timestamp.valueOf(LocalDateTime.of(2021, 2, 19, 0, 0))
   private val dummyText = "hello"
 
-  private val expectedSchemaInfer = StructType(List(
-    StructField("double", IntegerType, true),
-    StructField("boolean", BooleanType, true),
-    StructField("timestamp", TimestampType, true),
-    StructField("string", StringType, true)
-  ))
+  private val expectedSchemaInfer = StructType(
+    List(
+      StructField("double", IntegerType, true),
+      StructField("boolean", BooleanType, true),
+      StructField("timestamp", TimestampType, true),
+      StructField("string", StringType, true)
+    )
+  )
 
   private val expectedDataErrorsAsNullInfer: util.List[Row] = List(
     Row(1, true, dummyTimestamp, dummyText),
@@ -50,12 +52,14 @@ object ErrorsAsStringsReadSuite {
     Row(null, null, null, "#N/A")
   ).asJava
 
-  private val expectedSchemaNonInfer = StructType(List(
-    StructField("double", StringType, true),
-    StructField("boolean", StringType, true),
-    StructField("timestamp", StringType, true),
-    StructField("string", StringType, true)
-  ))
+  private val expectedSchemaNonInfer = StructType(
+    List(
+      StructField("double", StringType, true),
+      StructField("boolean", StringType, true),
+      StructField("timestamp", StringType, true),
+      StructField("string", StringType, true)
+    )
+  )
 
   private val expectedDataErrorsAsNullNonInfer: util.List[Row] = List(
     Row("1", "TRUE", """19"-"Feb"-"2021""", "hello"),

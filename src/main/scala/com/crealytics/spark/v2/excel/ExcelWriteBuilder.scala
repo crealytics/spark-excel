@@ -25,26 +25,24 @@ import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.StructType
 
 class ExcelWriteBuilder(
-    paths: Seq[String],
-    formatName: String,
-    supportsDataType: DataType => Boolean,
-    info: LogicalWriteInfo
+  paths: Seq[String],
+  formatName: String,
+  supportsDataType: DataType => Boolean,
+  info: LogicalWriteInfo
 ) extends FileWriteBuilder(paths, formatName, supportsDataType, info) {
   override def prepareWrite(
-      sqlConf: SQLConf,
-      job: Job,
-      options: Map[String, String],
-      dataSchema: StructType
+    sqlConf: SQLConf,
+    job: Job,
+    options: Map[String, String],
+    dataSchema: StructType
   ): OutputWriterFactory = {
 
     val excelOptions = new ExcelOptions(options, sqlConf.sessionLocalTimeZone)
 
     new OutputWriterFactory {
-      override def newInstance(
-          path: String,
-          dataSchema: StructType,
-          context: TaskAttemptContext
-      ): OutputWriter = { new ExcelOutputWriter(path, dataSchema, context, excelOptions) }
+      override def newInstance(path: String, dataSchema: StructType, context: TaskAttemptContext): OutputWriter = {
+        new ExcelOutputWriter(path, dataSchema, context, excelOptions)
+      }
 
       override def getFileExtension(context: TaskAttemptContext): String = ".xlsx"
     }

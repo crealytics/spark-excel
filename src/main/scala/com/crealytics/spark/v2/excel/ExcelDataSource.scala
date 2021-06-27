@@ -41,11 +41,13 @@ class ExcelDataSource extends TableProvider with DataSourceRegister {
   private def getTableName(map: CaseInsensitiveStringMap, paths: Seq[String]): String = {
     val hadoopConf = sparkSession.sessionState
       .newHadoopConfWithOptions(map.asCaseSensitiveMap().asScala.toMap)
-    shortName() + " " + paths.map(path => {
-      val hdfsPath = new Path(path)
-      val fs = hdfsPath.getFileSystem(hadoopConf)
-      hdfsPath.makeQualified(fs.getUri, fs.getWorkingDirectory).toString
-    }).mkString(",")
+    shortName() + " " + paths
+      .map(path => {
+        val hdfsPath = new Path(path)
+        val fs = hdfsPath.getFileSystem(hadoopConf)
+        hdfsPath.makeQualified(fs.getUri, fs.getWorkingDirectory).toString
+      })
+      .mkString(",")
   }
 
   private def getTableInternal(options: CaseInsensitiveStringMap): Table = {
@@ -114,9 +116,9 @@ class ExcelDataSource extends TableProvider with DataSourceRegister {
     *                   e.g. file path, Kafka topic name, etc.
     */
   override def getTable(
-      schema: StructType,
-      partitioning: Array[Transform],
-      properties: util.Map[String, String]
+    schema: StructType,
+    partitioning: Array[Transform],
+    properties: util.Map[String, String]
   ): Table =
     if (t != null) t else getTableInternal(new CaseInsensitiveStringMap(properties), schema)
 
@@ -126,9 +128,11 @@ class ExcelDataSource extends TableProvider with DataSourceRegister {
 object ExcelDataSource {
   def getPaths(map: CaseInsensitiveStringMap): Seq[String] = {
     val objectMapper = new ObjectMapper()
-    val paths = Option(map.get("paths")).map { pathStr =>
-      objectMapper.readValue(pathStr, classOf[Array[String]]).toSeq
-    }.getOrElse(Seq.empty)
+    val paths = Option(map.get("paths"))
+      .map { pathStr =>
+        objectMapper.readValue(pathStr, classOf[Array[String]]).toSeq
+      }
+      .getOrElse(Seq.empty)
     paths ++ Option(map.get("path")).toSeq
   }
 

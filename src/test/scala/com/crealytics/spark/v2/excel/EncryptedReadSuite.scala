@@ -22,12 +22,14 @@ import org.scalatest.FunSuite
 import scala.collection.JavaConverters._
 
 object EncryptedReadSuite {
-  val simpleSchema = StructType(List(
-    StructField("A", IntegerType, true),
-    StructField("B", IntegerType, true),
-    StructField("C", IntegerType, true),
-    StructField("D", IntegerType, true)
-  ))
+  val simpleSchema = StructType(
+    List(
+      StructField("A", IntegerType, true),
+      StructField("B", IntegerType, true),
+      StructField("C", IntegerType, true),
+      StructField("D", IntegerType, true)
+    )
+  )
 
   val expectedData = List(Row(1, 2, 3, 4)).asJava
 }

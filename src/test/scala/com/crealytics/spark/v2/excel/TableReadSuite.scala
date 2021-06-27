@@ -26,12 +26,14 @@ import scala.collection.JavaConverters._
 /** Loading data from named table
   */
 object TableReadSuite {
-  val expectedSchema = StructType(List(
-    StructField("City", StringType, true),
-    StructField("Latitude", DoubleType, true),
-    StructField("Longitude", DoubleType, true),
-    StructField("Population", IntegerType, true)
-  ))
+  val expectedSchema = StructType(
+    List(
+      StructField("City", StringType, true),
+      StructField("Latitude", DoubleType, true),
+      StructField("Longitude", DoubleType, true),
+      StructField("Population", IntegerType, true)
+    )
+  )
 
   val expectedBigCitiesData: util.List[Row] = List(
     Row("Shanghai, China", 31.23d, 121.5d, 24256800),
