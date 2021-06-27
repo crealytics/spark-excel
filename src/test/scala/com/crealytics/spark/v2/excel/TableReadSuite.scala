@@ -67,23 +67,25 @@ object TableReadSuite {
 
 }
 
-class TableReadSuite extends FunSuite with DataFrameSuiteBase {
+class TableReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import TableReadSuite._
 
-  def readFromResources(path: String, tableName: String, inferSchema: Boolean): DataFrame = {
-    val url = getClass.getResource(path)
-    spark.read.format("excel").option("dataAddress", s"$tableName[All]")
-      .option("inferSchema", inferSchema).load(url.getPath)
-  }
-
-  test("should read named-table SmallCity with testing data from Apache POI upstream tests") {
-    val df = readFromResources("/spreadsheets/apache_poi/DataTableCities.xlsx", "SmallCity", true)
+  test("named-table SmallCity with testing data from Apache POI upstream tests") {
+    val df = readFromResources(
+      spark,
+      path = "apache_poi/DataTableCities.xlsx",
+      options = Map("dataAddress" -> "SmallCity[All]", "inferSchema" -> true)
+    )
     val expected = spark.createDataFrame(expectedSmallCitiesData, expectedSchema)
     assertDataFrameApproximateEquals(expected, df, 0.1e-3)
   }
 
-  test("should read named-table BigCity with testing data from Apache POI upstream tests") {
-    val df = readFromResources("/spreadsheets/apache_poi/DataTableCities.xlsx", "BigCity", true)
+  test("named-table BigCity with testing data from Apache POI upstream tests") {
+    val df = readFromResources(
+      spark,
+      path = "apache_poi/DataTableCities.xlsx",
+      options = Map("dataAddress" -> "BigCity[All]", "inferSchema" -> true)
+    )
     val expected = spark.createDataFrame(expectedBigCitiesData, expectedSchema)
     assertDataFrameApproximateEquals(expected, df, 0.1e-3)
   }

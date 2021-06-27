@@ -82,47 +82,45 @@ object PlainNumberReadSuite {
   ).asJava
 }
 
-class PlainNumberReadSuite extends FunSuite with DataFrameSuiteBase {
+class PlainNumberReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import PlainNumberReadSuite._
 
-  def readFromResources(
-      path: String,
-      usePlainNumberFormat: Boolean,
-      inferSchema: Boolean
-  ): DataFrame = {
-    val url = getClass.getResource(path)
-    spark.read.format("excel").option("usePlainNumberFormat", usePlainNumberFormat)
-      .option("inferSchema", inferSchema).load(url.getPath)
-  }
-
-  test(
-    "should read numbers in plain number format when usePlainNumberFormat=true and inferSchema=true"
-  ) {
-    val df = readFromResources("/spreadsheets/plain_number.xlsx", true, true)
+  test("plain number format when usePlainNumberFormat=true and inferSchema=true") {
+    val df = readFromResources(
+      spark,
+      path = "plain_number.xlsx",
+      options = Map("usePlainNumberFormat" -> true, "inferSchema" -> true)
+    )
     val expected = spark.createDataFrame(expectedPlainDataInferSchema, expectedInferredSchema)
     assertDataFrameEquals(expected, df)
   }
 
-  test(
-    "should read numbers in plain number format when usePlainNumberFormat=true and inferSchema=false"
-  ) {
-    val df = readFromResources("/spreadsheets/plain_number.xlsx", true, false)
+  test("plain number format when usePlainNumberFormat=true and inferSchema=false") {
+    val df = readFromResources(
+      spark,
+      path = "plain_number.xlsx",
+      options = Map("usePlainNumberFormat" -> true, "inferSchema" -> false)
+    )
     val expected = spark.createDataFrame(expectedPlainDataNonInferSchema, expectedNonInferredSchema)
     assertDataFrameEquals(expected, df)
   }
 
-  test(
-    "should read numbers in excel general number format when usePlainNumberFormat=false and inferSchema=true"
-  ) {
-    val df = readFromResources("/spreadsheets/plain_number.xlsx", false, true)
+  test("excel general number format when usePlainNumberFormat=false and inferSchema=true") {
+    val df = readFromResources(
+      spark,
+      path = "plain_number.xlsx",
+      options = Map("usePlainNumberFormat" -> false, "inferSchema" -> true)
+    )
     val expected = spark.createDataFrame(expectedExcelDataInferSchema, expectedInferredSchema)
     assertDataFrameEquals(expected, df)
   }
 
-  test(
-    "should read numbers in excel general number format when usePlainNumberFormat=false and inferSchema=false"
-  ) {
-    val df = readFromResources("/spreadsheets/plain_number.xlsx", false, false)
+  test("excel general number format when usePlainNumberFormat=false and inferSchema=false") {
+    val df = readFromResources(
+      spark,
+      path = "plain_number.xlsx",
+      options = Map("usePlainNumberFormat" -> false, "inferSchema" -> false)
+    )
     val expected = spark.createDataFrame(expectedExcelDataNonInferSchema, expectedNonInferredSchema)
     assertDataFrameEquals(expected, df)
   }

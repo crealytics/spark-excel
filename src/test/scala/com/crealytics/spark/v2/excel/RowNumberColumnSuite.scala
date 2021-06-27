@@ -72,31 +72,62 @@ object RowNumberColumnSuite {
     Row(16, "C", "7", "8")
   ).asJava
 
+  val expectedSchema_Projection = StructType(List(
+    StructField("3", StringType, true),
+    StructField("RowID", IntegerType, true),
+    StructField("2", StringType, true)
+  ))
+
+  val expectedData_Projection: util.List[Row] = List(
+    Row(null, 0, null),
+    Row("Info", 1, "Info"),
+    Row(null, 3, null),
+    Row("2", 5, "1"),
+    Row("2", 6, "1"),
+    Row("6", 7, "5"),
+    Row("10", 8, "9"),
+    Row(null, 11, null),
+    Row("2", 13, "1"),
+    Row("2", 14, "1"),
+    Row("5", 15, "4"),
+    Row("8", 16, "7")
+  ).asJava
+
 }
 
-class RowNumberColumnSuite extends FunSuite with DataFrameSuiteBase {
+class RowNumberColumnSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import RowNumberColumnSuite._
 
-  def readFromResources(
-      path: String,
-      columnNameOfRowNumber: String,
-      keepUndefinedRows: Boolean
-  ): DataFrame = {
-    val url = getClass.getResource(path)
-    spark.read.format("excel").option("header", false).schema(expectedSchema)
-      .option("keepUndefinedRows", keepUndefinedRows)
-      .option("columnNameOfRowNumber", columnNameOfRowNumber).load(url.getPath)
-  }
-
   test("read with addition excel row number column") {
-    val df = readFromResources("/spreadsheets/issue_285_bryce21.xlsx", "RowID", false)
+    val df = readFromResources(
+      spark,
+      path = "issue_285_bryce21.xlsx",
+      Map("header" -> false, "keepUndefinedRows" -> false, "columnNameOfRowNumber" -> "RowID"),
+      schema = expectedSchema
+    )
     val expected = spark.createDataFrame(expectedData_NoKeep, expectedSchema)
     assertDataFrameEquals(expected, df)
   }
 
   test("read with addition excel row number column, keep undefined rows") {
-    val df = readFromResources("/spreadsheets/issue_285_bryce21.xlsx", "RowID", true)
+    val df = readFromResources(
+      spark,
+      path = "/issue_285_bryce21.xlsx",
+      Map("header" -> false, "keepUndefinedRows" -> true, "columnNameOfRowNumber" -> "RowID"),
+      schema = expectedSchema
+    )
     val expected = spark.createDataFrame(expectedData_Keep, expectedSchema)
+    assertDataFrameEquals(expected, df)
+  }
+
+  test("read with addition excel row number column, projection") {
+    val df = readFromResources(
+      spark,
+      path = "/issue_285_bryce21.xlsx",
+      Map("header" -> false, "keepUndefinedRows" -> false, "columnNameOfRowNumber" -> "RowID"),
+      schema = expectedSchema
+    ).select("3", "RowID", "2")
+    val expected = spark.createDataFrame(expectedData_Projection, expectedSchema_Projection)
     assertDataFrameEquals(expected, df)
   }
 }

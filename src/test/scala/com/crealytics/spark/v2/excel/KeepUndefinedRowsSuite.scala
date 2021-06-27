@@ -92,33 +92,27 @@ object KeepUndefinedRowsSuite {
 
 }
 
-class KeepUndefinedRowsSuite extends FunSuite with DataFrameSuiteBase {
+class KeepUndefinedRowsSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import KeepUndefinedRowsSuite._
 
-  private val dataRoot = getClass.getResource("/spreadsheets").getPath
-
-  def readFromResources(
-      path: String,
-      keepUndefinedRows: Boolean,
-      inferSchema: Boolean
-  ): DataFrame = {
-    val url = getClass.getResource(path)
-    if (inferSchema) spark.read.format("excel").option("header", false).option("inferSchema", true)
-      .option("keepUndefinedRows", keepUndefinedRows).load(url.getPath)
-    else spark.read.format("excel").option("header", false).option("inferSchema", true)
-      .option("keepUndefinedRows", keepUndefinedRows).schema(expectedSchema_Issue285)
-      .load(url.getPath)
-  }
-
   test("#285 undefined rows: no keep") {
-    val df = readFromResources("/spreadsheets/issue_285_bryce21.xlsx", false, false)
+    val df = readFromResources(
+      spark,
+      path = "issue_285_bryce21.xlsx",
+      options = Map("header" -> false, "inferSchema" -> false, "keepUndefinedRows" -> false),
+      schema = expectedSchema_Issue285
+    )
     val expected = spark.createDataFrame(expectedData_Issue285, expectedSchema_Issue285)
     assertDataFrameEquals(expected, df)
   }
 
   test("#162 load integer values with user defined schema") {
-    val df = spark.read.format("excel").option("header", true).schema(userDefined_Issue162)
-      .load(s"$dataRoot/issue_162_nihar_gharat.xlsx")
+    val df = readFromResources(
+      spark,
+      path = "issue_162_nihar_gharat.xlsx",
+      options = Map("header" -> true),
+      schema = userDefined_Issue162
+    )
     val expected = spark.createDataFrame(expectedData_Issue162, userDefined_Issue162)
     assertDataFrameEquals(expected, df)
   }

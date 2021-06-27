@@ -32,27 +32,36 @@ object EncryptedReadSuite {
   val expectedData = List(Row(1, 2, 3, 4)).asJava
 }
 
-class EncryptedReadSuite extends FunSuite with DataFrameSuiteBase {
+class EncryptedReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import EncryptedReadSuite._
 
   lazy val expected = spark.createDataFrame(expectedData, simpleSchema)
 
-  def readFromResources(path: String, password: String): DataFrame = {
-    val url = getClass.getResource(path)
-    spark.read.format("excel").option("dataAddress", "Sheet1!A1")
-      .option("treatEmptyValuesAsNulls", true).option("workbookPassword", password)
-      .option("inferSchema", true).load(url.getPath)
-  }
-
-  test("should read encrypted xslx file") {
-    val df = readFromResources("/spreadsheets/simple_encrypted.xlsx", "fooba")
-
+  test("read encrypted xslx file") {
+    val df = readFromResources(
+      spark,
+      path = "simple_encrypted.xlsx",
+      options = Map(
+        "dataAddress" -> "Sheet1!A1",
+        "treatEmptyValuesAsNulls" -> true,
+        "workbookPassword" -> "fooba",
+        "inferSchema" -> true
+      )
+    )
     assertDataFrameEquals(expected, df)
   }
 
-  test("should read encrypted xls file") {
-    val df = readFromResources("/spreadsheets/simple_encrypted.xls", "fooba")
-
+  test("read encrypted xls file") {
+    val df = readFromResources(
+      spark,
+      path = "simple_encrypted.xls",
+      options = Map(
+        "dataAddress" -> "Sheet1!A1",
+        "treatEmptyValuesAsNulls" -> true,
+        "workbookPassword" -> "fooba",
+        "inferSchema" -> true
+      )
+    )
     assertDataFrameEquals(expected, df)
   }
 }

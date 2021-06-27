@@ -15,7 +15,6 @@
 package com.crealytics.spark.v2.excel
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import org.apache.spark.sql._
 import org.apache.spark.sql.functions.input_file_name
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
@@ -74,49 +73,44 @@ object GlobPartitionAndFileNameSuite {
   ))
 }
 
-class GlobPartitionAndFileNameSuite extends FunSuite with DataFrameSuiteBase {
+class GlobPartitionAndFileNameSuite
+    extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import GlobPartitionAndFileNameSuite._
 
-  private val dataRoot = getClass.getResource("/spreadsheets").getPath
-
-  def readFromResources(path: String, inferSchema: Boolean): DataFrame = spark.read.format("excel")
-    .option("header", true).option("inferSchema", inferSchema).load(path)
+  private val sharedOptions = Map("header" -> true, "inferSchema" -> true)
 
   test("read multiple files must infer correct schema with inferSchema=true") {
-    val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/*.xlsx", true)
-
+    val df = readFromResources(spark, "ca_dataset/2019/Quarter=4/*.xlsx", sharedOptions)
     assert(df.schema == expectedInferredSchema)
   }
 
   test("read multiple files with input_file_name") {
-    val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/*.xlsx", true)
+    val df = readFromResources(spark, "ca_dataset/2019/Quarter=4/*.xlsx", sharedOptions)
       .withColumn("file_name", input_file_name)
-
     assert(df.schema == expectedWithFilenameSchema)
 
     /* And validate list of filename*/
     val names = df.select("file_name").distinct.collect.map(r => r.getString(0))
       .map(p => Paths.get(p).getFileName.toString).toSet
-
     assert(names == Set[String]("ca_10.xlsx", "ca_11.xlsx", "ca_12.xlsx"))
   }
 
   test("read whole folder with partition") {
-    val df = readFromResources(s"$dataRoot/ca_dataset/2019", true)
+    val df = readFromResources(spark, "ca_dataset/2019", sharedOptions)
     assert(df.schema == expectedWithPartitionSchema)
 
     /* And validate list of Quarters*/
     val quarters = df.select("Quarter").distinct.collect.map(r => r.getInt(0)).toSet
-
     assert(quarters == Set[Int](1, 2, 3, 4))
   }
 
   test("read multiple files must has same number total number of rows") {
-    val q4_total = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/*.xlsx", true).count()
+    val q4_total = readFromResources(spark, "ca_dataset/2019/Quarter=4/*.xlsx", sharedOptions)
+      .count()
 
-    val q4_sum = Seq("ca_10.xlsx", "ca_11.xlsx", "ca_12.xlsx")
-      .map(name => readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/$name", true).count())
-      .sum
+    val q4_sum = Seq("ca_10.xlsx", "ca_11.xlsx", "ca_12.xlsx").map(name =>
+      readFromResources(spark, s"ca_dataset/2019/Quarter=4/$name", sharedOptions).count()
+    ).sum
 
     assert(q4_total > 0)
     assert(q4_total == q4_sum)

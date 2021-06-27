@@ -57,28 +57,18 @@ object AreaReferenceReadSuite {
 
 }
 
-class AreaReferenceReadSuite extends FunSuite with DataFrameSuiteBase {
+class AreaReferenceReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import AreaReferenceReadSuite._
 
-  def readFromResources(
-      path: String,
-      dataAddress: String,
-      inferSchema: Boolean,
-      ignoreAfterHeader: Long
-  ): DataFrame = {
-    val url = getClass.getResource(path)
-    spark.read.format("excel").option("dataAddress", dataAddress).option("inferSchema", inferSchema)
-      .option("ignoreAfterHeader", ignoreAfterHeader).load(url.getPath)
-  }
-
-  test(
-    "should read with AreaReference from diffrence sheet with testing data from Apache POI upstream tests"
-  ) {
+  test("AreaReference from diffrence sheet with testing data from Apache POI upstream tests") {
     val df = readFromResources(
-      "/spreadsheets/apache_poi/57231_MixedGasReport.xls",
-      "'Coefficient Table'!A6",
-      true,
-      2 /* Ignore sub-name-column row and one all zero data row*/
+      spark,
+      path = "apache_poi/57231_MixedGasReport.xls",
+      options = Map(
+        "dataAddress" -> "'Coefficient Table'!A6",
+        "ignoreAfterHeader" -> 2,
+        "inferSchema" -> true
+      )
     ).limit(1)
     val expected = spark.createDataFrame(expectedData_01, expectedSchema_01)
     assertDataFrameApproximateEquals(expected, df, 0.1e-2)

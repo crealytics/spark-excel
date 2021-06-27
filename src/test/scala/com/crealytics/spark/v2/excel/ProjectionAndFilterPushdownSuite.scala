@@ -96,24 +96,28 @@ object ProjectionAndFilterPushdownSuite {
   ).asJava
 }
 
-class ProjectionAndFilterPushdownSuite extends FunSuite with DataFrameSuiteBase {
+class ProjectionAndFilterPushdownSuite
+    extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import ProjectionAndFilterPushdownSuite._
 
-  private val dataRoot = getClass.getResource("/spreadsheets").getPath
-
-  def readFromResources(path: String, inferSchema: Boolean): DataFrame = spark.read.format("excel")
-    .option("header", true).option("inferSchema", inferSchema).load(path)
-
   test("no projection check first 5 rows with inferSchema=true") {
-    val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", true).limit(5)
+    val df = readFromResources(
+      spark,
+      path = "ca_dataset/2019/Quarter=4/ca_12.xlsx",
+      options = Map("header" -> true, "inferSchema" -> true)
+    ).limit(5)
     val expected = spark.createDataFrame(expectedDataInferSchema, expectedInferredSchema)
 
     assertDataFrameEquals(expected, df)
   }
 
   test("projection with subset of columns, same order and inferSchema=true") {
-    val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", true)
-      .select("Day", "Month", "Customer ID", "Customer Name", "Staff").limit(5)
+    val df = readFromResources(
+      spark,
+      path = "ca_dataset/2019/Quarter=4/ca_12.xlsx",
+      options = Map("header" -> true, "inferSchema" -> true)
+    ).select("Day", "Month", "Customer ID", "Customer Name", "Staff").limit(5)
+
     val expected = spark
       .createDataFrame(expectedProjectionDataInferSchema_01, expectedProjectionInferredSchema_01)
 
@@ -121,8 +125,12 @@ class ProjectionAndFilterPushdownSuite extends FunSuite with DataFrameSuiteBase 
   }
 
   test("projection with subset of columns, out of order and inferSchema=true") {
-    val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", true)
-      .select("Staff", "Month", "Day", "Customer ID", "Customer Name", "Standard Package").limit(5)
+    val df = readFromResources(
+      spark,
+      path = "ca_dataset/2019/Quarter=4/ca_12.xlsx",
+      options = Map("header" -> true, "inferSchema" -> true)
+    ).select("Staff", "Month", "Day", "Customer ID", "Customer Name", "Standard Package").limit(5)
+
     val expected = spark
       .createDataFrame(expectedProjectionDataInferSchema_02, expectedProjectionInferredSchema_02)
 
@@ -130,24 +138,33 @@ class ProjectionAndFilterPushdownSuite extends FunSuite with DataFrameSuiteBase 
   }
 
   test("filter with one column inferSchema=true") {
-    val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", true)
-      .filter("Day = 4")
+    val df = readFromResources(
+      spark,
+      path = "ca_dataset/2019/Quarter=4/ca_12.xlsx",
+      options = Map("header" -> true, "inferSchema" -> true)
+    ).filter("Day = 4")
     val expected = spark.createDataFrame(expectedDataFilterInferSchema_01, expectedInferredSchema)
 
     assertDataFrameEquals(expected, df)
   }
 
   test("filter with two columns inferSchema=true") {
-    val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", true)
-      .filter("Day = 4 and `Extra Option 1` is not null")
+    val df = readFromResources(
+      spark,
+      path = "ca_dataset/2019/Quarter=4/ca_12.xlsx",
+      options = Map("header" -> true, "inferSchema" -> true)
+    ).filter("Day = 4 and `Extra Option 1` is not null")
     val expected = spark.createDataFrame(expectedDataFilterInferSchema_02, expectedInferredSchema)
 
     assertDataFrameEquals(expected, df)
   }
 
   test("filter and count matched inferSchema=true") {
-    val df = readFromResources(s"$dataRoot/ca_dataset/2019/Quarter=4/ca_12.xlsx", true)
-      .filter("Staff = 'Teresa Teng'")
+    val df = readFromResources(
+      spark,
+      path = "ca_dataset/2019/Quarter=4/ca_12.xlsx",
+      options = Map("header" -> true, "inferSchema" -> true)
+    ).filter("Staff = 'Teresa Teng'")
 
     assert(df.count() == 16)
   }
