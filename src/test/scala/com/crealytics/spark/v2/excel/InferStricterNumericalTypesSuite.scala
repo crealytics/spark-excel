@@ -18,7 +18,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
 import scala.collection.JavaConverters._
@@ -44,7 +44,7 @@ object InferStricterNumericalTypesSuite {
   ).asJava
 }
 
-class InferStricterNumericalTypesSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class InferStricterNumericalTypesSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import InferStricterNumericalTypesSuite._
 
   test("stricter numerical types usePlainNumberFormat=true and inferSchema=true (xlxs)") {

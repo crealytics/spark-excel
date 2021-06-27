@@ -18,7 +18,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
 import scala.collection.JavaConverters._
@@ -78,7 +78,7 @@ object PlainNumberReadSuite {
   ).asJava
 }
 
-class PlainNumberReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class PlainNumberReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import PlainNumberReadSuite._
 
   test("plain number format when usePlainNumberFormat=true and inferSchema=true") {

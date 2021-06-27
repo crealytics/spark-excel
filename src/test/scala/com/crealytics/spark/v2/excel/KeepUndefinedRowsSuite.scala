@@ -18,7 +18,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
 import scala.collection.JavaConverters._
@@ -90,7 +90,7 @@ object KeepUndefinedRowsSuite {
 
 }
 
-class KeepUndefinedRowsSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class KeepUndefinedRowsSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import KeepUndefinedRowsSuite._
 
   test("#285 undefined rows: no keep") {

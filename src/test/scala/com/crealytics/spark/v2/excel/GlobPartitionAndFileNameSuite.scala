@@ -17,7 +17,7 @@ package com.crealytics.spark.v2.excel
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.functions.input_file_name
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.nio.file.Paths
 
@@ -79,7 +79,7 @@ object GlobPartitionAndFileNameSuite {
   )
 }
 
-class GlobPartitionAndFileNameSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class GlobPartitionAndFileNameSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import GlobPartitionAndFileNameSuite._
 
   private val sharedOptions = Map("header" -> true, "inferSchema" -> true)

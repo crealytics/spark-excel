@@ -18,7 +18,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
@@ -83,7 +83,7 @@ object ErrorsAsStringsReadSuite {
   * Related issues: Support ERROR cell type when using inferSchema=true
   *  link: https://github.com/crealytics/spark-excel/pull/343
   */
-class ErrorsAsStringsReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class ErrorsAsStringsReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import ErrorsAsStringsReadSuite._
 
   test("error cells as null when useNullForErrorCells=true and inferSchema=true") {

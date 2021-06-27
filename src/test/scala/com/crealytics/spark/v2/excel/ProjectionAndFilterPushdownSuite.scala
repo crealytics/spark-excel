@@ -18,7 +18,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
 import scala.collection.JavaConverters._
@@ -102,7 +102,7 @@ object ProjectionAndFilterPushdownSuite {
   ).asJava
 }
 
-class ProjectionAndFilterPushdownSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class ProjectionAndFilterPushdownSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import ProjectionAndFilterPushdownSuite._
 
   test("no projection check first 5 rows with inferSchema=true") {
