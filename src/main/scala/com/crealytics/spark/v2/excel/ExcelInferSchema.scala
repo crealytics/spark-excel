@@ -42,18 +42,29 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     *     3. Replace any null types with string type
     */
   def infer(tokens: Seq[Vector[Cell]], header: Vector[String]): StructType = {
-    val fields =
+
+    /* Possible StructField for row-number column*/
+    val rowNumField =
+      if (options.columnNameOfRowNumber.isDefined)
+        Vector[StructField](StructField(options.columnNameOfRowNumber.get, IntegerType, false))
+      else Vector.empty[StructField]
+
+    /* Header without row-number-column*/
+    val dataHeader = if (options.columnNameOfRowNumber.isDefined) header.tail else header
+
+    /* Normal data fields*/
+    val dataFields =
       if (options.inferSchema) {
-        val startType: Vector[DataType] = Vector.fill[DataType](header.length)(NullType)
+        val startType: Vector[DataType] = Vector.fill[DataType](dataHeader.length)(NullType)
         val rootTypes: Vector[DataType] = tokens.aggregate(startType)(inferRowType, mergeRowTypes)
 
-        toStructFields(rootTypes, header)
+        toStructFields(rootTypes, dataHeader)
       } else {
         /* By default fields are assumed to be StringType*/
-        header.map(fieldName => StructField(fieldName, StringType, nullable = true))
+        dataHeader.map(fieldName => StructField(fieldName, StringType, nullable = true))
       }
 
-    StructType(fields)
+    StructType(rowNumField ++ dataFields)
   }
 
   private def toStructFields(

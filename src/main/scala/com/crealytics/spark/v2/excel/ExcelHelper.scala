@@ -111,32 +111,45 @@ class ExcelHelper(options: ExcelOptions) {
     * @param options excel option
     * @return list of column names
     */
-  def getColumnNames(firstRow: Vector[Cell]): Vector[String] =
-    if (options.header) {
-      val headerNames = firstRow.map(safeCellStringValue)
-      val duplicates = {
-        val nonNullHeaderNames = headerNames.filter(_ != null)
-        nonNullHeaderNames.groupBy(identity).filter(_._2.size > 1).keySet
+  def getColumnNames(firstRow: Vector[Cell]): Vector[String] = {
+
+    val rowNumColumn =
+      if (options.columnNameOfRowNumber.isDefined) Vector[String](options.columnNameOfRowNumber.get)
+      else Vector.empty[String]
+
+    val dataColumns =
+      if (options.header) {
+        val headerNames = firstRow.map(dataFormatter.formatCellValue)
+        val duplicates = {
+          val nonNullHeaderNames = headerNames.filter(_ != null)
+          nonNullHeaderNames.groupBy(identity).filter(_._2.size > 1).keySet
+        }
+
+        firstRow.zipWithIndex.map { case (cell, index) =>
+          val value = dataFormatter.formatCellValue(cell)
+          val cellType = cell.getCellType
+          if (
+            cellType == CellType.ERROR || cellType == CellType.BLANK ||
+            cellType == CellType._NONE || value.isEmpty
+          ) {
+            /* When there are empty strings or the, put the index as the suffix.*/
+            s"_c$index"
+          } else if (duplicates.contains(value)) {
+            /* When there are duplicates, put the index as the suffix.*/
+            s"$value$index"
+          } else { value }
+        }
+      } else {
+        firstRow.zipWithIndex.map { case (_, index) =>
+          /** Uses default column names, "_c#" where # is its position of fields
+            * when header option is disabled.
+            */
+          s"_c$index"
+        }
       }
 
-      firstRow.zipWithIndex.map { case (cell, index) =>
-        val value = safeCellStringValue(cell)
-        if (value == null || value.isEmpty) {
-          /* When there are empty strings or the, put the index as the suffix.*/
-          s"_c$index"
-        } else if (duplicates.contains(value)) {
-          /* When there are duplicates, put the index as the suffix.*/
-          s"$value$index"
-        } else { value }
-      }
-    } else {
-      firstRow.zipWithIndex.map { case (_, index) =>
-        /** Uses default column names, "_c#" where # is its position of fields
-          * when header option is disabled.
-          */
-        s"_c$index"
-      }
-    }
+    rowNumColumn ++ dataColumns
+  }
 
   /** Get parsed range address from given ExcelOption
     *

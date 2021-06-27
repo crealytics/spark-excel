@@ -37,15 +37,14 @@ class ExcelWriteBuilder(
       dataSchema: StructType
   ): OutputWriterFactory = {
 
+    val excelOptions = new ExcelOptions(options, sqlConf.sessionLocalTimeZone)
+
     new OutputWriterFactory {
       override def newInstance(
           path: String,
           dataSchema: StructType,
           context: TaskAttemptContext
-      ): OutputWriter = {
-        val excelOptions = new ExcelOptions(options, sqlConf.sessionLocalTimeZone)
-        new ExcelOutputWriter(path, dataSchema, context, excelOptions)
-      }
+      ): OutputWriter = { new ExcelOutputWriter(path, dataSchema, context, excelOptions) }
 
       override def getFileExtension(context: TaskAttemptContext): String = ".xlsx"
     }

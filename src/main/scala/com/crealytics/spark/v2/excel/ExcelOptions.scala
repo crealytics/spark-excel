@@ -78,7 +78,12 @@ class ExcelOptions(
   val timestampFormat: String = parameters
     .getOrElse("timestampFormat", s"${DateFormatter.defaultPattern}'T'HH:mm:ss[.SSS][XXX]")
 
+  /* Have header line when reading and writing*/
   val header = getBool("header", default = true)
+
+  /* Number of rows to ignore after header. Only in reading*/
+  val ignoreAfterHeader = getInt("ignoreAfterHeader").getOrElse(0)
+
   val inferSchema = getBool("inferSchema", default = false)
   val excerptSize = getInt("excerptSize")
 
@@ -109,6 +114,9 @@ class ExcelOptions(
   val addColorColumns = getBool("addColorColumns", default = false)
   val ignoreLeadingWhiteSpace = getBool("ignoreLeadingWhiteSpace", default = false)
   val ignoreTrailingWhiteSpace = getBool("ignoreTrailingWhiteSpace", default = false)
+
+  /* Additional column for excel row number*/
+  val columnNameOfRowNumber = parameters.get("columnNameOfRowNumber")
 
   /* Data address, default to everything*/
   val dataAddress = parameters.getOrElse("dataAddress", "A1")

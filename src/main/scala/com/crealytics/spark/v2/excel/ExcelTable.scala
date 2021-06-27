@@ -30,19 +30,19 @@ import scala.collection.JavaConverters._
 case class ExcelTable(
     name: String,
     sparkSession: SparkSession,
-    options: CaseInsensitiveStringMap,
+    map: CaseInsensitiveStringMap,
     paths: Seq[String],
     userSpecifiedSchema: Option[StructType]
-) extends FileTable(sparkSession, options, paths, userSpecifiedSchema) {
+) extends FileTable(sparkSession, map, paths, userSpecifiedSchema) {
 
-  override def newScanBuilder(options: CaseInsensitiveStringMap): ExcelScanBuilder =
-    ExcelScanBuilder(sparkSession, fileIndex, schema, dataSchema, options)
+  override def newScanBuilder(params: CaseInsensitiveStringMap): ExcelScanBuilder =
+    ExcelScanBuilder(sparkSession, fileIndex, schema, dataSchema, params)
 
   override def inferSchema(files: Seq[FileStatus]): Option[StructType] = {
-    val parsedOptions =
-      new ExcelOptions(options.asScala.toMap, sparkSession.sessionState.conf.sessionLocalTimeZone)
+    val options =
+      new ExcelOptions(map.asScala.toMap, sparkSession.sessionState.conf.sessionLocalTimeZone)
 
-    if (files.nonEmpty) Some(infer(sparkSession, files, parsedOptions)) else None
+    if (files.nonEmpty) Some(infer(sparkSession, files, options)) else None
   }
 
   override def newWriteBuilder(info: LogicalWriteInfo): WriteBuilder =
@@ -62,10 +62,10 @@ case class ExcelTable(
   private def infer(
       sparkSession: SparkSession,
       inputPaths: Seq[FileStatus],
-      parsedOptions: ExcelOptions
+      options: ExcelOptions
   ): StructType = {
-    val excelHelper = ExcelHelper(parsedOptions)
-    val excelReader = DataLocator(parsedOptions)
+    val excelHelper = ExcelHelper(options)
+    val excelReader = DataLocator(options)
 
     val workbook = excelHelper.getWorkbook(
       sparkSession.sqlContext.sparkContext.hadoopConfiguration,
@@ -74,7 +74,7 @@ case class ExcelTable(
 
     /* Depend on number of rows configured to do schema inferring*/
     val rows =
-      try parsedOptions.excerptSize match {
+      try options.excerptSize match {
         case None        => excelReader.readFrom(workbook).toSeq
         case Some(count) => excelReader.readFrom(workbook).slice(0, count).toSeq
       } finally workbook.close
@@ -82,10 +82,10 @@ case class ExcelTable(
     /* Ready to do schema inferring*/
     if (rows.isEmpty) StructType(Nil)
     else {
-      val nonHeaderRows = if (parsedOptions.header) rows.tail else rows
       val colNames = excelHelper.getColumnNames(rows.head)
+      val nonHeaderRows = if (options.header) rows.drop(options.ignoreAfterHeader + 1) else rows
 
-      (new ExcelInferSchema(parsedOptions)).infer(nonHeaderRows, colNames)
+      (new ExcelInferSchema(options)).infer(nonHeaderRows, colNames)
     }
   }
 
