@@ -41,12 +41,8 @@ import org.apache.poi.ss.usermodel.DateUtil
   * @param filters The pushdown filters that should be applied to converted
   *        values.
   */
-class ExcelParser(
-    dataSchema: StructType,
-    requiredSchema: StructType,
-    val options: ExcelOptions,
-    filters: Seq[Filter]
-) extends Logging {
+class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val options: ExcelOptions, filters: Seq[Filter])
+    extends Logging {
   require(
     requiredSchema.toSet.subsetOf(dataSchema.toSet),
     s"requiredSchema (${requiredSchema.catalogString}) should be the subset of " +
@@ -70,13 +66,15 @@ class ExcelParser(
 
   /* Implement column pruning right inside this class*/
   private val parsedSchema =
-    if (options.columnNameOfRowNumber.isDefined) dataSchema
-      .filter(_.name != options.columnNameOfRowNumber.get)
+    if (options.columnNameOfRowNumber.isDefined)
+      dataSchema
+        .filter(_.name != options.columnNameOfRowNumber.get)
     else dataSchema
 
   /* This index is used to reorder parsed tokens*/
   private val tokenIndexArr = requiredSchema
-    .map(f => java.lang.Integer.valueOf(parsedSchema.indexOf(f))).toArray
+    .map(f => java.lang.Integer.valueOf(parsedSchema.indexOf(f)))
+    .toArray
 
   /* Excel row number index (if configured)*/
   private val rowNumberPosition =
@@ -99,13 +97,8 @@ class ExcelParser(
     legacyFormat = FAST_DATE_FORMAT,
     isParsing = true
   )
-  private lazy val dateFormatter = DateFormatter(
-    options.dateFormat,
-    options.zoneId,
-    options.locale,
-    legacyFormat = FAST_DATE_FORMAT,
-    isParsing = true
-  )
+  private lazy val dateFormatter =
+    DateFormatter(options.dateFormat, options.zoneId, options.locale, legacyFormat = FAST_DATE_FORMAT, isParsing = true)
 
   /* Excel record is flat, it can use same filters with CSV*/
   private val pushedFilters = new OrderedFilters(filters, requiredSchema)
@@ -148,107 +141,126 @@ class ExcelParser(
     */
   private def makeConverter(name: String, dataType: DataType, nullable: Boolean): ValueConverter =
     dataType match {
-      case _: ByteType => (d: Cell) =>
+      case _: ByteType =>
+        (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.NUMERIC => _.getNumericCellValue.toByte
-            case CellType.FORMULA => _.getCachedFormulaResultType match {
+            case CellType.FORMULA =>
+              _.getCachedFormulaResultType match {
                 case CellType.BLANK | CellType._NONE | CellType.ERROR => null
-                case CellType.NUMERIC                                 => d.getNumericCellValue.toByte
-                case _                                                => d.getStringCellValue.toByte
+                case CellType.NUMERIC => d.getNumericCellValue.toByte
+                case _ => d.getStringCellValue.toByte
               }
             case _ => _.getStringCellValue.toByte
           })
 
-      case _: ShortType => (d: Cell) =>
+      case _: ShortType =>
+        (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.NUMERIC => _.getNumericCellValue.toShort
-            case CellType.FORMULA => _.getCachedFormulaResultType match {
+            case CellType.FORMULA =>
+              _.getCachedFormulaResultType match {
                 case CellType.BLANK | CellType._NONE | CellType.ERROR => null
-                case CellType.NUMERIC                                 => d.getNumericCellValue.toShort
-                case _                                                => d.getStringCellValue.toShort
+                case CellType.NUMERIC => d.getNumericCellValue.toShort
+                case _ => d.getStringCellValue.toShort
               }
             case _ => _.getStringCellValue.toShort
           })
 
-      case _: IntegerType => (d: Cell) =>
+      case _: IntegerType =>
+        (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.NUMERIC => _.getNumericCellValue.toInt
-            case CellType.FORMULA => _.getCachedFormulaResultType match {
+            case CellType.FORMULA =>
+              _.getCachedFormulaResultType match {
                 case CellType.BLANK | CellType._NONE | CellType.ERROR => null
-                case CellType.NUMERIC                                 => d.getNumericCellValue.toInt
-                case _                                                => d.getStringCellValue.toInt
+                case CellType.NUMERIC => d.getNumericCellValue.toInt
+                case _ => d.getStringCellValue.toInt
               }
             case _ => _.getStringCellValue.toInt
           })
 
-      case _: LongType => (d: Cell) =>
+      case _: LongType =>
+        (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.NUMERIC => _.getNumericCellValue.toLong
-            case CellType.FORMULA => _.getCachedFormulaResultType match {
+            case CellType.FORMULA =>
+              _.getCachedFormulaResultType match {
                 case CellType.BLANK | CellType._NONE | CellType.ERROR => null
-                case CellType.NUMERIC                                 => d.getNumericCellValue.toLong
-                case _                                                => d.getStringCellValue.toLong
+                case CellType.NUMERIC => d.getNumericCellValue.toLong
+                case _ => d.getStringCellValue.toLong
               }
             case _ => _.getStringCellValue.toLong
           })
 
-      case _: FloatType => (d: Cell) =>
+      case _: FloatType =>
+        (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.NUMERIC => _.getNumericCellValue.toFloat
-            case CellType.FORMULA => _.getCachedFormulaResultType match {
+            case CellType.FORMULA =>
+              _.getCachedFormulaResultType match {
                 case CellType.BLANK | CellType._NONE | CellType.ERROR => null
-                case CellType.NUMERIC                                 => d.getNumericCellValue.toFloat
-                case _                                                => d.getStringCellValue.toFloat
+                case CellType.NUMERIC => d.getNumericCellValue.toFloat
+                case _ => d.getStringCellValue.toFloat
               }
-            case _ => _.getStringCellValue match {
-                case options.nanValue    => Float.NaN
+            case _ =>
+              _.getStringCellValue match {
+                case options.nanValue => Float.NaN
                 case options.negativeInf => Float.NegativeInfinity
                 case options.positiveInf => Float.PositiveInfinity
-                case datum               => datum.toFloat
+                case datum => datum.toFloat
               }
           })
 
-      case _: DoubleType => (d: Cell) =>
+      case _: DoubleType =>
+        (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.NUMERIC => _.getNumericCellValue
-            case CellType.FORMULA => _.getCachedFormulaResultType match {
+            case CellType.FORMULA =>
+              _.getCachedFormulaResultType match {
                 case CellType.BLANK | CellType._NONE => null
 
                 /* Cell is an error-formula, and requested type is double*/
-                case CellType.ERROR   => Double.NaN
+                case CellType.ERROR => Double.NaN
                 case CellType.NUMERIC => d.getNumericCellValue
-                case _ => excelHelper.safeCellStringValue(d) match {
-                    case options.nanValue    => Double.NaN
+                case _ =>
+                  excelHelper.safeCellStringValue(d) match {
+                    case options.nanValue => Double.NaN
                     case options.negativeInf => Double.NegativeInfinity
                     case options.positiveInf => Double.PositiveInfinity
-                    case s                   => s.toDouble
+                    case s => s.toDouble
                   }
               }
-            case _ => excelHelper.safeCellStringValue(_) match {
-                case options.nanValue    => Double.NaN
+            case _ =>
+              excelHelper.safeCellStringValue(_) match {
+                case options.nanValue => Double.NaN
                 case options.negativeInf => Double.NegativeInfinity
                 case options.positiveInf => Double.PositiveInfinity
-                case s                   => s.toDouble
+                case s => s.toDouble
               }
           })
 
-      case _: BooleanType => (d: Cell) =>
+      case _: BooleanType =>
+        (d: Cell) =>
           nullSafeDatum(d, name, nullable, options)(d.getCellType match {
             case CellType.BOOLEAN => _.getBooleanCellValue
-            case CellType.FORMULA => _.getCachedFormulaResultType match {
+            case CellType.FORMULA =>
+              _.getCachedFormulaResultType match {
                 case CellType.BLANK | CellType._NONE | CellType.ERROR => null
-                case CellType.BOOLEAN                                 => d.getBooleanCellValue
-                case _                                                => d.getStringCellValue.toBoolean
+                case CellType.BOOLEAN => d.getBooleanCellValue
+                case _ => d.getStringCellValue.toBoolean
               }
             case _ => _.getStringCellValue.toBoolean
           })
 
-      case dt: DecimalType => (d: Cell) =>
+      case dt: DecimalType =>
+        (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
             Decimal(decimalParser(datum.getStringCellValue), dt.precision, dt.scale)
           }
 
-      case _: TimestampType => (d: Cell) =>
+      case _: TimestampType =>
+        (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
             if (DateUtil.isCellDateFormatted(datum)) {
               /* Excel to spark precision*/
@@ -276,7 +288,8 @@ class ExcelParser(
             }
           }
 
-      case _: DateType => (d: Cell) =>
+      case _: DateType =>
+        (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
             try { dateFormatter.parse(datum.getStringCellValue) }
             catch {
@@ -290,12 +303,14 @@ class ExcelParser(
             }
           }
 
-      case _: StringType => (d: Cell) =>
+      case _: StringType =>
+        (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
             UTF8String.fromString(excelHelper.safeCellStringValue(datum))
           }
 
-      case CalendarIntervalType => (d: Cell) =>
+      case CalendarIntervalType =>
+        (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
             IntervalUtils.safeStringToInterval(UTF8String.fromString(datum.getStringCellValue))
           }
@@ -307,11 +322,11 @@ class ExcelParser(
     }
 
   private def nullSafeDatum(datum: Cell, name: String, nullable: Boolean, options: ExcelOptions)(
-      converter: ValueConverter
+    converter: ValueConverter
   ): Any = {
     val ret = datum.getCellType match {
       case CellType.BLANK | CellType._NONE => null
-      case CellType.ERROR                  => if (options.useNullForErrorCells) null else converter.apply(datum)
+      case CellType.ERROR => if (options.useNullForErrorCells) null else converter.apply(datum)
       case CellType.STRING =>
         if (datum.getStringCellValue == options.nullValue) null else converter.apply(datum)
       case _ => converter.apply(datum)
@@ -339,11 +354,7 @@ class ExcelParser(
 
   private def convert(tokens: Vector[Cell]): Option[InternalRow] = {
     if (tokens == null) {
-      throw BadRecordException(
-        () => getCurrentInput,
-        () => None,
-        new RuntimeException("Malformed Excel record")
-      )
+      throw BadRecordException(() => getCurrentInput, () => None, new RuntimeException("Malformed Excel record"))
     }
 
     var badRecordException: Option[Throwable] =
@@ -390,11 +401,7 @@ class ExcelParser(
     if (skipRow) { noRows }
     else {
       if (badRecordException.isDefined) {
-        throw BadRecordException(
-          () => getCurrentInput,
-          () => requiredRow.headOption,
-          badRecordException.get
-        )
+        throw BadRecordException(() => getCurrentInput, () => requiredRow.headOption, badRecordException.get)
       } else { requiredRow }
     }
   }
@@ -406,10 +413,10 @@ object ExcelParser {
     * iterator of rows.
     */
   def parseIterator(
-      rows: Iterator[Vector[Cell]],
-      parser: ExcelParser,
-      headerChecker: ExcelHeaderChecker,
-      schema: StructType
+    rows: Iterator[Vector[Cell]],
+    parser: ExcelParser,
+    headerChecker: ExcelHeaderChecker,
+    schema: StructType
   ): Iterator[InternalRow] = {
 
     /* Check the header (and pop one record) */

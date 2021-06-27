@@ -26,11 +26,9 @@ import scala.collection.JavaConverters._
 object KeepUndefinedRowsSuite {
 
   /* Issue: https://github.com/crealytics/spark-excel/issues/285*/
-  val expectedSchema_Issue285 = StructType(List(
-    StructField("1", StringType, true),
-    StructField("2", StringType, true),
-    StructField("3", StringType, true)
-  ))
+  val expectedSchema_Issue285 = StructType(
+    List(StructField("1", StringType, true), StructField("2", StringType, true), StructField("3", StringType, true))
+  )
 
   /** No change to the spark-excel, Apache POI also produce same result with
     * sheet.iterator
@@ -79,16 +77,16 @@ object KeepUndefinedRowsSuite {
     * Spark-excel still infers to Double-Type, however, user can provide custom
     * scheme and Spark-excel should load to IntegerType or LongType accordingly
     */
-  val userDefined_Issue162 = StructType(List(
-    StructField("ID", IntegerType, true),
-    StructField("address", StringType, true),
-    StructField("Pin", IntegerType, true)
-  ))
+  val userDefined_Issue162 = StructType(
+    List(
+      StructField("ID", IntegerType, true),
+      StructField("address", StringType, true),
+      StructField("Pin", IntegerType, true)
+    )
+  )
 
-  val expectedData_Issue162: util.List[Row] = List(
-    Row(123123, "Asdadsas, Xyxyxy, 123xyz", 123132),
-    Row(123124, "Asdadsas1, Xyxyxy, 123xyz", 123133)
-  ).asJava
+  val expectedData_Issue162: util.List[Row] =
+    List(Row(123123, "Asdadsas, Xyxyxy, 123xyz", 123132), Row(123124, "Asdadsas1, Xyxyxy, 123xyz", 123133)).asJava
 
 }
 

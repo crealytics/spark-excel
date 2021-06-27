@@ -29,7 +29,9 @@ trait ExcelTestingUtilities {
     * @return data frame
     */
   def readFromResources(spark: SparkSession, path: String, options: Map[String, Any]): DataFrame =
-    spark.read.format("excel").options(options.map(p => (p._1 -> p._2.toString())))
+    spark.read
+      .format("excel")
+      .options(options.map(p => (p._1 -> p._2.toString())))
       .load(s"$dataRoot/$path")
 
   /** Load excel data from resource folder with user defined schema
@@ -40,11 +42,10 @@ trait ExcelTestingUtilities {
     * @param schema user provided schema
     * @return data frame
     */
-  def readFromResources(
-      spark: SparkSession,
-      path: String,
-      options: Map[String, Any],
-      schema: StructType
-  ): DataFrame = spark.read.format("excel").options(options.map(p => (p._1 -> p._2.toString())))
-    .schema(schema).load(s"$dataRoot/$path")
+  def readFromResources(spark: SparkSession, path: String, options: Map[String, Any], schema: StructType): DataFrame =
+    spark.read
+      .format("excel")
+      .options(options.map(p => (p._1 -> p._2.toString())))
+      .schema(schema)
+      .load(s"$dataRoot/$path")
 }

@@ -24,10 +24,10 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types._
 
 class ExcelGenerator(
-    val path: String,
-    val dataSchema: StructType,
-    val context: TaskAttemptContext,
-    val options: ExcelOptions
+  val path: String,
+  val dataSchema: StructType,
+  val context: TaskAttemptContext,
+  val options: ExcelOptions
 ) {
   private val wb = new HSSFWorkbook()
   private val sheet = wb.createSheet("Sheet1")
@@ -36,8 +36,7 @@ class ExcelGenerator(
   private type ValueConverter = (InternalRow, Int, Cell) => Unit
 
   /* Pre prepared for each output columns based on data schema*/
-  private val valueConverters: Array[ValueConverter] = dataSchema.map(_.dataType).map(makeConverter)
-    .toArray
+  private val valueConverters: Array[ValueConverter] = dataSchema.map(_.dataType).map(makeConverter).toArray
 
   /** Create Excel Style. This can be used inplace of cell.setType.
     * From apache POI 5.0, cell.setType will be deprecated, so this seem the
@@ -61,45 +60,55 @@ class ExcelGenerator(
   private lazy val StringCellStyle = createStyle("@")
 
   private def makeConverter(dataType: DataType): ValueConverter = dataType match {
-    case ByteType => (row: InternalRow, ordinal: Int, cell: Cell) => {
+    case ByteType =>
+      (row: InternalRow, ordinal: Int, cell: Cell) => {
         cell.setCellValue(row.getByte(ordinal).toDouble)
         cell.setCellStyle(WholeNumberCellStyle)
       }
-    case ShortType => (row: InternalRow, ordinal: Int, cell: Cell) => {
+    case ShortType =>
+      (row: InternalRow, ordinal: Int, cell: Cell) => {
         cell.setCellValue(row.getShort(ordinal).toDouble)
         cell.setCellStyle(WholeNumberCellStyle)
       }
-    case IntegerType => (row: InternalRow, ordinal: Int, cell: Cell) => {
+    case IntegerType =>
+      (row: InternalRow, ordinal: Int, cell: Cell) => {
         cell.setCellValue(row.getInt(ordinal).toDouble)
         cell.setCellStyle(WholeNumberCellStyle)
       }
-    case LongType => (row: InternalRow, ordinal: Int, cell: Cell) => {
+    case LongType =>
+      (row: InternalRow, ordinal: Int, cell: Cell) => {
         cell.setCellValue(row.getLong(ordinal).toDouble)
         cell.setCellStyle(WholeNumberCellStyle)
       }
-    case FloatType => (row: InternalRow, ordinal: Int, cell: Cell) => {
+    case FloatType =>
+      (row: InternalRow, ordinal: Int, cell: Cell) => {
         cell.setCellValue(row.getFloat(ordinal).toDouble)
         cell.setCellStyle(DecimalNumberCellStyle)
       }
-    case DoubleType => (row: InternalRow, ordinal: Int, cell: Cell) => {
+    case DoubleType =>
+      (row: InternalRow, ordinal: Int, cell: Cell) => {
         cell.setCellValue(row.getDouble(ordinal))
         cell.setCellStyle(DecimalNumberCellStyle)
       }
-    case t: DecimalType => (row: InternalRow, ordinal: Int, cell: Cell) => {
+    case t: DecimalType =>
+      (row: InternalRow, ordinal: Int, cell: Cell) => {
         cell.setCellValue(row.getDecimal(ordinal, t.precision, t.scale).toDouble)
         cell.setCellStyle(DecimalNumberCellStyle)
       }
-    case DateType => (row: InternalRow, ordinal: Int, cell: Cell) => {
+    case DateType =>
+      (row: InternalRow, ordinal: Int, cell: Cell) => {
         cell.setCellValue(new java.util.Date(row.getInt(ordinal).toLong))
         cell.setCellStyle(DateCellStyle)
       }
 
-    case TimestampType => (row: InternalRow, ordinal: Int, cell: Cell) => {
+    case TimestampType =>
+      (row: InternalRow, ordinal: Int, cell: Cell) => {
         cell.setCellValue(new java.util.Date(row.getLong(ordinal).toLong))
         cell.setCellStyle(TimestampCellStyle)
       }
 
-    case StringType => (row: InternalRow, ordinal: Int, cell: Cell) => {
+    case StringType =>
+      (row: InternalRow, ordinal: Int, cell: Cell) => {
         cell.setCellValue(row.getString(ordinal))
         cell.setCellStyle(StringCellStyle)
       }
