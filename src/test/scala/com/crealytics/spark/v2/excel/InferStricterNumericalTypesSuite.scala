@@ -18,18 +18,20 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
 import scala.collection.JavaConverters._
 
 object InferStricterNumericalTypesSuite {
-  val expectedInferredSchema = StructType(List(
-    StructField("ID", StringType, true),
-    StructField("Integer Value Range", IntegerType, true),
-    StructField("Long Value Range", LongType, true),
-    StructField("Double Value Range", DoubleType, true)
-  ))
+  val expectedInferredSchema = StructType(
+    List(
+      StructField("ID", StringType, true),
+      StructField("Integer Value Range", IntegerType, true),
+      StructField("Long Value Range", LongType, true),
+      StructField("Double Value Range", DoubleType, true)
+    )
+  )
 
   /** Stricter type for numerical value
     */
@@ -42,8 +44,7 @@ object InferStricterNumericalTypesSuite {
   ).asJava
 }
 
-class InferStricterNumericalTypesSuite
-    extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class InferStricterNumericalTypesSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import InferStricterNumericalTypesSuite._
 
   test("stricter numerical types usePlainNumberFormat=true and inferSchema=true (xlxs)") {

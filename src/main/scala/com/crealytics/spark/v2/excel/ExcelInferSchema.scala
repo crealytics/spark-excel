@@ -67,24 +67,23 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     StructType(rowNumField ++ dataFields)
   }
 
-  private def toStructFields(
-      fieldTypes: Vector[DataType],
-      header: Vector[String]
-  ): Vector[StructField] = {
+  private def toStructFields(fieldTypes: Vector[DataType], header: Vector[String]): Vector[StructField] = {
     header.zip(fieldTypes).map { case (thisHeader, rootType) =>
       val dType = rootType match {
         case _: NullType => StringType
-        case other       => other
+        case other => other
       }
       StructField(thisHeader, dType, nullable = true)
     }
   }
 
   private def inferRowType(rowSoFar: Vector[DataType], next: Vector[Cell]): Vector[DataType] =
-    Range(0, rowSoFar.length).map(i =>
-      if (i < next.length) inferField(rowSoFar(i), next(i))
-      else compatibleType(rowSoFar(i), NullType).getOrElse(StringType)
-    ).to[Vector]
+    Range(0, rowSoFar.length)
+      .map(i =>
+        if (i < next.length) inferField(rowSoFar(i), next(i))
+        else compatibleType(rowSoFar(i), NullType).getOrElse(StringType)
+      )
+      .to[Vector]
 
   private def mergeRowTypes(first: Vector[DataType], second: Vector[DataType]): Vector[DataType] = {
     first.zipAll(second, NullType, NullType).map { case (a, b) =>
@@ -100,14 +99,14 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     if (value == null || value.isEmpty || value == options.nullValue) { typeSoFar }
     else {
       val typeElemInfer = typeSoFar match {
-        case NullType       => tryParseInteger(value)
-        case IntegerType    => tryParseInteger(value)
-        case LongType       => tryParseLong(value)
+        case NullType => tryParseInteger(value)
+        case IntegerType => tryParseInteger(value)
+        case LongType => tryParseLong(value)
         case _: DecimalType => tryParseDecimal(value)
-        case DoubleType     => tryParseDouble(value)
-        case TimestampType  => tryParseTimestamp(value)
-        case BooleanType    => tryParseBoolean(value)
-        case StringType     => StringType
+        case DoubleType => tryParseDouble(value)
+        case TimestampType => tryParseTimestamp(value)
+        case BooleanType => tryParseBoolean(value)
+        case StringType => StringType
         case other: DataType =>
           throw new UnsupportedOperationException(s"Unexpected data type $other")
       }
@@ -128,13 +127,14 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
   /** Infer type of Cell field */
   private def inferField(typeSoFar: DataType, field: Cell): DataType = {
     val typeElemInfer = field.getCellType match {
-      case CellType.FORMULA => field.getCachedFormulaResultType match {
-          case CellType.STRING  => inferTypeOfStringValue(typeSoFar, field.getStringCellValue)
+      case CellType.FORMULA =>
+        field.getCachedFormulaResultType match {
+          case CellType.STRING => inferTypeOfStringValue(typeSoFar, field.getStringCellValue)
           case CellType.NUMERIC => inferTypeOfDoubleValue(typeSoFar, field.getNumericCellValue)
-          case _                => NullType
+          case _ => NullType
         }
       case CellType.BLANK | CellType.ERROR | CellType._NONE => NullType
-      case CellType.BOOLEAN                                 => BooleanType
+      case CellType.BOOLEAN => BooleanType
       case CellType.NUMERIC =>
         if (DateUtil.isCellDateFormatted(field)) TimestampType
         else inferTypeOfDoubleValue(typeSoFar, field.getNumericCellValue)

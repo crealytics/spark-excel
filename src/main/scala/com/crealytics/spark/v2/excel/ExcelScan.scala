@@ -30,15 +30,15 @@ import org.apache.spark.util.SerializableConfiguration
 import scala.collection.JavaConverters._
 
 case class ExcelScan(
-    sparkSession: SparkSession,
-    fileIndex: PartitioningAwareFileIndex,
-    dataSchema: StructType,
-    readDataSchema: StructType,
-    readPartitionSchema: StructType,
-    options: CaseInsensitiveStringMap,
-    pushedFilters: Array[Filter],
-    partitionFilters: Seq[Expression] = Seq.empty,
-    dataFilters: Seq[Expression] = Seq.empty
+  sparkSession: SparkSession,
+  fileIndex: PartitioningAwareFileIndex,
+  dataSchema: StructType,
+  readDataSchema: StructType,
+  readPartitionSchema: StructType,
+  options: CaseInsensitiveStringMap,
+  pushedFilters: Array[Filter],
+  partitionFilters: Seq[Expression] = Seq.empty,
+  dataFilters: Seq[Expression] = Seq.empty
 ) extends TextBasedFileScan(sparkSession, options) {
 
   private lazy val parsedOptions: ExcelOptions = new ExcelOptions(
@@ -92,13 +92,12 @@ case class ExcelScan(
     )
   }
 
-  override def withFilters(
-      partitionFilters: Seq[Expression],
-      dataFilters: Seq[Expression]
-  ): FileScan = this.copy(partitionFilters = partitionFilters, dataFilters = dataFilters)
+  override def withFilters(partitionFilters: Seq[Expression], dataFilters: Seq[Expression]): FileScan =
+    this.copy(partitionFilters = partitionFilters, dataFilters = dataFilters)
 
   override def equals(obj: Any): Boolean = obj match {
-    case c: ExcelScan => super.equals(c) && dataSchema == c.dataSchema && options == c.options &&
+    case c: ExcelScan =>
+      super.equals(c) && dataSchema == c.dataSchema && options == c.options &&
         equivalentFilters(pushedFilters, c.pushedFilters)
     case _ => false
   }

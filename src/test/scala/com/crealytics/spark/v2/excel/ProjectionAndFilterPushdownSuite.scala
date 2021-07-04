@@ -18,7 +18,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
 import scala.collection.JavaConverters._
@@ -28,17 +28,19 @@ import scala.collection.JavaConverters._
 object ProjectionAndFilterPushdownSuite {
 
   /* No projection*/
-  val expectedInferredSchema = StructType(List(
-    StructField("Day", IntegerType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true),
-    StructField("Extra Option 1", IntegerType, true),
-    StructField("Extra Option 2", IntegerType, true),
-    StructField("Extra Option 3", IntegerType, true),
-    StructField("Staff", StringType, true)
-  ))
+  val expectedInferredSchema = StructType(
+    List(
+      StructField("Day", IntegerType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true),
+      StructField("Extra Option 1", IntegerType, true),
+      StructField("Extra Option 2", IntegerType, true),
+      StructField("Extra Option 3", IntegerType, true),
+      StructField("Staff", StringType, true)
+    )
+  )
 
   val expectedDataInferSchema: util.List[Row] = List(
     Row(1, 12, "CA869", "Phạm Uyển Trinh", null, null, 2200, null, "Ella Fitzgerald"),
@@ -49,13 +51,15 @@ object ProjectionAndFilterPushdownSuite {
   ).asJava
 
   /* Subset of columns, same order*/
-  val expectedProjectionInferredSchema_01 = StructType(List(
-    StructField("Day", IntegerType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Staff", StringType, true)
-  ))
+  val expectedProjectionInferredSchema_01 = StructType(
+    List(
+      StructField("Day", IntegerType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Staff", StringType, true)
+    )
+  )
 
   val expectedProjectionDataInferSchema_01: util.List[Row] = List(
     Row(1, 12, "CA869", "Phạm Uyển Trinh", "Ella Fitzgerald"),
@@ -66,14 +70,16 @@ object ProjectionAndFilterPushdownSuite {
   ).asJava
 
   /* Subset of columns, out of order*/
-  val expectedProjectionInferredSchema_02 = StructType(List(
-    StructField("Staff", StringType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Day", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true)
-  ))
+  val expectedProjectionInferredSchema_02 = StructType(
+    List(
+      StructField("Staff", StringType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Day", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true)
+    )
+  )
 
   val expectedProjectionDataInferSchema_02: util.List[Row] = List(
     Row("Ella Fitzgerald", 12, 1, "CA869", "Phạm Uyển Trinh", null),
@@ -96,8 +102,7 @@ object ProjectionAndFilterPushdownSuite {
   ).asJava
 }
 
-class ProjectionAndFilterPushdownSuite
-    extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class ProjectionAndFilterPushdownSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import ProjectionAndFilterPushdownSuite._
 
   test("no projection check first 5 rows with inferSchema=true") {
