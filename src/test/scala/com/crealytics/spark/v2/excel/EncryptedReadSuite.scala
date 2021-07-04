@@ -17,24 +17,22 @@ package com.crealytics.spark.v2.excel
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.FunSuite
 
 import scala.collection.JavaConverters._
 
 object EncryptedReadSuite {
-  val simpleSchema = StructType(
-    List(
-      StructField("A", IntegerType, true),
-      StructField("B", IntegerType, true),
-      StructField("C", IntegerType, true),
-      StructField("D", IntegerType, true)
-    )
-  )
+  val simpleSchema = StructType(List(
+    StructField("A", IntegerType, true),
+    StructField("B", IntegerType, true),
+    StructField("C", IntegerType, true),
+    StructField("D", IntegerType, true)
+  ))
 
   val expectedData = List(Row(1, 2, 3, 4)).asJava
 }
 
-class EncryptedReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class EncryptedReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import EncryptedReadSuite._
 
   lazy val expected = spark.createDataFrame(expectedData, simpleSchema)

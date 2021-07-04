@@ -72,16 +72,15 @@ class ExcelHelper(options: ExcelOptions) {
     */
   def safeCellStringValue(cell: Cell): String = cell.getCellType match {
     case CellType.BLANK | CellType._NONE => ""
-    case CellType.STRING => cell.getStringCellValue
-    case CellType.FORMULA =>
-      cell.getCachedFormulaResultType match {
+    case CellType.STRING                 => cell.getStringCellValue
+    case CellType.FORMULA => cell.getCachedFormulaResultType match {
         case CellType.BLANK | CellType._NONE => ""
 
         /** When the cell is an error-formula, and requested type is string,
           * get actual formula itself
           */
-        case CellType.ERROR => cell.getCellFormula
-        case CellType.STRING => cell.getStringCellValue
+        case CellType.ERROR   => cell.getCellFormula
+        case CellType.STRING  => cell.getStringCellValue
         case CellType.NUMERIC => cell.getNumericCellValue.toString
 
         /* Get what displayed on the cell, for all other cases*/
@@ -101,7 +100,7 @@ class ExcelHelper(options: ExcelOptions) {
     val ins = FileSystem.get(uri, conf).open(new Path(uri))
 
     try options.workbookPassword match {
-      case None => WorkbookFactory.create(ins)
+      case None           => WorkbookFactory.create(ins)
       case Some(password) => WorkbookFactory.create(ins, password)
     } finally ins.close
   }
