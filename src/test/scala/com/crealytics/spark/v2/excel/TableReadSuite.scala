@@ -18,7 +18,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.FunSuite
 
 import java.util
 import scala.collection.JavaConverters._
@@ -26,14 +26,12 @@ import scala.collection.JavaConverters._
 /** Loading data from named table
   */
 object TableReadSuite {
-  val expectedSchema = StructType(
-    List(
-      StructField("City", StringType, true),
-      StructField("Latitude", DoubleType, true),
-      StructField("Longitude", DoubleType, true),
-      StructField("Population", IntegerType, true)
-    )
-  )
+  val expectedSchema = StructType(List(
+    StructField("City", StringType, true),
+    StructField("Latitude", DoubleType, true),
+    StructField("Longitude", DoubleType, true),
+    StructField("Population", IntegerType, true)
+  ))
 
   val expectedBigCitiesData: util.List[Row] = List(
     Row("Shanghai, China", 31.23d, 121.5d, 24256800),
@@ -69,7 +67,7 @@ object TableReadSuite {
 
 }
 
-class TableReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class TableReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import TableReadSuite._
 
   test("named-table SmallCity with testing data from Apache POI upstream tests") {

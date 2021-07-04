@@ -14,7 +14,6 @@
   */
 package com.crealytics.spark.v2.excel
 
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
@@ -22,11 +21,11 @@ import org.scalatest.FunSuite
 
 import java.util
 import scala.collection.JavaConverters._
+import java.nio.file.Files
+import com.holdenkarau.spark.testing.DataFrameSuiteBase
 
-/** For schema infering as well as loading for various numeric types
-  * {Integer, Long, Double}
-  */
-object NumericTypesSuite {
+/** Writing and reading back */
+object WriteAndReadSuite {
 
   val userDefinedSchema_01 = StructType(List(
     StructField("Day", IntegerType, true),
@@ -69,30 +68,54 @@ object NumericTypesSuite {
   ).asJava
 }
 
-class NumericTypesSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
-  import NumericTypesSuite._
+/** Write then read excel file, with both XLSX and XLS formats. There are two
+  * open questions:
+  *
+  * 1, Write to existing files: (multiple RDD partitions), the logic of how to
+  *    write to existing files (multiple) is still an open question
+  * 2, Write to named table (XLSX): How to address that table? And the same
+  *    issue with existing tables on multiple files
+  *
+  * There are two approach that we can think of:
+  * 1, User provide excel file template, will work for both cases
+  * 2, For (2,) still create a table, with extra "tableName" option along side
+  *    with dataAddress option.
+  */
+class WriteAndReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+  import WriteAndReadSuite._
 
-  test("load with user defined schema with Integer types") {
-    val df = readFromResources(
-      spark,
-      path = "ca_dataset/2019/Quarter=4/ca_12.xlsx",
-      options = Map("header" -> true),
-      schema = userDefinedSchema_01
-    ).limit(5)
-    val expected = spark.createDataFrame(expectedData_01, userDefinedSchema_01)
+  test("simple write then read") {
+    val path = Files.createTempDirectory("spark_excel_wr_01_").toString()
+    val df_source = spark.createDataFrame(expectedData_01, userDefinedSchema_01).sort("Customer ID")
+    df_source.write.format("excel").mode(SaveMode.Append).save(path)
 
-    assertDataFrameEquals(expected, df)
+    val df_read = spark.read.format("excel").schema(userDefinedSchema_01).load(path)
+      .sort("Customer ID")
+
+    assertDataFrameEquals(df_source, df_read)
+
+    /* Cleanup, should after the checking*/
+    deleteDirectory(path)
   }
 
-  test("load with user defined schema with both Integer and Long types") {
-    val df = readFromResources(
-      spark,
-      path = "ca_dataset/2019/Quarter=4/ca_12.xlsx",
-      options = Map("header" -> true),
-      schema = userDefinedSchema_02
-    ).limit(5)
-    val expected = spark.createDataFrame(expectedData_02, userDefinedSchema_02)
+  test("write and read with difference addresses") {
 
-    assertDataFrameEquals(expected, df)
+    Seq("A1", "B4", "X15", "AB8", "Customer!AB8", "'Product Values'!C5").foreach(dataAddress => {
+      val path = Files.createTempDirectory("spark_excel_wr_02_").toString()
+      val df_source = spark.createDataFrame(expectedData_01, userDefinedSchema_01)
+        .sort("Customer ID")
+
+      df_source.write.format("excel").option("dataAddress", dataAddress).mode(SaveMode.Append)
+        .save(path)
+
+      val df_read = spark.read.format("excel").option("dataAddress", dataAddress)
+        .schema(userDefinedSchema_01).load(path).sort("Customer ID")
+
+      assertDataFrameEquals(df_source, df_read)
+
+      /* Cleanup, should after the checking*/
+      deleteDirectory(path)
+    })
   }
+
 }

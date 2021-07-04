@@ -20,9 +20,12 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.OutputWriter
 import org.apache.spark.sql.types.StructType
 
-class ExcelOutputWriter(path: String, dataSchema: StructType, context: TaskAttemptContext, options: ExcelOptions)
-    extends OutputWriter
-    with Logging {
+class ExcelOutputWriter(
+    path: String,
+    dataSchema: StructType,
+    context: TaskAttemptContext,
+    options: ExcelOptions
+) extends OutputWriter with Logging {
 
   private val gen = new ExcelGenerator(path, dataSchema, context, options)
   if (options.header) { gen.writeHeaders() }

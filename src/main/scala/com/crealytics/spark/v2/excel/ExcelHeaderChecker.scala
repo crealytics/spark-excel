@@ -26,7 +26,8 @@ import org.apache.spark.sql.types.StructType
   * @param source name of Excel source that are currently checked. It is used in
   * error messages.
   */
-class ExcelHeaderChecker(schema: StructType, options: ExcelOptions, source: String) extends Logging {
+class ExcelHeaderChecker(schema: StructType, options: ExcelOptions, source: String)
+    extends Logging {
 
   /** Indicates if it is set to `false`, comparison of column names and schema
     * field names is not case sensitive.
@@ -71,7 +72,8 @@ class ExcelHeaderChecker(schema: StructType, options: ExcelOptions, source: Stri
           i += 1
         }
       } else {
-        errorMessage = Some(s"""|Number of column in Excel header is not equal to number of fields in the schema:
+        errorMessage =
+          Some(s"""|Number of column in Excel header is not equal to number of fields in the schema:
               | Header length: $headerLen, schema size: $schemaSize
               |$source""".stripMargin)
       }

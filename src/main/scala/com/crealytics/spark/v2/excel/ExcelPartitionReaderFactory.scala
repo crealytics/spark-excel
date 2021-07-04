@@ -37,13 +37,13 @@ import java.net.URI
   * @param parsedOptions Options for parsing Excel files.
   */
 case class ExcelPartitionReaderFactory(
-  sqlConf: SQLConf,
-  broadcastedConf: Broadcast[SerializableConfiguration],
-  dataSchema: StructType,
-  readDataSchema: StructType,
-  partitionSchema: StructType,
-  parsedOptions: ExcelOptions,
-  filters: Seq[Filter]
+    sqlConf: SQLConf,
+    broadcastedConf: Broadcast[SerializableConfiguration],
+    dataSchema: StructType,
+    readDataSchema: StructType,
+    partitionSchema: StructType,
+    parsedOptions: ExcelOptions,
+    filters: Seq[Filter]
 ) extends FilePartitionReaderFactory {
 
   override def buildReader(file: PartitionedFile): PartitionReader[InternalRow] = {
@@ -53,19 +53,27 @@ case class ExcelPartitionReaderFactory(
     val actualReadDataSchema =
       StructType(readDataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord))
     val parser = new ExcelParser(actualDataSchema, actualReadDataSchema, parsedOptions, filters)
-    val headerChecker =
-      new ExcelHeaderChecker(actualReadDataSchema, parsedOptions, source = s"Excel file: ${file.filePath}")
+    val headerChecker = new ExcelHeaderChecker(
+      actualReadDataSchema,
+      parsedOptions,
+      source = s"Excel file: ${file.filePath}"
+    )
     val iter = readFile(conf, file, parser, headerChecker, readDataSchema)
     val fileReader = new PartitionReaderFromIterator[InternalRow](iter)
-    new PartitionReaderWithPartitionValues(fileReader, readDataSchema, partitionSchema, file.partitionValues)
+    new PartitionReaderWithPartitionValues(
+      fileReader,
+      readDataSchema,
+      partitionSchema,
+      file.partitionValues
+    )
   }
 
   private def readFile(
-    conf: Configuration,
-    file: PartitionedFile,
-    parser: ExcelParser,
-    headerChecker: ExcelHeaderChecker,
-    requiredSchema: StructType
+      conf: Configuration,
+      file: PartitionedFile,
+      parser: ExcelParser,
+      headerChecker: ExcelHeaderChecker,
+      requiredSchema: StructType
   ): Iterator[InternalRow] = {
     val excelHelper = ExcelHelper(parsedOptions)
     val excelReader = DataLocator(parsedOptions)

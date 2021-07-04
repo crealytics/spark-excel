@@ -25,24 +25,26 @@ import java.time.ZoneId
 import java.util.Locale
 
 class ExcelOptions(
-  @transient
-  val parameters: CaseInsensitiveMap[String],
-  defaultTimeZoneId: String,
-  defaultColumnNameOfCorruptRecord: String
+    @transient
+    val parameters: CaseInsensitiveMap[String],
+    defaultTimeZoneId: String,
+    defaultColumnNameOfCorruptRecord: String
 ) extends Serializable {
 
   def this(parameters: Map[String, String], defaultTimeZoneId: String) = {
     this(CaseInsensitiveMap(parameters), defaultTimeZoneId, SQLConf.get.columnNameOfCorruptRecord)
   }
 
-  def this(parameters: Map[String, String], defaultTimeZoneId: String, defaultColumnNameOfCorruptRecord: String) = {
-    this(CaseInsensitiveMap(parameters), defaultTimeZoneId, defaultColumnNameOfCorruptRecord)
-  }
+  def this(
+      parameters: Map[String, String],
+      defaultTimeZoneId: String,
+      defaultColumnNameOfCorruptRecord: String
+  ) = { this(CaseInsensitiveMap(parameters), defaultTimeZoneId, defaultColumnNameOfCorruptRecord) }
 
   private def getInt(paramName: String): Option[Int] = {
     val paramValue = parameters.get(paramName)
     paramValue match {
-      case None => None
+      case None       => None
       case Some(null) => None
       case Some(value) =>
         try { Some(value.toInt) }
@@ -62,9 +64,7 @@ class ExcelOptions(
   }
 
   /* Parsing mode, how to handle corrupted record. Default to permissive*/
-  val parseMode: ParseMode = parameters
-    .get("mode")
-    .map(ParseMode.fromString)
+  val parseMode: ParseMode = parameters.get("mode").map(ParseMode.fromString)
     .getOrElse(PermissiveMode)
 
   val zoneId: ZoneId = DateTimeUtils
@@ -124,4 +124,9 @@ class ExcelOptions(
   /* Workbook password, optional*/
   val workbookPassword = parameters.get("workbookPassword")
 
+  /* Output excel file extension, default to xlsx*/
+  val fileExtension = parameters.get("fileExtension") match {
+    case Some(value) => value.trim
+    case None        => "xlsx"
+  }
 }
