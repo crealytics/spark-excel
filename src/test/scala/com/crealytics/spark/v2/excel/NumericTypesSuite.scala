@@ -18,7 +18,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
 import scala.collection.JavaConverters._
@@ -28,17 +28,19 @@ import scala.collection.JavaConverters._
   */
 object NumericTypesSuite {
 
-  val userDefinedSchema_01 = StructType(List(
-    StructField("Day", IntegerType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true),
-    StructField("Extra Option 1", IntegerType, true),
-    StructField("Extra Option 2", IntegerType, true),
-    StructField("Extra Option 3", IntegerType, true),
-    StructField("Staff", StringType, true)
-  ))
+  val userDefinedSchema_01 = StructType(
+    List(
+      StructField("Day", IntegerType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true),
+      StructField("Extra Option 1", IntegerType, true),
+      StructField("Extra Option 2", IntegerType, true),
+      StructField("Extra Option 3", IntegerType, true),
+      StructField("Staff", StringType, true)
+    )
+  )
 
   val expectedData_01: util.List[Row] = List(
     Row(1, 12, "CA869", "Phạm Uyển Trinh", null, null, 2200, null, "Ella Fitzgerald"),
@@ -48,17 +50,19 @@ object NumericTypesSuite {
     Row(1, 12, "CA873", "Nguyễn Thị Teresa Teng", null, null, 1200, null, "Jesse Thomas")
   ).asJava
 
-  val userDefinedSchema_02 = StructType(List(
-    StructField("Day", LongType, true),
-    StructField("Month", LongType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true),
-    StructField("Extra Option 1", IntegerType, true),
-    StructField("Extra Option 2", IntegerType, true),
-    StructField("Extra Option 3", LongType, true),
-    StructField("Staff", StringType, true)
-  ))
+  val userDefinedSchema_02 = StructType(
+    List(
+      StructField("Day", LongType, true),
+      StructField("Month", LongType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true),
+      StructField("Extra Option 1", IntegerType, true),
+      StructField("Extra Option 2", IntegerType, true),
+      StructField("Extra Option 3", LongType, true),
+      StructField("Staff", StringType, true)
+    )
+  )
 
   val expectedData_02: util.List[Row] = List(
     Row(1L, 12L, "CA869", "Phạm Uyển Trinh", null, null, 2200, null, "Ella Fitzgerald"),
@@ -69,7 +73,7 @@ object NumericTypesSuite {
   ).asJava
 }
 
-class NumericTypesSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class NumericTypesSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import NumericTypesSuite._
 
   test("load with user defined schema with Integer types") {

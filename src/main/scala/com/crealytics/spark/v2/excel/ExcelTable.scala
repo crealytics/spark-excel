@@ -28,11 +28,11 @@ import org.apache.spark.sql.connector.catalog.TableCapability._
 import scala.collection.JavaConverters._
 
 case class ExcelTable(
-    name: String,
-    sparkSession: SparkSession,
-    map: CaseInsensitiveStringMap,
-    paths: Seq[String],
-    userSpecifiedSchema: Option[StructType]
+  name: String,
+  sparkSession: SparkSession,
+  map: CaseInsensitiveStringMap,
+  paths: Seq[String],
+  userSpecifiedSchema: Option[StructType]
 ) extends FileTable(sparkSession, map, paths, userSpecifiedSchema) {
 
   override def newScanBuilder(params: CaseInsensitiveStringMap): ExcelScanBuilder =
@@ -59,23 +59,17 @@ case class ExcelTable(
     Set(ACCEPT_ANY_SCHEMA, BATCH_READ, BATCH_WRITE, OVERWRITE_BY_FILTER, TRUNCATE).asJava
 
   /* Actual doing schema inferring*/
-  private def infer(
-      sparkSession: SparkSession,
-      inputPaths: Seq[FileStatus],
-      options: ExcelOptions
-  ): StructType = {
+  private def infer(sparkSession: SparkSession, inputPaths: Seq[FileStatus], options: ExcelOptions): StructType = {
     val excelHelper = ExcelHelper(options)
     val excelReader = DataLocator(options)
 
-    val workbook = excelHelper.getWorkbook(
-      sparkSession.sqlContext.sparkContext.hadoopConfiguration,
-      inputPaths.head.getPath.toUri
-    )
+    val workbook =
+      excelHelper.getWorkbook(sparkSession.sqlContext.sparkContext.hadoopConfiguration, inputPaths.head.getPath.toUri)
 
     /* Depend on number of rows configured to do schema inferring*/
     val rows =
       try options.excerptSize match {
-        case None        => excelReader.readFrom(workbook).toSeq
+        case None => excelReader.readFrom(workbook).toSeq
         case Some(count) => excelReader.readFrom(workbook).slice(0, count).toSeq
       } finally workbook.close
 

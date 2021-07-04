@@ -27,27 +27,28 @@ import scala.util.Try
 trait DataLocator {
   def readFrom(workbook: Workbook): Iterator[Vector[Cell]]
 
-  def actualReadFromSheet(
-      options: ExcelOptions,
-      sheet: Sheet,
-      rowInd: Range,
-      colInd: Range
-  ): Iterator[Vector[Cell]] = {
+  def actualReadFromSheet(options: ExcelOptions, sheet: Sheet, rowInd: Range, colInd: Range): Iterator[Vector[Cell]] = {
     if (options.keepUndefinedRows) {
       rowInd.iterator.map(rid => {
         val r = sheet.getRow(rid)
         if (r == null) { Vector.empty[Cell] }
         else {
-          colInd.filter(_ < r.getLastCellNum())
-            .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK)).to[Vector]
+          colInd
+            .filter(_ < r.getLastCellNum())
+            .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK))
+            .to[Vector]
         }
       })
 
     } else {
-      sheet.iterator.asScala.filter(r => rowInd.contains(r.getRowNum)).map(r =>
-        colInd.filter(_ < r.getLastCellNum())
-          .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK)).to[Vector]
-      )
+      sheet.iterator.asScala
+        .filter(r => rowInd.contains(r.getRowNum))
+        .map(r =>
+          colInd
+            .filter(_ < r.getLastCellNum())
+            .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK))
+            .to[Vector]
+        )
     }
   }
 }
@@ -57,7 +58,7 @@ object DataLocator {
     val tableAddressRegex = """(.*)\[(.*)\]""".r
     options.dataAddress match {
       case tableAddressRegex(tableName, _) => new TableDataLocator(options, tableName)
-      case _                               => new CellRangeAddressDataLocator(options)
+      case _ => new CellRangeAddressDataLocator(options)
     }
   }
 }
@@ -76,11 +77,13 @@ class CellRangeAddressDataLocator(val options: ExcelOptions) extends DataLocator
     actualReadFromSheet(options, sheet, rowInd, colInd)
   }
 
-  private def findSheet(workbook: Workbook, name: Option[String]): Sheet = name.map(sn =>
-    Try(Option(workbook.getSheetAt(sn.toInt))).toOption.flatten
-      .orElse(Option(workbook.getSheet(sn)))
-      .getOrElse(throw new IllegalArgumentException(s"Unknown sheet $sn"))
-  ).getOrElse(workbook.getSheetAt(0))
+  private def findSheet(workbook: Workbook, name: Option[String]): Sheet = name
+    .map(sn =>
+      Try(Option(workbook.getSheetAt(sn.toInt))).toOption.flatten
+        .orElse(Option(workbook.getSheet(sn)))
+        .getOrElse(throw new IllegalArgumentException(s"Unknown sheet $sn"))
+    )
+    .getOrElse(workbook.getSheetAt(0))
 
   private val dataAddress = ExcelHelper(options).parsedRangeAddress()
 

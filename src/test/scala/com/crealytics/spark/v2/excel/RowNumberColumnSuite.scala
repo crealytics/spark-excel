@@ -18,7 +18,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
 import scala.collection.JavaConverters._
@@ -30,12 +30,14 @@ import scala.collection.JavaConverters._
   */
 object RowNumberColumnSuite {
 
-  val expectedSchema = StructType(List(
-    StructField("RowID", IntegerType, true),
-    StructField("1", StringType, true),
-    StructField("2", StringType, true),
-    StructField("3", StringType, true)
-  ))
+  val expectedSchema = StructType(
+    List(
+      StructField("RowID", IntegerType, true),
+      StructField("1", StringType, true),
+      StructField("2", StringType, true),
+      StructField("3", StringType, true)
+    )
+  )
 
   val expectedData_NoKeep: util.List[Row] = List(
     Row(0, "File info", null, null),
@@ -72,11 +74,13 @@ object RowNumberColumnSuite {
     Row(16, "C", "7", "8")
   ).asJava
 
-  val expectedSchema_Projection = StructType(List(
-    StructField("3", StringType, true),
-    StructField("RowID", IntegerType, true),
-    StructField("2", StringType, true)
-  ))
+  val expectedSchema_Projection = StructType(
+    List(
+      StructField("3", StringType, true),
+      StructField("RowID", IntegerType, true),
+      StructField("2", StringType, true)
+    )
+  )
 
   val expectedData_Projection: util.List[Row] = List(
     Row(null, 0, null),
@@ -95,7 +99,7 @@ object RowNumberColumnSuite {
 
 }
 
-class RowNumberColumnSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class RowNumberColumnSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import RowNumberColumnSuite._
 
   test("read with addition excel row number column") {

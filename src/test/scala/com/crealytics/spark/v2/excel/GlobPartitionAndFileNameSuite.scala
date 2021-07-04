@@ -17,7 +17,7 @@ package com.crealytics.spark.v2.excel
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.functions.input_file_name
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.nio.file.Paths
 
@@ -34,47 +34,52 @@ import java.nio.file.Paths
   */
 
 object GlobPartitionAndFileNameSuite {
-  val expectedInferredSchema = StructType(List(
-    StructField("Day", IntegerType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true),
-    StructField("Extra Option 1", IntegerType, true),
-    StructField("Extra Option 2", IntegerType, true),
-    StructField("Extra Option 3", IntegerType, true),
-    StructField("Staff", StringType, true)
-  ))
+  val expectedInferredSchema = StructType(
+    List(
+      StructField("Day", IntegerType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true),
+      StructField("Extra Option 1", IntegerType, true),
+      StructField("Extra Option 2", IntegerType, true),
+      StructField("Extra Option 3", IntegerType, true),
+      StructField("Staff", StringType, true)
+    )
+  )
 
-  val expectedWithFilenameSchema = StructType(List(
-    StructField("Day", IntegerType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true),
-    StructField("Extra Option 1", IntegerType, true),
-    StructField("Extra Option 2", IntegerType, true),
-    StructField("Extra Option 3", IntegerType, true),
-    StructField("Staff", StringType, true),
-    StructField("file_name", StringType, false)
-  ))
+  val expectedWithFilenameSchema = StructType(
+    List(
+      StructField("Day", IntegerType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true),
+      StructField("Extra Option 1", IntegerType, true),
+      StructField("Extra Option 2", IntegerType, true),
+      StructField("Extra Option 3", IntegerType, true),
+      StructField("Staff", StringType, true),
+      StructField("file_name", StringType, false)
+    )
+  )
 
-  val expectedWithPartitionSchema = StructType(List(
-    StructField("Day", IntegerType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true),
-    StructField("Extra Option 1", IntegerType, true),
-    StructField("Extra Option 2", IntegerType, true),
-    StructField("Extra Option 3", IntegerType, true),
-    StructField("Staff", StringType, true),
-    StructField("Quarter", IntegerType, true)
-  ))
+  val expectedWithPartitionSchema = StructType(
+    List(
+      StructField("Day", IntegerType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true),
+      StructField("Extra Option 1", IntegerType, true),
+      StructField("Extra Option 2", IntegerType, true),
+      StructField("Extra Option 3", IntegerType, true),
+      StructField("Staff", StringType, true),
+      StructField("Quarter", IntegerType, true)
+    )
+  )
 }
 
-class GlobPartitionAndFileNameSuite
-    extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class GlobPartitionAndFileNameSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import GlobPartitionAndFileNameSuite._
 
   private val sharedOptions = Map("header" -> true, "inferSchema" -> true)
@@ -90,8 +95,13 @@ class GlobPartitionAndFileNameSuite
     assert(df.schema == expectedWithFilenameSchema)
 
     /* And validate list of filename*/
-    val names = df.select("file_name").distinct.collect.map(r => r.getString(0))
-      .map(p => Paths.get(p).getFileName.toString).toSet
+    val names = df
+      .select("file_name")
+      .distinct
+      .collect
+      .map(r => r.getString(0))
+      .map(p => Paths.get(p).getFileName.toString)
+      .toSet
     assert(names == Set[String]("ca_10.xlsx", "ca_11.xlsx", "ca_12.xlsx"))
   }
 
@@ -108,9 +118,9 @@ class GlobPartitionAndFileNameSuite
     val q4_total = readFromResources(spark, "ca_dataset/2019/Quarter=4/*.xlsx", sharedOptions)
       .count()
 
-    val q4_sum = Seq("ca_10.xlsx", "ca_11.xlsx", "ca_12.xlsx").map(name =>
-      readFromResources(spark, s"ca_dataset/2019/Quarter=4/$name", sharedOptions).count()
-    ).sum
+    val q4_sum = Seq("ca_10.xlsx", "ca_11.xlsx", "ca_12.xlsx")
+      .map(name => readFromResources(spark, s"ca_dataset/2019/Quarter=4/$name", sharedOptions).count())
+      .sum
 
     assert(q4_total > 0)
     assert(q4_total == q4_sum)

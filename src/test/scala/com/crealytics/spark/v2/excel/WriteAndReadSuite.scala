@@ -17,7 +17,7 @@ package com.crealytics.spark.v2.excel
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
 import scala.collection.JavaConverters._
@@ -27,17 +27,19 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 /** Writing and reading back */
 object WriteAndReadSuite {
 
-  val userDefinedSchema_01 = StructType(List(
-    StructField("Day", IntegerType, true),
-    StructField("Month", IntegerType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true),
-    StructField("Extra Option 1", IntegerType, true),
-    StructField("Extra Option 2", IntegerType, true),
-    StructField("Extra Option 3", IntegerType, true),
-    StructField("Staff", StringType, true)
-  ))
+  val userDefinedSchema_01 = StructType(
+    List(
+      StructField("Day", IntegerType, true),
+      StructField("Month", IntegerType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true),
+      StructField("Extra Option 1", IntegerType, true),
+      StructField("Extra Option 2", IntegerType, true),
+      StructField("Extra Option 3", IntegerType, true),
+      StructField("Staff", StringType, true)
+    )
+  )
 
   val expectedData_01: util.List[Row] = List(
     Row(1, 12, "CA869", "Phạm Uyển Trinh", null, null, 2200, null, "Ella Fitzgerald"),
@@ -47,17 +49,19 @@ object WriteAndReadSuite {
     Row(1, 12, "CA873", "Nguyễn Thị Teresa Teng", null, null, 1200, null, "Jesse Thomas")
   ).asJava
 
-  val userDefinedSchema_02 = StructType(List(
-    StructField("Day", LongType, true),
-    StructField("Month", LongType, true),
-    StructField("Customer ID", StringType, true),
-    StructField("Customer Name", StringType, true),
-    StructField("Standard Package", IntegerType, true),
-    StructField("Extra Option 1", IntegerType, true),
-    StructField("Extra Option 2", IntegerType, true),
-    StructField("Extra Option 3", LongType, true),
-    StructField("Staff", StringType, true)
-  ))
+  val userDefinedSchema_02 = StructType(
+    List(
+      StructField("Day", LongType, true),
+      StructField("Month", LongType, true),
+      StructField("Customer ID", StringType, true),
+      StructField("Customer Name", StringType, true),
+      StructField("Standard Package", IntegerType, true),
+      StructField("Extra Option 1", IntegerType, true),
+      StructField("Extra Option 2", IntegerType, true),
+      StructField("Extra Option 3", LongType, true),
+      StructField("Staff", StringType, true)
+    )
+  )
 
   val expectedData_02: util.List[Row] = List(
     Row(1L, 12L, "CA869", "Phạm Uyển Trinh", null, null, 2200, null, "Ella Fitzgerald"),
@@ -81,7 +85,7 @@ object WriteAndReadSuite {
   * 2, For (2,) still create a table, with extra "tableName" option along side
   *    with dataAddress option.
   */
-class WriteAndReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import WriteAndReadSuite._
 
   test("simple write then read") {
@@ -89,7 +93,10 @@ class WriteAndReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTesti
     val df_source = spark.createDataFrame(expectedData_01, userDefinedSchema_01).sort("Customer ID")
     df_source.write.format("excel").mode(SaveMode.Append).save(path)
 
-    val df_read = spark.read.format("excel").schema(userDefinedSchema_01).load(path)
+    val df_read = spark.read
+      .format("excel")
+      .schema(userDefinedSchema_01)
+      .load(path)
       .sort("Customer ID")
 
     assertDataFrameEquals(df_source, df_read)
@@ -102,14 +109,22 @@ class WriteAndReadSuite extends FunSuite with DataFrameSuiteBase with ExcelTesti
 
     Seq("A1", "B4", "X15", "AB8", "Customer!AB8", "'Product Values'!C5").foreach(dataAddress => {
       val path = Files.createTempDirectory("spark_excel_wr_02_").toString()
-      val df_source = spark.createDataFrame(expectedData_01, userDefinedSchema_01)
+      val df_source = spark
+        .createDataFrame(expectedData_01, userDefinedSchema_01)
         .sort("Customer ID")
 
-      df_source.write.format("excel").option("dataAddress", dataAddress).mode(SaveMode.Append)
+      df_source.write
+        .format("excel")
+        .option("dataAddress", dataAddress)
+        .mode(SaveMode.Append)
         .save(path)
 
-      val df_read = spark.read.format("excel").option("dataAddress", dataAddress)
-        .schema(userDefinedSchema_01).load(path).sort("Customer ID")
+      val df_read = spark.read
+        .format("excel")
+        .option("dataAddress", dataAddress)
+        .schema(userDefinedSchema_01)
+        .load(path)
+        .sort("Customer ID")
 
       assertDataFrameEquals(df_source, df_read)
 
