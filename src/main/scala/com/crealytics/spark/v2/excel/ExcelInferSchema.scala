@@ -41,7 +41,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     *     2. Merge row types to find common type
     *     3. Replace any null types with string type
     */
-  def infer(tokens: Seq[Vector[Cell]], header: Vector[String]): StructType = {
+  def infer(tokens: Iterator[Vector[Cell]], header: Vector[String]): StructType = {
 
     /* Possible StructField for row-number column*/
     val rowNumField =
@@ -222,4 +222,8 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
       } else { Some(DecimalType(range + scale, scale)) }
     case _ => None
   }
+}
+
+object ExcelInferSchema {
+  def apply(options: ExcelOptions): ExcelInferSchema = new ExcelInferSchema(options)
 }

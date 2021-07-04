@@ -23,8 +23,14 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-/** For handling Excel data address */
+/** For handling Excel data address and read data from there*/
 trait DataLocator {
+
+  /** Get cell-row itertor for given workbook with parsed address from option
+    *
+    * @param workbook to be create iterator for
+    * @return cell-row iterator
+    */
   def readFrom(workbook: Workbook): Iterator[Vector[Cell]]
 
   def actualReadFromSheet(options: ExcelOptions, sheet: Sheet, rowInd: Range, colInd: Range): Iterator[Vector[Cell]] = {

@@ -129,4 +129,11 @@ class ExcelOptions(
     case Some(value) => value.trim
     case None => "xlsx"
   }
+
+  /* Defines fraction of file used for schema inferring. For default and
+     invalid values, 1.0 will be used*/
+  val samplingRatio = {
+    val r = parameters.get("samplingRatio").map(_.toDouble).getOrElse(1.0)
+    if (r > 1.0 || r <= 0.0) 1.0 else r
+  }
 }

@@ -61,26 +61,44 @@ case class ExcelTable(
   /* Actual doing schema inferring*/
   private def infer(sparkSession: SparkSession, inputPaths: Seq[FileStatus], options: ExcelOptions): StructType = {
     val excelHelper = ExcelHelper(options)
-    val excelReader = DataLocator(options)
+    val conf = sparkSession.sqlContext.sparkContext.hadoopConfiguration
 
-    val workbook =
-      excelHelper.getWorkbook(sparkSession.sqlContext.sparkContext.hadoopConfiguration, inputPaths.head.getPath.toUri)
+    /** Sampling ratio on file level (not row level as in CSV) */
+    val paths = {
+      var sample = (inputPaths.size * options.samplingRatio).intValue
+      sample = if (sample < 1) 1 else sample
+      inputPaths.take(sample).map(_.getPath.toUri)
+    }
+    var rows = excelHelper.getRows(conf, paths.head)
 
-    /* Depend on number of rows configured to do schema inferring*/
-    val rows =
-      try options.excerptSize match {
-        case None => excelReader.readFrom(workbook).toSeq
-        case Some(count) => excelReader.readFrom(workbook).slice(0, count).toSeq
-      } finally workbook.close
+    if (rows.isEmpty) { /* If the first file is empty, not checking further*/
+      StructType(Nil)
+    } else {
+      /* Prepare field names*/
+      val colNames =
+        if (options.header) { /* Get column name from the first row*/
+          val r = excelHelper.getColumnNames(rows.next)
+          rows = rows.drop(options.ignoreAfterHeader)
+          r
+        } else { /* Peek first row, then return back*/
+          val headerRow = rows.next
+          val r = excelHelper.getColumnNames(headerRow)
+          rows = Iterator(headerRow) ++ rows
+          r
+        }
 
-    /* Ready to do schema inferring*/
-    if (rows.isEmpty) StructType(Nil)
-    else {
-      val colNames = excelHelper.getColumnNames(rows.head)
-      val nonHeaderRows = if (options.header) rows.drop(options.ignoreAfterHeader + 1) else rows
+      /* Other files also be utilized (lazily) for field types, reuse field name
+         from the first file*/
+      val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
+      paths.tail.foreach(path => {
+        rows ++= excelHelper.getRows(conf, path).drop(numberOfRowToIgnore)
+      })
 
-      (new ExcelInferSchema(options)).infer(nonHeaderRows, colNames)
+      /* Limit numer of rows to be used for schema infering*/
+      rows = if (options.excerptSize.isDefined) rows.take(options.excerptSize.get) else rows
+
+      /* Ready to infer schema*/
+      ExcelInferSchema(options).infer(rows, colNames)
     }
   }
-
 }
