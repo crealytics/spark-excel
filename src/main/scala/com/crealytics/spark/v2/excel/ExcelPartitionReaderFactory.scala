@@ -68,14 +68,8 @@ case class ExcelPartitionReaderFactory(
     requiredSchema: StructType
   ): Iterator[InternalRow] = {
     val excelHelper = ExcelHelper(parsedOptions)
-    val excelReader = DataLocator(parsedOptions)
-    val workbook = excelHelper.getWorkbook(conf, URI.create(file.filePath))
-
-    val rows =
-      try excelReader.readFrom(workbook).toSeq
-      finally workbook.close
-
-    ExcelParser.parseIterator(rows.toIterator, parser, headerChecker, requiredSchema)
+    val rows = excelHelper.getRows(conf, URI.create(file.filePath))
+    ExcelParser.parseIterator(rows, parser, headerChecker, requiredSchema)
   }
 
 }

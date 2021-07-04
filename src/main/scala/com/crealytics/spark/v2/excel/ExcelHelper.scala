@@ -106,6 +106,19 @@ class ExcelHelper(options: ExcelOptions) {
     } finally ins.close
   }
 
+  /** Get cell-row iterator for excel file in given URI
+    *
+    * @param conf Hadoop configuration
+    * @param uri to the file, this can be on any support file system back end
+    * @return cell-row iterator
+    */
+  def getRows(conf: Configuration, uri: URI): Iterator[Vector[Cell]] = {
+    val workbook = getWorkbook(conf, uri)
+    val excelReader = DataLocator(options)
+    try { excelReader.readFrom(workbook) }
+    finally workbook.close
+  }
+
   /** Get column name by list of cells (row)
     *
     * @param firstRow column names will be based on this
