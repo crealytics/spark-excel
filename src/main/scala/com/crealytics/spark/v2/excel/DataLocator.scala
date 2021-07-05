@@ -23,7 +23,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-/** For handling Excel data address and read data from there*/
+/** For handling Excel data address and read data from there */
 trait DataLocator {
 
   /** Get cell-row itertor for given workbook with parsed address from option
