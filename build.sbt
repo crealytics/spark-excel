@@ -14,7 +14,7 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 
 resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
-libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.31" % "provided")
+libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.32" % "provided")
   .map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 shadedDeps ++= Seq(
