@@ -72,7 +72,7 @@ case class ExcelScan(
 
     val caseSensitiveMap = options.asCaseSensitiveMap.asScala.toMap
 
-    /* Hadoop Configurations are case sensitive.*/
+    /* Hadoop Configurations are case sensitive. */
     val hadoopConf = sparkSession.sessionState.newHadoopConfWithOptions(caseSensitiveMap)
 
     val broadcastedConf = sparkSession.sparkContext

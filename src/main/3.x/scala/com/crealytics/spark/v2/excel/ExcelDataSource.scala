@@ -124,7 +124,7 @@ class ExcelDataSource extends TableProvider with DataSourceRegister {
 
 }
 
-/* Utilities methods*/
+/* Utilities methods */
 object ExcelDataSource {
   def getPaths(map: CaseInsensitiveStringMap): Seq[String] = {
     val objectMapper = new ObjectMapper()

@@ -27,7 +27,7 @@ import scala.collection.JavaConverters._
   */
 object ProjectionAndFilterPushdownSuite {
 
-  /* No projection*/
+  /* No projection */
   val expectedInferredSchema = StructType(
     List(
       StructField("Day", IntegerType, true),
@@ -50,7 +50,7 @@ object ProjectionAndFilterPushdownSuite {
     Row(1, 12, "CA873", "Nguyễn Thị Teresa Teng", null, null, 1200, null, "Jesse Thomas")
   ).asJava
 
-  /* Subset of columns, same order*/
+  /* Subset of columns, same order */
   val expectedProjectionInferredSchema_01 = StructType(
     List(
       StructField("Day", IntegerType, true),
@@ -69,7 +69,7 @@ object ProjectionAndFilterPushdownSuite {
     Row(1, 12, "CA873", "Nguyễn Thị Teresa Teng", "Jesse Thomas")
   ).asJava
 
-  /* Subset of columns, out of order*/
+  /* Subset of columns, out of order */
   val expectedProjectionInferredSchema_02 = StructType(
     List(
       StructField("Staff", StringType, true),
@@ -89,7 +89,7 @@ object ProjectionAndFilterPushdownSuite {
     Row("Jesse Thomas", 12, 1, "CA873", "Nguyễn Thị Teresa Teng", null)
   ).asJava
 
-  /* Filtering, with same schemas as in projection*/
+  /* Filtering, with same schemas as in projection */
   val expectedDataFilterInferSchema_01: util.List[Row] = List(
     Row(4, 12, "CA883", "Phạm Thanh Mai", 7000, 4000, null, null, "Jesse Thomas"),
     Row(4, 12, "CA884", "Hoàng Ngọc Hà", 8000, null, null, null, "Teresa Teng"),

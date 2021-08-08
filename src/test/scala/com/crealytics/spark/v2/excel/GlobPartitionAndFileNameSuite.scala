@@ -94,7 +94,7 @@ class GlobPartitionAndFileNameSuite extends AnyFunSuite with DataFrameSuiteBase 
       .withColumn("file_name", input_file_name)
     assert(df.schema == expectedWithFilenameSchema)
 
-    /* And validate list of filename*/
+    /* And validate list of filename */
     val names = df
       .select("file_name")
       .distinct
@@ -109,7 +109,7 @@ class GlobPartitionAndFileNameSuite extends AnyFunSuite with DataFrameSuiteBase 
     val df = readFromResources(spark, "ca_dataset/2019", sharedOptions)
     assert(df.schema == expectedWithPartitionSchema)
 
-    /* And validate list of Quarters*/
+    /* And validate list of Quarters */
     val quarters = df.select("Quarter").distinct.collect.map(r => r.getInt(0)).toSet
     assert(quarters == Set[Int](1, 2, 3, 4))
   }

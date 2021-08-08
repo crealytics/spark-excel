@@ -61,7 +61,7 @@ class ExcelOptions(
     else { throw new Exception(s"$paramName flag can be true or false") }
   }
 
-  /* Parsing mode, how to handle corrupted record. Default to permissive*/
+  /* Parsing mode, how to handle corrupted record. Default to permissive */
   val parseMode: ParseMode = parameters
     .get("mode")
     .map(ParseMode.fromString)
@@ -70,7 +70,7 @@ class ExcelOptions(
   val zoneId: ZoneId = ZoneId
     .of(parameters.getOrElse(DateTimeUtils.TIMEZONE_OPTION, defaultTimeZoneId))
 
-  /* A language tag in IETF BCP 47 format*/
+  /* A language tag in IETF BCP 47 format */
   val locale: Locale = parameters.get("locale").map(Locale.forLanguageTag).getOrElse(Locale.US)
 
   val dateFormat: String = parameters.getOrElse("dateFormat", DateFormatter.defaultPattern)
@@ -78,10 +78,10 @@ class ExcelOptions(
   val timestampFormat: String = parameters
     .getOrElse("timestampFormat", s"${DateFormatter.defaultPattern}'T'HH:mm:ss[.SSS][XXX]")
 
-  /* Have header line when reading and writing*/
+  /* Have header line when reading and writing */
   val header = getBool("header", default = true)
 
-  /* Number of rows to ignore after header. Only in reading*/
+  /* Number of rows to ignore after header. Only in reading */
   val ignoreAfterHeader = getInt("ignoreAfterHeader").getOrElse(0)
 
   val inferSchema = getBool("inferSchema", default = false)
@@ -92,7 +92,7 @@ class ExcelOptions(
     */
   val enforceSchema = getBool("enforceSchema", default = true)
 
-  /* Name for column of corrupted records*/
+  /* Name for column of corrupted records */
   val columnNameOfCorruptRecord = parameters
     .getOrElse("columnNameOfCorruptRecord", defaultColumnNameOfCorruptRecord)
 
@@ -101,37 +101,37 @@ class ExcelOptions(
   val positiveInf = parameters.getOrElse("positiveInf", "Inf")
   val negativeInf = parameters.getOrElse("negativeInf", "-Inf")
 
-  /* If true, format the cells without rounding and scientific notations*/
+  /* If true, format the cells without rounding and scientific notations */
   val usePlainNumberFormat = getBool("usePlainNumberFormat", default = false)
 
-  /* If true, keep undefined (Excel) rows*/
+  /* If true, keep undefined (Excel) rows */
   val keepUndefinedRows = getBool("keepUndefinedRows", default = false)
 
-  /* Use null value for error cells*/
+  /* Use null value for error cells */
   val useNullForErrorCells = getBool("useNullForErrorCells", default = false)
 
-  /* Additional column for color*/
+  /* Additional column for color */
   val addColorColumns = getBool("addColorColumns", default = false)
   val ignoreLeadingWhiteSpace = getBool("ignoreLeadingWhiteSpace", default = false)
   val ignoreTrailingWhiteSpace = getBool("ignoreTrailingWhiteSpace", default = false)
 
-  /* Additional column for excel row number*/
+  /* Additional column for excel row number */
   val columnNameOfRowNumber = parameters.get("columnNameOfRowNumber")
 
-  /* Data address, default to everything*/
+  /* Data address, default to everything */
   val dataAddress = parameters.getOrElse("dataAddress", "A1")
 
-  /* Workbook password, optional*/
+  /* Workbook password, optional */
   val workbookPassword = parameters.get("workbookPassword")
 
-  /* Output excel file extension, default to xlsx*/
+  /* Output excel file extension, default to xlsx */
   val fileExtension = parameters.get("fileExtension") match {
     case Some(value) => value.trim
     case None => "xlsx"
   }
 
   /* Defines fraction of file used for schema inferring. For default and
-     invalid values, 1.0 will be used*/
+     invalid values, 1.0 will be used */
   val samplingRatio = {
     val r = parameters.get("samplingRatio").map(_.toDouble).getOrElse(1.0)
     if (r > 1.0 || r <= 0.0) 1.0 else r

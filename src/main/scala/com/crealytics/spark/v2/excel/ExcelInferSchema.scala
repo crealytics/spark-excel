@@ -33,16 +33,16 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     */
   def infer(tokens: Iterator[Vector[Cell]], header: Vector[String]): StructType = {
 
-    /* Possible StructField for row-number column*/
+    /* Possible StructField for row-number column */
     val rowNumField =
-      if (options.columnNameOfRowNumber.isDefined)
+      if (options.columnNameOfRowNumber.isDefined) {
         Vector[StructField](StructField(options.columnNameOfRowNumber.get, IntegerType, false))
-      else Vector.empty
+      } else Vector.empty
 
-    /* Header without row-number-column*/
+    /* Header without row-number-column */
     val dataHeader = if (options.columnNameOfRowNumber.isDefined) header.tail else header
 
-    /* Normal data fields*/
+    /* Normal data fields */
     val dataFields =
       if (options.inferSchema) {
         val startType: Vector[DataType] = Vector.fill[DataType](dataHeader.length)(NullType)
@@ -50,7 +50,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
 
         toStructFields(rootTypes, dataHeader)
       } else {
-        /* By default fields are assumed to be StringType*/
+        /* By default fields are assumed to be StringType */
         dataHeader.map(fieldName => StructField(fieldName, StringType, nullable = true))
       }
 
@@ -134,7 +134,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     compatibleType(typeSoFar, typeElemInfer).getOrElse(StringType)
   }
 
-  /* Special handling the default locale for backward compatibility*/
+  /* Special handling the default locale for backward compatibility */
   private val decimalParser = (s: String) => new java.math.BigDecimal(s)
 
   private def isInfOrNan(field: String): Boolean = {
@@ -151,7 +151,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
 
   private def tryParseDecimal(field: String): DataType = {
     val decimalTry = allCatch opt {
-      /* The conversion can fail when the `field` is not a form of number.*/
+      /* The conversion can fail when the `field` is not a form of number */
       val bigDecimal = decimalParser(field)
 
       /** Because many other formats do not support decimal, it reduces the
@@ -173,7 +173,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     if ((allCatch opt field.toDouble).isDefined || isInfOrNan(field)) { DoubleType }
     else { tryParseTimestamp(field) }
 
-  /* This case infers a custom `dataFormat` is set.*/
+  /* This case infers a custom `dataFormat` is set */
   private def tryParseTimestamp(field: String): DataType =
     if ((allCatch opt timestampParser.parse(field)).isDefined) { TimestampType }
     else { tryParseBoolean(field) }
@@ -205,7 +205,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
       val scale = math.max(t1.scale, t2.scale)
       val range = math.max(t1.precision - t1.scale, t2.precision - t2.scale)
       if (range + scale > 38) {
-        /* DecimalType can't support precision > 38*/
+        /* DecimalType can't support precision > 38 */
         Some(DoubleType)
       } else { Some(DecimalType(range + scale, scale)) }
     case _ => None

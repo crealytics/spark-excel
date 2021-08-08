@@ -42,7 +42,7 @@ object AreaReferenceReadSuite {
     )
   )
 
-  /* Manually checking 1 row only*/
+  /* Manually checking 1 row only */
   val expectedData_01: util.List[Row] = List(
     Row(
       "Alabama",

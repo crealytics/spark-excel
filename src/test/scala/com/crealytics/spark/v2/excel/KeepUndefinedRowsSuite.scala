@@ -25,7 +25,7 @@ import scala.collection.JavaConverters._
 
 object KeepUndefinedRowsSuite {
 
-  /* Issue: https://github.com/crealytics/spark-excel/issues/285*/
+  /* Issue: https://github.com/crealytics/spark-excel/issues/285 */
   val expectedSchema_Issue285 = StructType(
     List(StructField("1", StringType, true), StructField("2", StringType, true), StructField("3", StringType, true))
   )
@@ -52,7 +52,7 @@ object KeepUndefinedRowsSuite {
     Row("C", "7", "8")
   ).asJava
 
-  /* With newly introduced keepUndefinedRows option*/
+  /* With newly introduced keepUndefinedRows option */
   val expectedData_KeepUndefinedRows_Issue285: util.List[Row] = List(
     Row("File info", null, null),
     Row("Info", "Info", "Info"),

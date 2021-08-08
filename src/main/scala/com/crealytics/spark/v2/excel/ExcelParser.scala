@@ -61,25 +61,25 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
     */
   private type ValueConverter = Cell => Any
 
-  /* Implement column pruning right inside this class*/
+  /* Implement column pruning right inside this class */
   private val parsedSchema =
-    if (options.columnNameOfRowNumber.isDefined)
+    if (options.columnNameOfRowNumber.isDefined) {
       dataSchema
         .filter(_.name != options.columnNameOfRowNumber.get)
-    else dataSchema
+    } else dataSchema
 
-  /* This index is used to reorder parsed tokens*/
+  /* This index is used to reorder parsed tokens */
   private val tokenIndexArr = requiredSchema
     .map(f => java.lang.Integer.valueOf(parsedSchema.indexOf(f)))
     .toArray
 
-  /* Excel row number index (if configured)*/
+  /* Excel row number index (if configured) */
   private val rowNumberPosition =
-    if (options.columnNameOfRowNumber.isDefined)
+    if (options.columnNameOfRowNumber.isDefined) {
       Some(requiredSchema.fieldIndex(options.columnNameOfRowNumber.get))
-    else None
+    } else None
 
-  /* Pre-allocated Some to avoid the overhead of building Some per each-row.*/
+  /* Pre-allocated Some to avoid the overhead of building Some per each-row. */
   private val requiredRow = Some(new GenericInternalRow(requiredSchema.length))
 
   /** Pre-allocated empty sequence returned when the parsed row cannot pass
@@ -90,10 +90,10 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
   private lazy val timestampFormatter = ExcelDateTimeStringUtils.getTimestampFormatter(options)
   private lazy val dateFormatter = ExcelDateTimeStringUtils.getDateFormatter(options)
 
-  /* Excel record is flat, it can use same filters with CSV*/
+  /* Excel record is flat, it can use same filters with CSV */
   private val pushedFilters = new ExcelFilters(filters, requiredSchema)
 
-  /* Retrieve the raw record string.*/
+  /* Retrieve the raw record string. */
   private def getCurrentInput: UTF8String = UTF8String
     .fromString("TODO: how to show the corrupted record?")
 
@@ -120,7 +120,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
     requiredSchema.map(f => makeConverter(f.name, f.dataType, f.nullable)).toArray
   }
 
-  /* Special handling the default locale for backward compatibility*/
+  /* Special handling the default locale for backward compatibility */
   private val decimalParser = (s: String) => new java.math.BigDecimal(s)
 
   /** Create a converter which converts the Cell value to a value according to a
@@ -211,7 +211,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
               _.getCachedFormulaResultType match {
                 case CellType.BLANK | CellType._NONE => null
 
-                /* Cell is an error-formula, and requested type is double*/
+                /* Cell is an error-formula, and requested type is double */
                 case CellType.ERROR => Double.NaN
                 case CellType.NUMERIC => d.getNumericCellValue
                 case _ =>
@@ -254,12 +254,12 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
             if (DateUtil.isCellDateFormatted(datum)) {
-              /* Excel to spark precision*/
+              /* Excel to spark precision */
               datum.getDateCellValue.getTime * 1000
             } else {
               datum.getCellType match {
                 case CellType.NUMERIC | CellType.FORMULA => {
-                  /* Excel to spark precision*/
+                  /* Excel to spark precision */
                   datum.getNumericCellValue * 1000
                 }
                 case _ => {
@@ -318,8 +318,9 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
       case _ => converter.apply(datum)
     }
 
-    if (ret == null && !nullable)
+    if (ret == null && !nullable) {
       throw new RuntimeException(s"null value found but field $name is not nullable.")
+    }
 
     ret
   }
@@ -328,12 +329,12 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
     * no row (if the the record is malformed).
     */
   val parse: Vector[Cell] => Option[InternalRow] = {
-    /* This is intentionally a val to create a function once and reuse.*/
+    /* This is intentionally a val to create a function once and reuse. */
     if (requiredSchema.isEmpty) {
       /* If partition attributes scanned only, `schema` gets empty. */
       (_: Vector[Cell]) => Some(InternalRow.empty)
     } else {
-      /* parse if the requiredSchema is nonEmpty*/
+      /* parse if the requiredSchema is nonEmpty */
       (input: Vector[Cell]) => convert(input)
     }
   }
@@ -367,11 +368,11 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
         if (skipRow) { row.setNullAt(i) }
         else {
           if (rowNumberPosition.isDefined && i == rowNumberPosition.get) {
-            /* Handle additional excel-row-number*/
+            /* Handle additional excel-row-number */
             if (tokens.isEmpty) { row.setNullAt(i) }
             else { row(i) = tokens.head.getRowIndex }
           } else {
-            /* Normal data column*/
+            /* Normal data column */
             row(i) = valueConverters(i).apply(tokens(tokenIndexArr(i)))
           }
 
@@ -411,7 +412,7 @@ object ExcelParser {
         val excelHelper = ExcelHelper(parser.options)
         headerChecker.checkHeaderColumnNames(excelHelper.getColumnNames(rows.next))
 
-        /* Ignore rows after header, if configured*/
+        /* Ignore rows after header, if configured */
         rows.drop(parser.options.ignoreAfterHeader)
       } else { rows }
 

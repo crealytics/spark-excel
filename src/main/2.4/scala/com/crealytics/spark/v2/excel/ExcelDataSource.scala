@@ -37,6 +37,8 @@ import org.apache.spark.sql.types._
 import java.net.URI
 import java.util.Optional
 import scala.collection.JavaConverters._
+import java.{util => ju}
+import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 
 /** Creality Spark Excel data source entry point for Spark 2.4 series
   */
@@ -44,7 +46,7 @@ class ExcelDataSource extends DataSourceV2 with ReadSupport with WriteSupport wi
 
   private lazy val sparkSession = SparkSession.active
 
-  /* The string that represents the format that this data source provider uses*/
+  /* The string that represents the format that this data source provider uses */
   override def shortName(): String = "excel"
 
   /** Creates a {@link DataSourceReader} to scan the data from this data source.
@@ -55,7 +57,7 @@ class ExcelDataSource extends DataSourceV2 with ReadSupport with WriteSupport wi
     * @param options the options for the returned data source reader, which is an immutable
     *                case-insensitive string-to-string map.
     */
-  override def createReader(options: DataSourceOptions) =
+  override def createReader(options: DataSourceOptions): DataSourceReader =
     new ExcelDataSourceReader(sparkSession, options.asMap.asScala.toMap, options.paths.toSeq, None)
 
   /** Creates a {@link DataSourceReader} to scan the data from this data source.
@@ -67,7 +69,7 @@ class ExcelDataSource extends DataSourceV2 with ReadSupport with WriteSupport wi
     * @param options the options for the returned data source reader, which is an immutable
     *                case-insensitive string-to-string map.
     */
-  override def createReader(schema: StructType, options: DataSourceOptions) =
+  override def createReader(schema: StructType, options: DataSourceOptions): DataSourceReader =
     new ExcelDataSourceReader(sparkSession, options.asMap.asScala.toMap, options.paths.toSeq, Some(schema))
 
   /** Creates an optional {@link DataSourceWriter} to save the data to this data source. Data
@@ -233,7 +235,7 @@ class ExcelDataSourceReader(
     * If this method fails (by throwing an exception), the action will fail and no Spark job will be
     * submitted.
     */
-  override def planInputPartitions = fileIndex
+  override def planInputPartitions: ju.List[InputPartition[InternalRow]] = fileIndex
     .listFiles(Seq.empty, Seq.empty)
     .map(dir =>
       dir.files.map(path =>
@@ -253,7 +255,7 @@ class ExcelDataSourceReader(
     .asInstanceOf[List[InputPartition[InternalRow]]]
     .asJava
 
-  /* Actual doing schema inferring*/
+  /* Actual doing schema inferring */
   private def infer(inputPaths: Seq[FileStatus]): StructType = {
     val excelHelper = ExcelHelper(options)
     val conf = sparkSession.sqlContext.sparkContext.hadoopConfiguration
@@ -266,16 +268,16 @@ class ExcelDataSourceReader(
     }
     var rows = excelHelper.getRows(conf, paths.head)
 
-    if (rows.isEmpty) { /* If the first file is empty, not checking further*/
+    if (rows.isEmpty) { /* If the first file is empty, not checking further */
       StructType(Seq.empty)
     } else {
-      /* Prepare field names*/
+      /* Prepare field names */
       val colNames =
-        if (options.header) { /* Get column name from the first row*/
+        if (options.header) { /* Get column name from the first row */
           val r = excelHelper.getColumnNames(rows.next)
           rows = rows.drop(options.ignoreAfterHeader)
           r
-        } else { /* Peek first row, then return back*/
+        } else { /* Peek first row, then return back */
           val headerRow = rows.next
           val r = excelHelper.getColumnNames(headerRow)
           rows = Iterator(headerRow) ++ rows
@@ -283,16 +285,16 @@ class ExcelDataSourceReader(
         }
 
       /* Other files also be utilized (lazily) for field types, reuse field name
-         from the first file*/
+         from the first file */
       val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
       paths.tail.foreach(path => {
         rows ++= excelHelper.getRows(conf, path).drop(numberOfRowToIgnore)
       })
 
-      /* Limit numer of rows to be used for schema infering*/
+      /* Limit numer of rows to be used for schema infering */
       rows = if (options.excerptSize.isDefined) rows.take(options.excerptSize.get) else rows
 
-      /* Ready to infer schema*/
+      /* Ready to infer schema */
       ExcelInferSchema(options).infer(rows, colNames)
     }
   }
@@ -314,7 +316,7 @@ class ExcelInputPartition(
     * If this method fails (by throwing an exception), the corresponding Spark task would fail and
     * get retried until hitting the maximum retry times.
     */
-  override def createPartitionReader =
+  override def createPartitionReader: InputPartitionReader[InternalRow] =
     new ExcelInputPartitionReader(filters, dataSchema, requiredSchema, partitionSchema, options, path, partitionValues)
 }
 
@@ -355,9 +357,9 @@ class ExcelInputPartitionReader(
     converter(joinedRow(dataRow, partitionValues))
   })
 
-  override def next = combinedReader.hasNext
-  override def get = combinedReader.next
-  def close() = Unit
+  override def next: Boolean = combinedReader.hasNext
+  override def get: InternalRow = combinedReader.next
+  override def close(): Unit = {}
 }
 
 class ExcelDataSourceWriter(
@@ -373,9 +375,9 @@ class ExcelDataSourceWriter(
   override def createWriterFactory(): DataWriterFactory[InternalRow] =
     new ExcelDataWriterFactory(options, path, schema)
 
-  override def commit(messages: Array[WriterCommitMessage]) = {}
+  override def commit(messages: Array[WriterCommitMessage]): Unit = {}
 
-  override def abort(messages: Array[WriterCommitMessage]) = {}
+  override def abort(messages: Array[WriterCommitMessage]): Unit = {}
 }
 
 class ExcelDataWriterFactory(val options: ExcelOptions, val path: String, val schema: StructType)
@@ -390,14 +392,14 @@ class ExcelDataWriter(val options: ExcelOptions, val path: String, val schema: S
   private val gen = new ExcelGenerator(path, schema, new Configuration(), options)
   if (options.header) { gen.writeHeaders() }
 
-  override def write(record: InternalRow) = gen.write(record)
+  override def write(record: InternalRow): Unit = gen.write(record)
 
   override def commit(): WriterCommitMessage = {
     gen.close()
     WriteSucceeded
   }
 
-  override def abort() = {}
+  override def abort(): Unit = {}
 
   object WriteSucceeded extends WriterCommitMessage
 }

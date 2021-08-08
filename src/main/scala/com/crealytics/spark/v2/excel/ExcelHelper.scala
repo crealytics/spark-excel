@@ -47,10 +47,10 @@ object PlainNumberFormat extends Format {
     throw new UnsupportedOperationException()
 }
 
-/* Excel parsing and utility methods*/
+/* Excel parsing and utility methods */
 class ExcelHelper(options: ExcelOptions) {
 
-  /* For get cell string value*/
+  /* For get cell string value */
   private lazy val dataFormatter = {
     val r = new DataFormatter()
     if (options.usePlainNumberFormat) {
@@ -84,7 +84,7 @@ class ExcelHelper(options: ExcelOptions) {
         case CellType.STRING => cell.getStringCellValue
         case CellType.NUMERIC => cell.getNumericCellValue.toString
 
-        /* Get what displayed on the cell, for all other cases*/
+        /* Get what displayed on the cell, for all other cases */
         case _ => dataFormatter.formatCellValue(cell)
       }
     case _ => dataFormatter.formatCellValue(cell)
@@ -146,10 +146,10 @@ class ExcelHelper(options: ExcelOptions) {
             cellType == CellType.ERROR || cellType == CellType.BLANK ||
             cellType == CellType._NONE || value.isEmpty
           ) {
-            /* When there are empty strings or the, put the index as the suffix.*/
+            /* When there are empty strings or the, put the index as the suffix. */
             s"_c$index"
           } else if (duplicates.contains(value)) {
-            /* When there are duplicates, put the index as the suffix.*/
+            /* When there are duplicates, put the index as the suffix. */
             s"$value$index"
           } else { value }
         }

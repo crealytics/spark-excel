@@ -29,9 +29,9 @@ class FailureSafeParser[IN](
 ) {
 
   private val corruptFieldIndex =
-    if (schema.fieldNames.contains(columnNameOfCorruptRecord))
+    if (schema.fieldNames.contains(columnNameOfCorruptRecord)) {
       Some(schema.fieldIndex(columnNameOfCorruptRecord))
-    else None
+    } else None
 
   private val actualSchema = StructType(schema.filterNot(_.name == columnNameOfCorruptRecord))
   private val resultRow = new GenericInternalRow(schema.length)

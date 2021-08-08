@@ -27,7 +27,7 @@ import org.apache.poi.ss.util.WorkbookUtil
 import org.apache.hadoop.conf.Configuration
 
 class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Configuration, val options: ExcelOptions) {
-  /* Prepare target Excel workbook, sheet and where to write to*/
+  /* Prepare target Excel workbook, sheet and where to write to */
   private val wb: Workbook =
     if (options.fileExtension.toLowerCase == "xlsx") new HSSFWorkbook() else new XSSFWorkbook()
 
@@ -43,10 +43,10 @@ class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Con
     (wb.createSheet(sheetname), col, row)
   }
 
-  /* Set value from Spark InternalRow to an Excel cell*/
+  /* Set value from Spark InternalRow to an Excel cell */
   private type ValueConverter = (InternalRow, Int, Cell) => Unit
 
-  /* Pre prepared for each output columns based on data schema*/
+  /* Pre prepared for each output columns based on data schema */
   private val valueConverters: Array[ValueConverter] = dataSchema.map(_.dataType).map(makeConverter).toArray
 
   /** Create Excel Style. This can be used inplace of cell.setType.
@@ -63,7 +63,7 @@ class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Con
     r
   }
 
-  /* Predefined Excel Cell styles/types*/
+  /* Predefined Excel Cell styles/types */
   private lazy val DateCellStyle = createStyle(options.dateFormat)
   private lazy val TimestampCellStyle = createStyle(options.timestampFormat)
   private lazy val WholeNumberCellStyle = createStyle("General")

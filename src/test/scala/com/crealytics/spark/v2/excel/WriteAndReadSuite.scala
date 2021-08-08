@@ -101,7 +101,7 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
 
     assertDataFrameEquals(df_source, df_read)
 
-    /* Cleanup, should after the checking*/
+    /* Cleanup, should after the checking */
     deleteDirectory(path)
   }
 
@@ -128,7 +128,7 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
 
       assertDataFrameEquals(df_source, df_read)
 
-      /* Cleanup, should after the checking*/
+      /* Cleanup, should after the checking */
       deleteDirectory(path)
     })
   }
