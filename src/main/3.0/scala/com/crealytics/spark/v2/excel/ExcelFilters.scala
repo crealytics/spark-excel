@@ -14,20 +14,15 @@
   */
 package com.crealytics.spark.v2.excel
 
-import org.apache.hadoop.mapreduce.TaskAttemptContext
-import org.apache.spark.internal.Logging
-import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.execution.datasources.OutputWriter
+import org.apache.spark.sql.catalyst.csv.CSVFilters
+import org.apache.spark.sql.sources
 import org.apache.spark.sql.types.StructType
 
-class ExcelOutputWriter(path: String, dataSchema: StructType, context: TaskAttemptContext, options: ExcelOptions)
-    extends OutputWriter
-    with Logging {
+/** Wrapping the API change between spark 3.0 vs 3.1 */
+class ExcelFilters(filters: Seq[sources.Filter], requiredSchema: StructType)
+    extends CSVFilters(filters, requiredSchema) {}
 
-  private val gen = new ExcelGenerator(path, dataSchema, context, options)
-  if (options.header) { gen.writeHeaders() }
-
-  override def write(row: InternalRow): Unit = gen.write(row)
-
-  override def close(): Unit = gen.close()
+object ExcelFilters {
+  def pushedFilters(filters: Array[sources.Filter], schema: StructType): Array[sources.Filter] =
+    CSVFilters.pushedFilters(filters, schema)
 }

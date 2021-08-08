@@ -37,7 +37,7 @@ trait DataLocator {
     if (options.keepUndefinedRows) {
       rowInd.iterator.map(rid => {
         val r = sheet.getRow(rid)
-        if (r == null) { Vector.empty[Cell] }
+        if (r == null) { Vector.empty }
         else {
           colInd
             .filter(_ < r.getLastCellNum())

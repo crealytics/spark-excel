@@ -107,8 +107,4 @@ case class ExcelScan(
   override def description(): String = {
     super.description() + ", PushedFilters: " + pushedFilters.mkString("[", ", ", "]")
   }
-
-  override def getMetaData(): Map[String, String] = {
-    super.getMetaData() ++ Map("PushedFilers" -> seqToString(pushedFilters))
-  }
 }

@@ -18,23 +18,13 @@ import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.DateUtil
 import org.apache.spark.sql.catalyst.analysis.TypeCoercion
-import org.apache.spark.sql.catalyst.expressions.ExprUtils
-import org.apache.spark.sql.catalyst.util.LegacyDateFormats.FAST_DATE_FORMAT
-import org.apache.spark.sql.catalyst.util.TimestampFormatter
 import org.apache.spark.sql.types._
 
-import java.util.Locale
 import scala.util.control.Exception.allCatch
 
 class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
 
-  private val timestampParser = TimestampFormatter(
-    options.timestampFormat,
-    options.zoneId,
-    options.locale,
-    legacyFormat = FAST_DATE_FORMAT,
-    isParsing = true
-  )
+  private val timestampParser = ExcelDateTimeStringUtils.getTimestampFormatter(options)
 
   /** Similar to the JSON schema inference
     *     1. Infer type of each row
@@ -47,7 +37,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     val rowNumField =
       if (options.columnNameOfRowNumber.isDefined)
         Vector[StructField](StructField(options.columnNameOfRowNumber.get, IntegerType, false))
-      else Vector.empty[StructField]
+      else Vector.empty
 
     /* Header without row-number-column*/
     val dataHeader = if (options.columnNameOfRowNumber.isDefined) header.tail else header
@@ -145,9 +135,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
   }
 
   /* Special handling the default locale for backward compatibility*/
-  private val decimalParser =
-    if (options.locale == Locale.US) { s: String => new java.math.BigDecimal(s) }
-    else { ExprUtils.getDecimalParser(options.locale) }
+  private val decimalParser = (s: String) => new java.math.BigDecimal(s)
 
   private def isInfOrNan(field: String): Boolean = {
     field == options.nanValue || field == options.negativeInf || field == options.positiveInf

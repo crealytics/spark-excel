@@ -15,7 +15,6 @@
 package com.crealytics.spark.v2.excel
 
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.mapreduce.TaskAttemptContext
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellStyle
@@ -25,13 +24,9 @@ import org.apache.spark.sql.types._
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.apache.poi.ss.util.WorkbookUtil
+import org.apache.hadoop.conf.Configuration
 
-class ExcelGenerator(
-  val path: String,
-  val dataSchema: StructType,
-  val context: TaskAttemptContext,
-  val options: ExcelOptions
-) {
+class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Configuration, val options: ExcelOptions) {
   /* Prepare target Excel workbook, sheet and where to write to*/
   private val wb: Workbook =
     if (options.fileExtension.toLowerCase == "xlsx") new HSSFWorkbook() else new XSSFWorkbook()
@@ -158,7 +153,7 @@ class ExcelGenerator(
   def close(): Unit = {
     val fos = {
       val hdfsPath = new Path(path)
-      val fs = hdfsPath.getFileSystem(context.getConfiguration)
+      val fs = hdfsPath.getFileSystem(conf)
       fs.create(hdfsPath, true)
     }
     wb.write(fos)

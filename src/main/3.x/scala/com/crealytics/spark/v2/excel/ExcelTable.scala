@@ -42,7 +42,7 @@ case class ExcelTable(
     val options =
       new ExcelOptions(map.asScala.toMap, sparkSession.sessionState.conf.sessionLocalTimeZone)
 
-    if (files.nonEmpty) Some(infer(sparkSession, files, options)) else None
+    if (files.nonEmpty) Some(infer(sparkSession, files, options)) else Some(StructType(Seq.empty))
   }
 
   override def newWriteBuilder(info: LogicalWriteInfo): WriteBuilder =
@@ -72,7 +72,7 @@ case class ExcelTable(
     var rows = excelHelper.getRows(conf, paths.head)
 
     if (rows.isEmpty) { /* If the first file is empty, not checking further*/
-      StructType(Nil)
+      StructType(Seq.empty)
     } else {
       /* Prepare field names*/
       val colNames =

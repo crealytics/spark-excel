@@ -18,10 +18,7 @@ import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellType
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.OrderedFilters
-import org.apache.spark.sql.catalyst.expressions.ExprUtils
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
-import org.apache.spark.sql.catalyst.util.LegacyDateFormats.FAST_DATE_FORMAT
 import org.apache.spark.sql.catalyst.util._
 import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.types._
@@ -90,18 +87,11 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
     */
   private val noRows = None
 
-  private lazy val timestampFormatter = TimestampFormatter(
-    options.timestampFormat,
-    options.zoneId,
-    options.locale,
-    legacyFormat = FAST_DATE_FORMAT,
-    isParsing = true
-  )
-  private lazy val dateFormatter =
-    DateFormatter(options.dateFormat, options.zoneId, options.locale, legacyFormat = FAST_DATE_FORMAT, isParsing = true)
+  private lazy val timestampFormatter = ExcelDateTimeStringUtils.getTimestampFormatter(options)
+  private lazy val dateFormatter = ExcelDateTimeStringUtils.getDateFormatter(options)
 
   /* Excel record is flat, it can use same filters with CSV*/
-  private val pushedFilters = new OrderedFilters(filters, requiredSchema)
+  private val pushedFilters = new ExcelFilters(filters, requiredSchema)
 
   /* Retrieve the raw record string.*/
   private def getCurrentInput: UTF8String = UTF8String
@@ -130,7 +120,8 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
     requiredSchema.map(f => makeConverter(f.name, f.dataType, f.nullable)).toArray
   }
 
-  private val decimalParser = ExprUtils.getDecimalParser(options.locale)
+  /* Special handling the default locale for backward compatibility*/
+  private val decimalParser = (s: String) => new java.math.BigDecimal(s)
 
   /** Create a converter which converts the Cell value to a value according to a
     * desired type. Currently, we do not support complex types (`ArrayType`,
@@ -279,8 +270,9 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
                       /** If fails to parse, then tries the way used in 2.0 and 1.x
                         * for backwards compatibility.
                         */
-                      val str = DateTimeUtils.cleanLegacyTimestampStr(UTF8String.fromString(v))
-                      DateTimeUtils.stringToTimestamp(str, options.zoneId).getOrElse(throw e)
+                      ExcelDateTimeStringUtils
+                        .stringToTimestamp(v, options.zoneId)
+                        .getOrElse(throw e)
                   }
                 }
               }
@@ -297,9 +289,9 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
                 /** If fails to parse, then tries the way used in 2.0 and 1.x
                   * for backwards compatibility.
                   */
-                val str = DateTimeUtils
-                  .cleanLegacyTimestampStr(UTF8String.fromString(datum.getStringCellValue))
-                DateTimeUtils.stringToDate(str, options.zoneId).getOrElse(throw e)
+                ExcelDateTimeStringUtils
+                  .stringToDate(datum.getStringCellValue, options.zoneId)
+                  .getOrElse(throw e)
             }
           }
 
@@ -307,12 +299,6 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
             UTF8String.fromString(excelHelper.safeCellStringValue(datum))
-          }
-
-      case CalendarIntervalType =>
-        (d: Cell) =>
-          nullSafeDatum(d, name, nullable, options) { datum =>
-            IntervalUtils.safeStringToInterval(UTF8String.fromString(datum.getStringCellValue))
           }
 
       /** We don't actually hit this exception though, we keep it for

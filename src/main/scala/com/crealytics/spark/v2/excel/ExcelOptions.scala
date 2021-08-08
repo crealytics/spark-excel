@@ -67,8 +67,8 @@ class ExcelOptions(
     .map(ParseMode.fromString)
     .getOrElse(PermissiveMode)
 
-  val zoneId: ZoneId = DateTimeUtils
-    .getZoneId(parameters.getOrElse(DateTimeUtils.TIMEZONE_OPTION, defaultTimeZoneId))
+  val zoneId: ZoneId = ZoneId
+    .of(parameters.getOrElse(DateTimeUtils.TIMEZONE_OPTION, defaultTimeZoneId))
 
   /* A language tag in IETF BCP 47 format*/
   val locale: Locale = parameters.get("locale").map(Locale.forLanguageTag).getOrElse(Locale.US)

@@ -15,7 +15,6 @@
 package com.crealytics.spark.v2.excel
 
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.catalyst.StructFilters
 import org.apache.spark.sql.connector.read.Scan
 import org.apache.spark.sql.connector.read.SupportsPushDownFilters
 import org.apache.spark.sql.execution.datasources.PartitioningAwareFileIndex
@@ -40,7 +39,7 @@ case class ExcelScanBuilder(
   private var _pushedFilters: Array[Filter] = Array.empty
 
   override def pushFilters(filters: Array[Filter]): Array[Filter] = {
-    _pushedFilters = StructFilters.pushedFilters(filters, dataSchema)
+    _pushedFilters = ExcelFilters.pushedFilters(filters, dataSchema)
     filters
   }
 
