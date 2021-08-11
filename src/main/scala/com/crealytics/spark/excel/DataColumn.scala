@@ -67,6 +67,7 @@ class HeaderDataColumn(
             case CellType.NUMERIC => Option(cell.getNumericCellValue)
             case CellType.STRING =>
               parseNumber(Option(cell.getRichStringCellValue).map(_.getString))
+            case CellType.ERROR => Some(0.0)
           }
       }
     lazy val booleanValue = cell.getCellType match {
