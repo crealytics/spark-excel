@@ -287,9 +287,9 @@ class ExcelDataSourceReader(
       /* Other files also be utilized (lazily) for field types, reuse field name
          from the first file */
       val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
-      paths.tail.foreach(path => {
-        rows ++= excelHelper.getRows(conf, path).drop(numberOfRowToIgnore)
-      })
+      rows = paths.tail.foldLeft(rows) { case (rs, path) => 
+        rs ++ excelHelper.getRows(conf, path).drop(numberOfRowToIgnore)
+      }
 
       /* Limit numer of rows to be used for schema infering */
       rows = options.excerptSize.foldLeft(rows)(_ take _)
