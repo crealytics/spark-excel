@@ -292,7 +292,7 @@ class ExcelDataSourceReader(
       })
 
       /* Limit numer of rows to be used for schema infering */
-      rows = if (options.excerptSize.isDefined) rows.take(options.excerptSize.get) else rows
+      rows = options.excerptSize.foldLeft(rows)(_ take _)
 
       /* Ready to infer schema */
       ExcelInferSchema(options).infer(rows, colNames)
