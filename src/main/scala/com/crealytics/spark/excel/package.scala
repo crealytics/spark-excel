@@ -30,7 +30,7 @@ package object excel {
   implicit class RichCell(val cell: Cell) extends AnyVal {
     def value: Any =
       cell.getCellType match {
-        case CellType.BLANK => null
+        case CellType.BLANK | CellType.ERROR | CellType._NONE => null
         case CellType.NUMERIC => cell.getNumericCellValue
         case CellType.STRING => cell.getStringCellValue
         case CellType.BOOLEAN => cell.getBooleanCellValue
@@ -40,6 +40,7 @@ package object excel {
             case CellType.NUMERIC => cell.getNumericCellValue
             case CellType.STRING => cell.getRichStringCellValue
             case CellType.BOOLEAN => cell.getBooleanCellValue
+            case _ => null
           }
       }
   }
