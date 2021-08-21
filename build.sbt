@@ -49,6 +49,25 @@ libraryDependencies ++= Seq(
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % Test
 )
 
+// Custom source layout for Spark Data Source API 2
+Compile / unmanagedSourceDirectories := {
+  if (testSparkVersion.value >= "3.1.0")
+    Seq(
+      (Compile / sourceDirectory)(_ / "scala"),
+      (Compile / sourceDirectory)(_ / "3.x/scala"),
+      (Compile / sourceDirectory)(_ / "3.1/scala")
+    ).join.value
+  else if (testSparkVersion.value >= "3.0.0")
+    Seq(
+      (Compile / sourceDirectory)(_ / "scala"),
+      (Compile / sourceDirectory)(_ / "3.x/scala"),
+      (Compile / sourceDirectory)(_ / "3.0/scala")
+    ).join.value
+  else if (testSparkVersion.value >= "2.4.0")
+    Seq((Compile / sourceDirectory)(_ / "scala"), (Compile / sourceDirectory)(_ / "2.4/scala")).join.value
+  else throw new UnsupportedOperationException(s"testSparkVersion ${testSparkVersion.value} is not supported")
+}
+
 Test / fork := true
 Test / parallelExecution := false
 javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
