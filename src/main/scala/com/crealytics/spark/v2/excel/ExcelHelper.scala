@@ -1,16 +1,13 @@
 /** Copyright 2016 - 2021 Martin Mauch (@nightscape)
   *
-  * Licensed under the Apache License, Version 2.0 (the "License");
-  * you may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at
+  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at
   *
-  *     http://www.apache.org/licenses/LICENSE-2.0
+  * http://www.apache.org/licenses/LICENSE-2.0
   *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
+  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  * specific language governing permissions and limitations under the License.
   */
 package com.crealytics.spark.v2.excel
 
@@ -33,10 +30,11 @@ import org.apache.poi.ss.util.CellReference
 import org.apache.poi.ss.SpreadsheetVersion
 import scala.util.Try
 
-/** A format that formats a double as a plain string without rounding and
-  * scientific notation. All other operations are unsupported.
-  * @see [[org.apache.poi.ss.usermodel.ExcelGeneralNumberFormat]] and SSNFormat
-  * from [[org.apache.poi.ss.usermodel.DataFormatter]] from Apache POI.
+/** A format that formats a double as a plain string without rounding and scientific notation. All other operations are
+  * unsupported.
+  * @see
+  *   [[org.apache.poi.ss.usermodel.ExcelGeneralNumberFormat]] and SSNFormat from
+  *   [[org.apache.poi.ss.usermodel.DataFormatter]] from Apache POI.
   */
 object PlainNumberFormat extends Format {
 
@@ -55,8 +53,8 @@ class ExcelHelper(options: ExcelOptions) {
     val r = new DataFormatter()
     if (options.usePlainNumberFormat) {
 
-      /** Overwrite ExcelGeneralNumberFormat with custom PlainNumberFormat.
-        * See https://github.com/crealytics/spark-excel/issues/321
+      /** Overwrite ExcelGeneralNumberFormat with custom PlainNumberFormat. See
+        * https://github.com/crealytics/spark-excel/issues/321
         */
       val plainNumberFormat = PlainNumberFormat
       r.addFormat("General", plainNumberFormat)
@@ -67,8 +65,10 @@ class ExcelHelper(options: ExcelOptions) {
 
   /** Cell string value extractor, which handle difference cell type
     *
-    * @param cell to be extracted
-    * @return string value for given cell
+    * @param cell
+    *   to be extracted
+    * @return
+    *   string value for given cell
     */
   def safeCellStringValue(cell: Cell): String = cell.getCellType match {
     case CellType.BLANK | CellType._NONE => ""
@@ -77,8 +77,7 @@ class ExcelHelper(options: ExcelOptions) {
       cell.getCachedFormulaResultType match {
         case CellType.BLANK | CellType._NONE => ""
 
-        /** When the cell is an error-formula, and requested type is string,
-          * get actual formula itself
+        /** When the cell is an error-formula, and requested type is string, get actual formula itself
           */
         case CellType.ERROR => cell.getCellFormula
         case CellType.STRING => cell.getStringCellValue
@@ -92,10 +91,14 @@ class ExcelHelper(options: ExcelOptions) {
 
   /** Get workbook
     *
-    * @param conf Hadoop configuration
-    * @param uri to the file, this can be on any support file system back end
-    * @param password optional password to open workbook
-    * @return workbook
+    * @param conf
+    *   Hadoop configuration
+    * @param uri
+    *   to the file, this can be on any support file system back end
+    * @param password
+    *   optional password to open workbook
+    * @return
+    *   workbook
     */
   def getWorkbook(conf: Configuration, uri: URI): Workbook = {
     val ins = FileSystem.get(uri, conf).open(new Path(uri))
@@ -108,9 +111,12 @@ class ExcelHelper(options: ExcelOptions) {
 
   /** Get cell-row iterator for excel file in given URI
     *
-    * @param conf Hadoop configuration
-    * @param uri to the file, this can be on any support file system back end
-    * @return cell-row iterator
+    * @param conf
+    *   Hadoop configuration
+    * @param uri
+    *   to the file, this can be on any support file system back end
+    * @return
+    *   cell-row iterator
     */
   def getRows(conf: Configuration, uri: URI): Iterator[Vector[Cell]] = {
     val workbook = getWorkbook(conf, uri)
@@ -121,9 +127,12 @@ class ExcelHelper(options: ExcelOptions) {
 
   /** Get column name by list of cells (row)
     *
-    * @param firstRow column names will be based on this
-    * @param options excel option
-    * @return list of column names
+    * @param firstRow
+    *   column names will be based on this
+    * @param options
+    *   excel option
+    * @return
+    *   list of column names
     */
   def getColumnNames(firstRow: Vector[Cell]): Vector[String] = {
 
@@ -155,8 +164,7 @@ class ExcelHelper(options: ExcelOptions) {
         }
       } else {
         firstRow.zipWithIndex.map { case (_, index) =>
-          /** Uses default column names, "_c#" where # is its position of fields
-            * when header option is disabled.
+          /** Uses default column names, "_c#" where # is its position of fields when header option is disabled.
             */
           s"_c$index"
         }
@@ -167,7 +175,8 @@ class ExcelHelper(options: ExcelOptions) {
 
   /** Get parsed range address from given ExcelOption
     *
-    * @return parsed area reference
+    * @return
+    *   parsed area reference
     */
   def parsedRangeAddress(): AreaReference = Try {
     val cellRef = new CellReference(options.dataAddress)

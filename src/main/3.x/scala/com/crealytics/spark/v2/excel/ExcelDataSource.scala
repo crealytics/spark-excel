@@ -1,16 +1,13 @@
 /** Copyright 2016 - 2021 Martin Mauch (@nightscape)
   *
-  * Licensed under the Apache License, Version 2.0 (the "License");
-  * you may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at
+  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at
   *
-  *     http://www.apache.org/licenses/LICENSE-2.0
+  * http://www.apache.org/licenses/LICENSE-2.0
   *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
+  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  * specific language governing permissions and limitations under the License.
   */
 package com.crealytics.spark.v2.excel
 
@@ -29,9 +26,8 @@ import scala.collection.JavaConverters._
 
 /** Creality Spark Excel data source entry point.
   *
-  * This class is heavily influenced by datasources.v2.FileDataSourceV2. We can
-  * not extends FileDataSourceV2 directly because that needs a fallback
-  * implementation with V1 API for writing.
+  * This class is heavily influenced by datasources.v2.FileDataSourceV2. We can not extends FileDataSourceV2 directly
+  * because that needs a fallback implementation with V1 API for writing.
   */
 class ExcelDataSource extends TableProvider with DataSourceRegister {
   import ExcelDataSource._
@@ -70,20 +66,19 @@ class ExcelDataSource extends TableProvider with DataSourceRegister {
     */
   override def shortName(): String = "excel"
 
-  /** Returns true if the source has the ability of accepting external table
-    * metadata when getting tables. The external table metadata includes:
-    *   1. For table reader: user-specified schema from
-    *      `DataFrameReader`/`DataStreamReader` and
-    *      schema/partitioning stored in Spark catalog.
-    *   2. For table writer: the schema of the input `Dataframe` of
+  /** Returns true if the source has the ability of accepting external table metadata when getting tables. The external
+    * table metadata includes:
+    *   1. For table reader: user-specified schema from `DataFrameReader`/`DataStreamReader` and schema/partitioning
+    *      stored in Spark catalog. 2. For table writer: the schema of the input `Dataframe` of
     *      `DataframeWriter`/`DataStreamWriter`.
     */
   override def supportsExternalMetadata(): Boolean = true
 
   /** Infer the schema of the table identified by the given options.
     *
-    * @param options an immutable case-insensitive string-to-string map that can
-    *                identify a table, e.g. file path, Kafka topic name, etc.
+    * @param options
+    *   an immutable case-insensitive string-to-string map that can identify a table, e.g. file path, Kafka topic name,
+    *   etc.
     */
   override def inferSchema(options: CaseInsensitiveStringMap): StructType = {
     if (t == null) t = getTableInternal(options)
@@ -92,28 +87,28 @@ class ExcelDataSource extends TableProvider with DataSourceRegister {
 
   /** Infer the partitioning of the table identified by the given options.
     *
-    * By default this method returns empty partitioning, please override it if
-    * this source support partitioning.
+    * By default this method returns empty partitioning, please override it if this source support partitioning.
     *
-    * @param options an immutable case-insensitive string-to-string map that can
-    *                identify a table, e.g. file path, Kafka topic name, etc.
+    * @param options
+    *   an immutable case-insensitive string-to-string map that can identify a table, e.g. file path, Kafka topic name,
+    *   etc.
     */
   override def inferPartitioning(options: CaseInsensitiveStringMap): Array[Transform] = {
     Array.empty
   }
 
-  /** Return a Table instance with the specified table schema, partitioning and
-    * properties to do read/write. The returned table should report the same
-    * schema and partitioning with the specified ones, or Spark may fail the
+  /** Return a Table instance with the specified table schema, partitioning and properties to do read/write. The
+    * returned table should report the same schema and partitioning with the specified ones, or Spark may fail the
     * operation.
     *
-    * @param schema The specified table schema.
-    * @param partitioning The specified table partitioning.
-    * @param properties The specified table properties. It's case preserving
-    *                   (contains exactly what users specified) and
-    *                   implementations are free to use it case sensitively or
-    *                   insensitively. It should be able to identify a table,
-    *                   e.g. file path, Kafka topic name, etc.
+    * @param schema
+    *   The specified table schema.
+    * @param partitioning
+    *   The specified table partitioning.
+    * @param properties
+    *   The specified table properties. It's case preserving (contains exactly what users specified) and implementations
+    *   are free to use it case sensitively or insensitively. It should be able to identify a table, e.g. file path,
+    *   Kafka topic name, etc.
     */
   override def getTable(
     schema: StructType,

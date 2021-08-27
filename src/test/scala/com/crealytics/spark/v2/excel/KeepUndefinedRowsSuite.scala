@@ -1,16 +1,13 @@
 /** Copyright 2016 - 2021 Martin Mauch (@nightscape)
   *
-  * Licensed under the Apache License, Version 2.0 (the "License");
-  * you may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at
+  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at
   *
-  *     http://www.apache.org/licenses/LICENSE-2.0
+  * http://www.apache.org/licenses/LICENSE-2.0
   *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
+  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  * specific language governing permissions and limitations under the License.
   */
 package com.crealytics.spark.v2.excel
 
@@ -30,12 +27,10 @@ object KeepUndefinedRowsSuite {
     List(StructField("1", StringType, true), StructField("2", StringType, true), StructField("3", StringType, true))
   )
 
-  /** No change to the spark-excel, Apache POI also produce same result with
-    * sheet.iterator
+  /** No change to the spark-excel, Apache POI also produce same result with sheet.iterator
     *
-    * Workaround:
-    *   https://stackoverflow.com/questions/47790569/how-to-avoid-skipping-blank-rows-or-columns-in-apache-poi
-    *   Doc: http://poi.apache.org/components/spreadsheet/quick-guide.html#Iterator
+    * Workaround: https://stackoverflow.com/questions/47790569/how-to-avoid-skipping-blank-rows-or-columns-in-apache-poi
+    * Doc: http://poi.apache.org/components/spreadsheet/quick-guide.html#Iterator
     */
   val expectedData_Issue285: util.List[Row] = List(
     Row("File info", null, null),
@@ -73,9 +68,8 @@ object KeepUndefinedRowsSuite {
     Row("C", "7", "8")
   ).asJava
 
-  /** Issue: https://github.com/crealytics/spark-excel/issues/162
-    * Spark-excel still infers to Double-Type, however, user can provide custom
-    * scheme and Spark-excel should load to IntegerType or LongType accordingly
+  /** Issue: https://github.com/crealytics/spark-excel/issues/162 Spark-excel still infers to Double-Type, however, user
+    * can provide custom scheme and Spark-excel should load to IntegerType or LongType accordingly
     */
   val userDefined_Issue162 = StructType(
     List(

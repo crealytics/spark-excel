@@ -1,16 +1,13 @@
 /** Copyright 2016 - 2021 Martin Mauch (@nightscape)
   *
-  * Licensed under the Apache License, Version 2.0 (the "License");
-  * you may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at
+  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at
   *
-  *     http://www.apache.org/licenses/LICENSE-2.0
+  * http://www.apache.org/licenses/LICENSE-2.0
   *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
+  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  * specific language governing permissions and limitations under the License.
   */
 package com.crealytics.spark.v2.excel
 
@@ -27,16 +24,16 @@ import org.apache.spark.unsafe.types.UTF8String
 import scala.util.control.NonFatal
 import org.apache.poi.ss.usermodel.DateUtil
 
-/** Constructs a parser for a given schema that translates Excel data to an
-  * [[InternalRow]].
+/** Constructs a parser for a given schema that translates Excel data to an [[InternalRow]].
   *
-  * @param dataSchema The Excel data schema that is specified by the user, or
-  *        inferred from underlying data files.
-  * @param requiredSchema The schema of the data that should be output for each
-  *        row. This should be a subset of the columns in dataSchema.
-  * @param options Configuration options for a Excel parser.
-  * @param filters The pushdown filters that should be applied to converted
-  *        values.
+  * @param dataSchema
+  *   The Excel data schema that is specified by the user, or inferred from underlying data files.
+  * @param requiredSchema
+  *   The schema of the data that should be output for each row. This should be a subset of the columns in dataSchema.
+  * @param options
+  *   Configuration options for a Excel parser.
+  * @param filters
+  *   The pushdown filters that should be applied to converted values.
   */
 class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val options: ExcelOptions, filters: Seq[Filter])
     extends Logging {
@@ -51,13 +48,11 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
   }
   def this(schema: StructType, options: ExcelOptions) = this(schema, schema, options)
 
-  /** Handling detail about Excel, so the logic of ExcelParser is similar with
-    * other file based data sources
+  /** Handling detail about Excel, so the logic of ExcelParser is similar with other file based data sources
     */
   private val excelHelper = ExcelHelper(options)
 
-  /** A `ValueConverter` is responsible for converting the given value to a
-    * desired type.
+  /** A `ValueConverter` is responsible for converting the given value to a desired type.
     */
   private type ValueConverter = Cell => Any
 
@@ -82,8 +77,8 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
   /* Pre-allocated Some to avoid the overhead of building Some per each-row. */
   private val requiredRow = Some(new GenericInternalRow(requiredSchema.length))
 
-  /** Pre-allocated empty sequence returned when the parsed row cannot pass
-    * filters. Pre-allocate it to avoid unnecessary allocations.
+  /** Pre-allocated empty sequence returned when the parsed row cannot pass filters. Pre-allocate it to avoid
+    * unnecessary allocations.
     */
   private val noRows = None
 
@@ -97,24 +92,18 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
   private def getCurrentInput: UTF8String = UTF8String
     .fromString("TODO: how to show the corrupted record?")
 
-  /** This parser first picks some tokens from the input tokens, according to
-    * the required schema, then parse these tokens and put the values in a row,
-    * with the order specified by the required schema.
+  /** This parser first picks some tokens from the input tokens, according to the required schema, then parse these
+    * tokens and put the values in a row, with the order specified by the required schema.
     *
-    * For example, let's say there is Excel data as below:
-    *  a,b,c
-    *  1,2,A
+    * For example, let's say there is Excel data as below: a,b,c 1,2,A
     *
-    * So the Excel data schema is: ["a", "b", "c"]
-    * And let's say the required schema is: ["c", "b"]
+    * So the Excel data schema is: ["a", "b", "c"] And let's say the required schema is: ["c", "b"]
     *
-    * with the input tokens,
-    *   input tokens - [1, 2, "A"]
+    * with the input tokens, input tokens - [1, 2, "A"]
     *
-    * Each input token is placed in each output row's position by mapping these.
-    * In this case,
+    * Each input token is placed in each output row's position by mapping these. In this case,
     *
-    *   output row - ["A", 2]
+    * output row - ["A", 2]
     */
   private val valueConverters: Array[ValueConverter] = {
     requiredSchema.map(f => makeConverter(f.name, f.dataType, f.nullable)).toArray
@@ -123,12 +112,10 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
   /* Special handling the default locale for backward compatibility */
   private val decimalParser = (s: String) => new java.math.BigDecimal(s)
 
-  /** Create a converter which converts the Cell value to a value according to a
-    * desired type. Currently, we do not support complex types (`ArrayType`,
-    * `MapType`, `StructType`).
+  /** Create a converter which converts the Cell value to a value according to a desired type. Currently, we do not
+    * support complex types (`ArrayType`, `MapType`, `StructType`).
     *
-    * For other nullable types, returns null if it is null or equals to the
-    * value specified in `nullValue` option.
+    * For other nullable types, returns null if it is null or equals to the value specified in `nullValue` option.
     */
   private def makeConverter(name: String, dataType: DataType, nullable: Boolean): ValueConverter =
     dataType match {
@@ -267,8 +254,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
                   try { timestampFormatter.parse(v) }
                   catch {
                     case NonFatal(e) =>
-                      /** If fails to parse, then tries the way used in 2.0 and 1.x
-                        * for backwards compatibility.
+                      /** If fails to parse, then tries the way used in 2.0 and 1.x for backwards compatibility.
                         */
                       ExcelDateTimeStringUtils
                         .stringToTimestamp(v, options.zoneId)
@@ -286,8 +272,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
             try { dateFormatter.parse(datum.getStringCellValue) }
             catch {
               case NonFatal(e) =>
-                /** If fails to parse, then tries the way used in 2.0 and 1.x
-                  * for backwards compatibility.
+                /** If fails to parse, then tries the way used in 2.0 and 1.x for backwards compatibility.
                   */
                 ExcelDateTimeStringUtils
                   .stringToDate(datum.getStringCellValue, options.zoneId)
@@ -301,8 +286,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
             UTF8String.fromString(excelHelper.safeCellStringValue(datum))
           }
 
-      /** We don't actually hit this exception though, we keep it for
-        * understand ability
+      /** We don't actually hit this exception though, we keep it for understand ability
         */
       case _ => throw new RuntimeException(s"Unsupported type: ${dataType.typeName}")
     }
@@ -325,8 +309,8 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
     ret
   }
 
-  /** Parses a single Excel string and turns it into either one resulting row or
-    * no row (if the the record is malformed).
+  /** Parses a single Excel string and turns it into either one resulting row or no row (if the the record is
+    * malformed).
     */
   val parse: Vector[Cell] => Option[InternalRow] = {
     /* This is intentionally a val to create a function once and reuse. */
@@ -347,18 +331,15 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
     var badRecordException: Option[Throwable] =
       if (tokens.length != parsedSchema.length) {
 
-        /** If the number of tokens doesn't match the schema, we should treat it
-          * as a malformed record. However, we still have chance to parse some
-          * of the tokens. It continues to parses the tokens normally and sets
-          * null when `ArrayIndexOutOfBoundsException` occurs for missing tokens.
+        /** If the number of tokens doesn't match the schema, we should treat it as a malformed record. However, we
+          * still have chance to parse some of the tokens. It continues to parses the tokens normally and sets null when
+          * `ArrayIndexOutOfBoundsException` occurs for missing tokens.
           */
         Some(new RuntimeException("Malformed Excel record"))
       } else None
 
-    /** When the length of the returned tokens is identical to the length of the
-      * parsed schema, we just need to:
-      *  1. Convert the tokens that correspond to the required schema.
-      *  2. Apply the pushdown filters to `requiredRow`.
+    /** When the length of the returned tokens is identical to the length of the parsed schema, we just need to:
+      *   1. Convert the tokens that correspond to the required schema. 2. Apply the pushdown filters to `requiredRow`.
       */
     var i = 0
     val row = requiredRow.get
@@ -396,8 +377,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
 
 object ExcelParser {
 
-  /** Parses an iterator that contains Excel list-of-cells and turns it into an
-    * iterator of rows.
+  /** Parses an iterator that contains Excel list-of-cells and turns it into an iterator of rows.
     */
   def parseIterator(
     rows: Iterator[Vector[Cell]],
