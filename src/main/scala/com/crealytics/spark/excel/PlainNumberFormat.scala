@@ -5,10 +5,11 @@ import java.text.FieldPosition
 import java.text.Format
 import java.text.ParsePosition
 
-/** A format that formats a double as a plain string without rounding and scientific notation.
-  * All other operations are unsupported.
-  * @see [[org.apache.poi.ss.usermodel.ExcelGeneralNumberFormat]] and SSNFormat from
-  * [[org.apache.poi.ss.usermodel.DataFormatter]] from Apache POI.
+/** A format that formats a double as a plain string without rounding and scientific notation. All other operations are
+  * unsupported.
+  * @see
+  *   [[org.apache.poi.ss.usermodel.ExcelGeneralNumberFormat]] and SSNFormat from
+  *   [[org.apache.poi.ss.usermodel.DataFormatter]] from Apache POI.
   */
 object PlainNumberFormat extends Format {
 

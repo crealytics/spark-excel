@@ -3,14 +3,14 @@ package com.crealytics.spark.excel
 import com.crealytics.spark.excel.Utils.MapIncluding
 import com.norbitltd.spoiwo.model.HasIndex._
 import com.norbitltd.spoiwo.model.{
+  Cell => WriteCell,
   CellDataFormat,
   CellRange,
   CellStyle,
-  Table,
-  TableColumn,
-  Cell => WriteCell,
   Row => WriteRow,
-  Sheet => WriteSheet
+  Sheet => WriteSheet,
+  Table,
+  TableColumn
 }
 import org.apache.poi.ss.SpreadsheetVersion
 import org.apache.poi.ss.usermodel.{Cell, Sheet, Workbook}

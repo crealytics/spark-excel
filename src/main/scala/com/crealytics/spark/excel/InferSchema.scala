@@ -21,11 +21,8 @@ import org.apache.spark.sql.types._
 private[excel] object InferSchema {
   type CellType = Int
 
-  /** Similar to the JSON schema inference.
-    * [[org.apache.spark.sql.execution.datasources.json.InferSchema]]
-    *     1. Infer type of each row
-    *     2. Merge row types to find common type
-    *     3. Replace any null types with string type
+  /** Similar to the JSON schema inference. [[org.apache.spark.sql.execution.datasources.json.InferSchema]]
+    *   1. Infer type of each row 2. Merge row types to find common type 3. Replace any null types with string type
     */
   def apply(rowsRDD: RDD[Seq[DataType]]): Array[DataType] = {
     val startType: Array[DataType] = Array.empty
@@ -51,8 +48,8 @@ private[excel] object InferSchema {
     }
   }
 
-  /** Infer type of string field. Given known type Double, and a string "1", there is no
-    * point checking if it is an Int, as the final type must be Double or higher.
+  /** Infer type of string field. Given known type Double, and a string "1", there is no point checking if it is an Int,
+    * as the final type must be Double or higher.
     */
   private[excel] def inferField(typeSoFar: DataType, field: DataType): DataType = {
     // Defining a function to return the StringType constant is necessary in order to work around
@@ -76,14 +73,12 @@ private[excel] object InferSchema {
     }
   }
 
-  /** Copied from internal Spark api
-    * [[org.apache.spark.sql.catalyst.analysis.HiveTypeCoercion]]
+  /** Copied from internal Spark api [[org.apache.spark.sql.catalyst.analysis.HiveTypeCoercion]]
     */
   private val numericPrecedence: IndexedSeq[DataType] =
     IndexedSeq[DataType](ByteType, ShortType, IntegerType, LongType, FloatType, DoubleType, TimestampType)
 
-  /** Copied from internal Spark api
-    * [[org.apache.spark.sql.catalyst.analysis.HiveTypeCoercion]]
+  /** Copied from internal Spark api [[org.apache.spark.sql.catalyst.analysis.HiveTypeCoercion]]
     */
   val findTightestCommonType: (DataType, DataType) => Option[DataType] = {
     case (t1, t2) if t1 == t2 => Some(t1)

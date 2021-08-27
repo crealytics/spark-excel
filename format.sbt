@@ -1,4 +1,1 @@
-inThisBuild(Seq(
-  scalafmtCheck  := true,
-  scalafmtOnCompile  := true
-))
+inThisBuild(Seq(scalafmtCheck := true, scalafmtOnCompile := true))
