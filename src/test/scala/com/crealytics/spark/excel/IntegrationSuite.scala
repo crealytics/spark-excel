@@ -2,7 +2,7 @@ package com.crealytics.spark.excel
 
 import cats.Monoid
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import com.norbitltd.spoiwo.model.{Cell, CellRange, Sheet, Row => SRow, Table => STable}
+import com.norbitltd.spoiwo.model.{Cell, CellRange, Row => SRow, Sheet, Table => STable}
 import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
 import org.apache.poi.ss.util.CellReference
 import org.apache.spark.sql.functions.{col, lit}

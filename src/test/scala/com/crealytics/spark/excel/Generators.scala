@@ -2,7 +2,7 @@ package com.crealytics.spark.excel
 
 import org.scalacheck.Arbitrary.{arbBigDecimal => _, arbLong => _, arbString => _, _}
 import org.scalacheck.ScalacheckShapeless._
-import com.norbitltd.spoiwo.model.{Cell, CellRange, Sheet, TableColumn, Row => SRow, Table => STable}
+import com.norbitltd.spoiwo.model.{Cell, CellRange, Row => SRow, Sheet, Table => STable, TableColumn}
 import org.apache.poi.ss.util.CellReference
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.StructType
