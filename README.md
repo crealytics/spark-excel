@@ -28,14 +28,14 @@ You can link against this library in your program at the following coordinates:
 ```
 groupId: com.crealytics
 artifactId: spark-excel_2.12
-version: 0.14.0
+version: <spark-version>_0.14.0
 ```
 
 ### Scala 2.11
 ```
 groupId: com.crealytics
 artifactId: spark-excel_2.11
-version: 0.14.0
+version: <spark-version>_0.14.0
 ```
 
 ## Using with Spark shell
@@ -184,4 +184,6 @@ Currently the following address styles are supported:
 ## Building From Source
 This library is built with [SBT](http://www.scala-sbt.org/0.13/docs/Command-Line-Reference.html).
 To build a JAR file simply run `sbt assembly` from the project root.
+To build for a specific spark version, for example spark-2.4.1, run `sbt -Dspark.testVersion=2.4.1 assembly`,
+also from the project root.
 The build configuration includes support for Scala 2.12 and 2.11.
