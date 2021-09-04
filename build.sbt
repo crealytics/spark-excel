@@ -12,6 +12,9 @@ val testSparkVersion = settingKey[String]("The version of Spark to test against.
 
 testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.value)
 
+// For Spark DataSource API V2, spark-excel jar file depends on spark-version
+version := testSparkVersion.value + "_" + version.value
+
 resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
 libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.32" % "provided")
