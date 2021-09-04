@@ -140,7 +140,7 @@ val peopleSchema = StructType(Array(
 val spark: SparkSession = ???
 val df = spark.read
     .format("com.crealytics.spark.excel")
-    .option("sheetName", "Info")
+    .option("dataAddress", "'Info'!A1")
     .option("header", "true")
     .schema(peopleSchema)
     .load("People.xlsx")
