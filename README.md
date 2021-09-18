@@ -74,7 +74,7 @@ val df = spark.read
     .option("inferSchema", "false") // Optional, default: false
     .option("addColorColumns", "true") // Optional, default: false
     .option("timestampFormat", "MM-dd-yyyy HH:mm:ss") // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
-    .option("maxRowsInMemory", 20) // Optional, default None. If set, uses a streaming reader which can help with big files
+    .option("maxRowsInMemory", 20) // Optional, default None. If set, uses a streaming reader which can help with big files (will fail if used with xls format files)
     .option("excerptSize", 10) // Optional, default: 10. If set and if schema inferred, number of rows to infer schema from
     .option("workbookPassword", "pass") // Optional, default None. Requires unlimited strength JCE for older JVMs
     .schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
@@ -98,7 +98,7 @@ val df = spark.read.excel(
     inferSchema = false,  // Optional, default: false
     addColorColumns = true,  // Optional, default: false
     timestampFormat = "MM-dd-yyyy HH:mm:ss",  // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
-    maxRowsInMemory = 20,  // Optional, default None. If set, uses a streaming reader which can help with big files
+    maxRowsInMemory = 20,  // Optional, default None. If set, uses a streaming reader which can help with big files (will fail if used with xls format files)
     excerptSize = 10,  // Optional, default: 10. If set and if schema inferred, number of rows to infer schema from
     workbookPassword = "pass"  // Optional, default None. Requires unlimited strength JCE for older JVMs
 ).schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
