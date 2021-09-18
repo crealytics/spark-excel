@@ -26,7 +26,7 @@ import org.apache.hadoop.conf.Configuration
 class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Configuration, val options: ExcelOptions) {
   /* Prepare target Excel workbook, sheet and where to write to */
   private val wb: Workbook =
-    if (options.fileExtension.toLowerCase == "xlsx") new HSSFWorkbook() else new XSSFWorkbook()
+    if (options.fileExtension.toLowerCase == "xlsx") new XSSFWorkbook() else new HSSFWorkbook()
 
   private val (sheet, firstCol, firstRow) = {
     val dataAddress = ExcelHelper(options).parsedRangeAddress()
