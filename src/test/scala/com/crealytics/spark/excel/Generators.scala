@@ -6,7 +6,7 @@ import org.apache.poi.ss.util.CellReference
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.StructType
 import org.scalacheck.{Arbitrary, Gen}
-import spoiwo.model.{Cell, CellRange, Sheet, TableColumn, Row => SRow, Table => STable}
+import spoiwo.model.{Cell, CellRange, Row => SRow, Sheet, Table => STable, TableColumn}
 
 import java.sql.{Date, Timestamp}
 import java.time.temporal.ChronoUnit

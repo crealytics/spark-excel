@@ -12,6 +12,9 @@ val testSparkVersion = settingKey[String]("The version of Spark to test against.
 
 testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.value)
 
+// For Spark DataSource API V2, spark-excel jar file depends on spark-version
+version := testSparkVersion.value + "_" + version.value
+
 resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
 libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.32" % "provided")
@@ -41,13 +44,32 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-hive" % testSparkVersion.value % "provided",
   "org.typelevel" %% "cats-core" % "2.6.1" % Test,
   "org.scalatest" %% "scalatest" % "3.2.9" % Test,
-  "org.scalatestplus" %% "scalacheck-1-15" % "3.2.9.0" % Test,
+  "org.scalatestplus" %% "scalacheck-1-15" % "3.2.10.0" % Test,
   "org.scalacheck" %% "scalacheck" % "1.15.4" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.15" % "1.3.0" % Test,
   "com.github.nightscape" %% "spark-testing-base" % "c2bc44caf4" % Test,
   //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % Test
 )
+
+// Custom source layout for Spark Data Source API 2
+Compile / unmanagedSourceDirectories := {
+  if (testSparkVersion.value >= "3.1.0")
+    Seq(
+      (Compile / sourceDirectory)(_ / "scala"),
+      (Compile / sourceDirectory)(_ / "3.x/scala"),
+      (Compile / sourceDirectory)(_ / "3.1/scala")
+    ).join.value
+  else if (testSparkVersion.value >= "3.0.0")
+    Seq(
+      (Compile / sourceDirectory)(_ / "scala"),
+      (Compile / sourceDirectory)(_ / "3.x/scala"),
+      (Compile / sourceDirectory)(_ / "3.0/scala")
+    ).join.value
+  else if (testSparkVersion.value >= "2.4.0")
+    Seq((Compile / sourceDirectory)(_ / "scala"), (Compile / sourceDirectory)(_ / "2.4/scala")).join.value
+  else throw new UnsupportedOperationException(s"testSparkVersion ${testSparkVersion.value} is not supported")
+}
 
 Test / fork := true
 Test / parallelExecution := false

@@ -7,14 +7,14 @@ import org.apache.poi.ss.util.{AreaReference, CellReference}
 import org.apache.poi.xssf.usermodel.{XSSFTable, XSSFWorkbook}
 import spoiwo.model.HasIndex._
 import spoiwo.model.{
+  Cell => WriteCell,
   CellDataFormat,
   CellRange,
   CellStyle,
-  Table,
-  TableColumn,
-  Cell => WriteCell,
   Row => WriteRow,
-  Sheet => WriteSheet
+  Sheet => WriteSheet,
+  Table,
+  TableColumn
 }
 
 import scala.collection.JavaConverters._

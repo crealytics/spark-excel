@@ -11,7 +11,7 @@ import org.scalactic.anyvals.PosInt
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import spoiwo.model.{Cell, CellRange, Sheet, Row => SRow, Table => STable}
+import spoiwo.model.{Cell, CellRange, Row => SRow, Sheet, Table => STable}
 import spoiwo.natures.xlsx.Model2XlsxConversions._
 
 import java.io.{File, FileOutputStream}
