@@ -1,9 +1,9 @@
 package com.crealytics.spark
 
-import com.norbitltd.spoiwo.model.Sheet
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy
 import org.apache.poi.ss.usermodel.{Cell, CellType, Row}
 import org.apache.spark.sql.{DataFrameReader, DataFrameWriter}
+import spoiwo.model.Sheet
 
 package object excel {
   implicit class RichRow(val row: Row) extends AnyVal {

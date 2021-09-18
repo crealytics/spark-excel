@@ -1,12 +1,12 @@
 package com.crealytics.spark.excel
 
-import com.norbitltd.spoiwo.model.Workbook
-import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.scalacheck.Gen
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import spoiwo.model.Workbook
+import spoiwo.natures.xlsx.Model2XlsxConversions._
 
 import scala.collection.JavaConverters._
 

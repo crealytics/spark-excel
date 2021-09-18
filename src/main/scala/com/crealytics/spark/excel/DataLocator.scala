@@ -1,8 +1,12 @@
 package com.crealytics.spark.excel
 
 import com.crealytics.spark.excel.Utils.MapIncluding
-import com.norbitltd.spoiwo.model.HasIndex._
-import com.norbitltd.spoiwo.model.{
+import org.apache.poi.ss.SpreadsheetVersion
+import org.apache.poi.ss.usermodel.{Cell, Sheet, Workbook}
+import org.apache.poi.ss.util.{AreaReference, CellReference}
+import org.apache.poi.xssf.usermodel.{XSSFTable, XSSFWorkbook}
+import spoiwo.model.HasIndex._
+import spoiwo.model.{
   CellDataFormat,
   CellRange,
   CellStyle,
@@ -12,10 +16,6 @@ import com.norbitltd.spoiwo.model.{
   Row => WriteRow,
   Sheet => WriteSheet
 }
-import org.apache.poi.ss.SpreadsheetVersion
-import org.apache.poi.ss.usermodel.{Cell, Sheet, Workbook}
-import org.apache.poi.ss.util.{AreaReference, CellReference}
-import org.apache.poi.xssf.usermodel.{XSSFTable, XSSFWorkbook}
 
 import scala.collection.JavaConverters._
 import scala.util.Try

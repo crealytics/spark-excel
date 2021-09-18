@@ -2,8 +2,6 @@ package com.crealytics.spark.excel
 
 import cats.Monoid
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import com.norbitltd.spoiwo.model.{Cell, CellRange, Sheet, Row => SRow, Table => STable}
-import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
 import org.apache.poi.ss.util.CellReference
 import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.types._
@@ -13,6 +11,8 @@ import org.scalactic.anyvals.PosInt
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import spoiwo.model.{Cell, CellRange, Sheet, Row => SRow, Table => STable}
+import spoiwo.natures.xlsx.Model2XlsxConversions._
 
 import java.io.{File, FileOutputStream}
 

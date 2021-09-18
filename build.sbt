@@ -28,7 +28,7 @@ shadedDeps ++= Seq(
 
 shadeRenames ++= Seq(
   "org.apache.poi.**" -> "shadeio.poi.@1",
-  "com.norbitltd.spoiwo.**" -> "shadeio.spoiwo.@1",
+  "spoiwo.**" -> "shadeio.spoiwo.@1",
   "com.github.pjfanning.**" -> "shadeio.pjfanning.@1",
   "org.apache.commons.compress.**" -> "shadeio.commons.compress.@1"
 )
