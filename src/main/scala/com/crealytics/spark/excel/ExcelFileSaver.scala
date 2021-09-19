@@ -1,10 +1,10 @@
 package com.crealytics.spark.excel
 
-import com.norbitltd.spoiwo.model._
-import com.norbitltd.spoiwo.natures.xlsx.Model2XlsxConversions._
 import org.apache.hadoop.fs.{FSDataInputStream, FileSystem, Path}
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.apache.spark.sql.{DataFrame, SaveMode}
+import spoiwo.model._
+import spoiwo.natures.xlsx.Model2XlsxConversions._
 
 import java.io.BufferedOutputStream
 import scala.collection.JavaConverters._
