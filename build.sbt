@@ -6,7 +6,7 @@ crossScalaVersions := Seq("2.12.15")
 
 scalaVersion := crossScalaVersions.value.head
 
-lazy val sparkVersion = "3.1.2"
+lazy val sparkVersion = "3.2.0"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
