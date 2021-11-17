@@ -43,12 +43,12 @@ This package can be added to  Spark using the `--packages` command line option. 
 
 ### Spark compiled with Scala 2.12
 ```
-$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.12:0.15.0
+$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.12:<spark-version>_0.15.0
 ```
 
 ### Spark compiled with Scala 2.11
 ```
-$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:0.15.0
+$SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:<spark-version>_0.15.0
 ```
 
 ## Features
