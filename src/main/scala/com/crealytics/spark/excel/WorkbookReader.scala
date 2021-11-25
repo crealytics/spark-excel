@@ -7,6 +7,8 @@ import com.github.pjfanning.xlsx.StreamingReader
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.poi.ss.usermodel.{Workbook, WorkbookFactory}
+import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory
+import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory
 
 trait WorkbookReader {
   protected def openWorkbook(): Workbook
@@ -29,6 +31,9 @@ object WorkbookReader {
   val WithLocationMaxRowsInMemoryAndPassword =
     MapIncluding(Seq("path"), optionally = Seq("maxRowsInMemory", "workbookPassword"))
 
+  WorkbookFactory.addProvider(new HSSFWorkbookFactory)
+  WorkbookFactory.addProvider(new XSSFWorkbookFactory)
+
   def apply(parameters: Map[String, String], hadoopConfiguration: Configuration): WorkbookReader = {
     def readFromHadoop(location: String) = {
       val path = new Path(location)
@@ -44,6 +49,7 @@ object WorkbookReader {
 }
 class DefaultWorkbookReader(inputStreamProvider: => InputStream, workbookPassword: Option[String])
     extends WorkbookReader {
+
   protected def openWorkbook(): Workbook =
     workbookPassword
       .fold(WorkbookFactory.create(inputStreamProvider))(password =>
