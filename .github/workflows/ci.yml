@@ -21,7 +21,6 @@ jobs:
                 ~/.ivy2/cache
                 ~/.sbt
             key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
-      - uses: olafurpg/setup-scala@v10
       - name: Test
         run: sbt -Dspark.testVersion=${{ matrix.spark  }} ++${{ matrix.scala }} test
       - name: Assembly
