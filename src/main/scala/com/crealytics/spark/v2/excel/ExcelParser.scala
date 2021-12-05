@@ -234,7 +234,14 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
       case dt: DecimalType =>
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
-            Decimal(decimalParser(datum.getStringCellValue), dt.precision, dt.scale)
+            datum.getCellType match {
+              case CellType.NUMERIC | CellType.FORMULA => {
+                Decimal(datum.getNumericCellValue(), dt.precision, dt.scale)
+              }
+              case _ => {
+                Decimal(decimalParser(datum.getStringCellValue), dt.precision, dt.scale)
+              }
+            }
           }
 
       case _: TimestampType =>
@@ -247,7 +254,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
               datum.getCellType match {
                 case CellType.NUMERIC | CellType.FORMULA => {
                   /* Excel to spark precision */
-                  datum.getNumericCellValue * 1000
+                  datum.getNumericCellValue.toLong
                 }
                 case _ => {
                   val v = excelHelper.safeCellStringValue(datum)
@@ -269,14 +276,27 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
       case _: DateType =>
         (d: Cell) =>
           nullSafeDatum(d, name, nullable, options) { datum =>
-            try { dateFormatter.parse(datum.getStringCellValue) }
-            catch {
-              case NonFatal(e) =>
-                /** If fails to parse, then tries the way used in 2.0 and 1.x for backwards compatibility.
-                  */
-                ExcelDateTimeStringUtils
-                  .stringToDate(datum.getStringCellValue, options.zoneId)
-                  .getOrElse(throw e)
+            if (DateUtil.isCellDateFormatted(datum)) {
+              DateTimeUtils.fromJavaDate(new java.sql.Date(datum.getDateCellValue().getTime))
+            } else {
+              datum.getCellType match {
+                case CellType.NUMERIC | CellType.FORMULA => {
+                  /* Excel to spark precision */
+                  datum.getNumericCellValue.toInt
+                }
+                case _ => {
+                  val v = excelHelper.safeCellStringValue(datum)
+                  try { dateFormatter.parse(v) }
+                  catch {
+                    case NonFatal(e) =>
+                      /** If fails to parse, then tries the way used in 2.0 and 1.x for backwards compatibility.
+                        */
+                      ExcelDateTimeStringUtils
+                        .stringToDate(v, options.zoneId)
+                        .getOrElse(throw e)
+                  }
+                }
+              }
             }
           }
 
