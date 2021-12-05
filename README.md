@@ -19,7 +19,13 @@ Help is very welcome e.g. in the following areas:
 
 ## Requirements
 
-This library requires Spark 2.0+
+This library requires Spark 2.0+.
+
+List of spark versions, those are automatically tested:
+```
+spark: ["2.4.1", "2.4.7", "2.4.8", "3.0.0", "3.0.3", "3.1.1", "3.1.2"]
+```
+For more detail, please refer to project CI: [ci.yml](https://github.com/crealytics/spark-excel/blob/main/.github/workflows/ci.yml#L10)
 
 ## Linking
 You can link against this library in your program at the following coordinates:
@@ -52,7 +58,13 @@ $SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:<spark-ve
 ```
 
 ## Features
-This package allows querying Excel spreadsheets as [Spark DataFrames](https://spark.apache.org/docs/latest/sql-programming-guide.html).
+* This package allows querying Excel spreadsheets as [Spark DataFrames](https://spark.apache.org/docs/latest/sql-programming-guide.html).
+* From spark-excel [0.14.0](https://github.com/crealytics/spark-excel/releases/tag/v0.14.0) (August 24, 2021), there are two implementation of spark-excel
+    * Original Spark-Excel with Spark data source API 1.0
+    * Spark-Excel V2 with data source API V2.0+, which supports loading from multiple files, corrupted record handling and some improvement on handling data types.
+
+To use V2 implementation, just change your .format from `.format("com.crealytics.spark.excel")` to `.format("excel")`
+
 
 ### Scala API
 __Spark 2.0+:__
@@ -65,7 +77,7 @@ import org.apache.spark.sql._
 
 val spark: SparkSession = ???
 val df = spark.read
-    .format("com.crealytics.spark.excel")
+    .format("com.crealytics.spark.excel") // Or .format("excel") for V2 implementation
     .option("dataAddress", "'My Sheet'!B3:C35") // Optional, default: "A1"
     .option("header", "true") // Required
     .option("treatEmptyValuesAsNulls", "false") // Optional, default: true
@@ -139,7 +151,7 @@ val peopleSchema = StructType(Array(
 
 val spark: SparkSession = ???
 val df = spark.read
-    .format("com.crealytics.spark.excel")
+    .format("com.crealytics.spark.excel") // Or .format("excel") for V2 implementation
     .option("dataAddress", "'Info'!A1")
     .option("header", "true")
     .schema(peopleSchema)
@@ -152,7 +164,7 @@ import org.apache.spark.sql._
 
 val df: DataFrame = ???
 df.write
-  .format("com.crealytics.spark.excel")
+  .format("com.crealytics.spark.excel") // Or .format("excel") for V2 implementation
   .option("dataAddress", "'My Sheet'!B3:C35")
   .option("header", "true")
   .option("dateFormat", "yy-mmm-d") // Optional, default: yy-m-d h:mm
