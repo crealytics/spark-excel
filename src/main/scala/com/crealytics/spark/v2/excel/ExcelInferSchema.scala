@@ -68,7 +68,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
         if (i < next.length) inferField(rowSoFar(i), next(i))
         else compatibleType(rowSoFar(i), NullType).getOrElse(StringType)
       )
-      .to[Vector]
+      .toVector
 
   private def mergeRowTypes(first: Vector[DataType], second: Vector[DataType]): Vector[DataType] = {
     first.zipAll(second, NullType, NullType).map { case (a, b) =>

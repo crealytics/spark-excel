@@ -29,7 +29,7 @@ case class ExcelRelation(
     with PrunedScan {
   type SheetRow = Seq[Cell]
 
-  lazy val excerpt: List[SheetRow] = workbookReader.withWorkbook(dataLocator.readFrom(_).take(excerptSize).to[List])
+  lazy val excerpt: List[SheetRow] = workbookReader.withWorkbook(dataLocator.readFrom(_).take(excerptSize).toList)
 
   lazy val headerColumnForName = headerColumns.map(c => c.name -> c).toMap
 
@@ -74,7 +74,7 @@ case class ExcelRelation(
             None
           }.get
         )
-      val result = rows.to[Vector]
+      val result = rows.toVector
       parallelize(result.map(Row.fromSeq))
     }
   }

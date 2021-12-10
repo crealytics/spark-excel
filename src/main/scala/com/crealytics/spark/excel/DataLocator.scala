@@ -90,7 +90,7 @@ trait AreaDataLocator extends DataLocator {
     val colInd = columnIndices(workbook)
     sheet.iterator.asScala
       .filter(r => rowInd.contains(r.getRowNum))
-      .map(_.cellIterator().asScala.filter(c => colInd.contains(c.getColumnIndex)).to[Vector])
+      .map(_.cellIterator().asScala.filter(c => colInd.contains(c.getColumnIndex)).toVector)
   }
 
   override def toSheet(

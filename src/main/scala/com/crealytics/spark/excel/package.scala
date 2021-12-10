@@ -51,7 +51,7 @@ package object excel {
       val (startRow, endRow) = table.cellRange.rowRange
       val (startColumn, endColumn) = table.cellRange.columnRange
       val tableRows = sheet.rows.filter(r => r.index.exists((startRow to endRow).contains))
-      tableRows.map(_.cells.filter(_.index.exists((startColumn to endColumn).contains)).map(_.value).to[Seq])
+      tableRows.map(_.cells.filter(_.index.exists((startColumn to endColumn).contains)).map(_.value).toSeq)
     }
   }
 

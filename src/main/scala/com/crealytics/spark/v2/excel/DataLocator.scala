@@ -41,7 +41,7 @@ trait DataLocator {
           colInd
             .filter(_ < r.getLastCellNum())
             .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK))
-            .to[Vector]
+            .toVector
         }
       })
 
@@ -52,7 +52,7 @@ trait DataLocator {
           colInd
             .filter(_ < r.getLastCellNum())
             .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK))
-            .to[Vector]
+            .toVector
         )
     }
   }

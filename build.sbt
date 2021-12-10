@@ -2,7 +2,7 @@ name := "spark-excel"
 
 organization := "com.crealytics"
 
-crossScalaVersions := Seq("2.12.15")
+crossScalaVersions := Seq("2.12.15", "2.13.7")
 
 scalaVersion := crossScalaVersions.value.head
 
@@ -47,10 +47,9 @@ libraryDependencies ++= Seq(
   "org.scalatestplus" %% "scalacheck-1-15" % "3.2.10.0" % Test,
   "org.scalacheck" %% "scalacheck" % "1.15.4" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.15" % "1.3.0" % Test,
-  "com.github.nightscape" %% "spark-testing-base" % "c2bc44caf4" % Test,
   //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
-  "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % Test
-)
+  "org.scalamock" %% "scalamock" % "5.1.0" % Test
+) ++ (if (scalaVersion.value.startsWith("2.12")) Seq("com.github.nightscape" %% "spark-testing-base" % "9496d55" % Test) else Seq())
 
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {
@@ -83,7 +82,7 @@ Compile / unmanagedSourceDirectories := {
 
 Test / fork := true
 Test / parallelExecution := false
-javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
+javaOptions ++= Seq("-Xms512M", "-Xmx2048M")
 
 publishMavenStyle := true
 
