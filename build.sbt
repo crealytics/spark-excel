@@ -25,7 +25,7 @@ shadedDeps ++= Seq(
   "org.apache.poi" ^ "poi-ooxml" ^ "5.1.0",
   "com.norbitltd" ^^ "spoiwo" ^ "2.0.0",
   "com.github.pjfanning" ^ "excel-streaming-reader" ^ "3.2.4",
-  "com.github.pjfanning" ^ "poi-shared-strings" ^ "2.3.0",
+  "com.github.pjfanning" ^ "poi-shared-strings" ^ "2.3.1",
   "org.apache.commons" ^ "commons-compress" ^ "1.21"
 )
 
@@ -49,7 +49,8 @@ libraryDependencies ++= Seq(
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.15" % "1.3.0" % Test,
   //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
   "org.scalamock" %% "scalamock" % "5.1.0" % Test
-) ++ (if (scalaVersion.value.startsWith("2.12")) Seq("com.github.nightscape" %% "spark-testing-base" % "9496d55" % Test) else Seq())
+) ++ (if (scalaVersion.value.startsWith("2.12")) Seq("com.github.nightscape" %% "spark-testing-base" % "9496d55" % Test)
+      else Seq())
 
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {
