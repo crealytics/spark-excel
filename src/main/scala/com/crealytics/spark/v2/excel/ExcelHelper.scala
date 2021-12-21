@@ -11,20 +11,26 @@
   */
 package com.crealytics.spark.v2.excel
 
-import java.math.BigDecimal
-import java.net.URI
-import java.text.{FieldPosition, Format, ParsePosition}
-
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.Path
+import org.apache.poi.ss.usermodel.Cell
+import org.apache.poi.ss.usermodel.CellType
+import org.apache.poi.ss.usermodel.DataFormatter
+import org.apache.poi.ss.usermodel.Workbook
+import org.apache.poi.ss.usermodel.WorkbookFactory
+import java.math.BigDecimal
+import java.text.FieldPosition
+import java.text.Format
+import java.text.ParsePosition
+
+import java.net.URI
 import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory
+import org.apache.poi.ss.util.AreaReference
+import org.apache.poi.ss.util.CellReference
 import org.apache.poi.ss.SpreadsheetVersion
-import org.apache.poi.ss.usermodel._
-import org.apache.poi.ss.util.{AreaReference, CellReference}
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory
-
 import scala.util.Try
-
 /** A format that formats a double as a plain string without rounding and scientific notation. All other operations are
   * unsupported.
   * @see
