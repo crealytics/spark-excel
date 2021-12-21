@@ -27,6 +27,7 @@ shadedDeps ++= Seq(
   "com.norbitltd" %% "spoiwo" % "2.2.1",
   "com.github.pjfanning" % "excel-streaming-reader" % "3.6.1",
   "com.github.pjfanning" % "poi-shared-strings" % "2.5.2",
+  "commons-io" % "commons-io" % "2.11.0",
   "org.apache.commons" % "commons-compress" % "1.21"
 )
 
@@ -34,6 +35,7 @@ shadeRenames ++= Seq(
   "org.apache.poi.**" -> "shadeio.poi.@1",
   "spoiwo.**" -> "shadeio.spoiwo.@1",
   "com.github.pjfanning.**" -> "shadeio.pjfanning.@1",
+  "org.apache.commons.io.**" -> "shadeio.commons.io.@1",
   "org.apache.commons.compress.**" -> "shadeio.commons.compress.@1"
 )
 
