@@ -48,7 +48,7 @@ libraryDependencies ++= Seq(
   "org.scalacheck" %% "scalacheck" % "1.15.4" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.15" % "1.3.0" % Test,
   //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
-  "org.scalamock" %% "scalamock" % "5.1.0" % Test
+  "org.scalamock" %% "scalamock" % "5.2.0" % Test
 ) ++ (if (scalaVersion.value.startsWith("2.12")) Seq("com.github.nightscape" %% "spark-testing-base" % "9496d55" % Test)
       else Seq())
 
