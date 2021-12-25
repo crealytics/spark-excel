@@ -107,7 +107,8 @@ class ExcelHelper(options: ExcelOptions) {
       options.workbookPassword match {
         case None => WorkbookFactory.create(ins)
         case Some(password) => WorkbookFactory.create(ins, password)
-      } finally ins.close
+      }
+    finally ins.close
   }
 
   /** Get cell-row iterator for excel file in given URI
