@@ -104,10 +104,12 @@ class ExcelHelper(options: ExcelOptions) {
   def getWorkbook(conf: Configuration, uri: URI): Workbook = {
     val ins = FileSystem.get(uri, conf).open(new Path(uri))
 
-    try options.workbookPassword match {
-      case None => WorkbookFactory.create(ins)
-      case Some(password) => WorkbookFactory.create(ins, password)
-    } finally ins.close
+    try
+      options.workbookPassword match {
+        case None => WorkbookFactory.create(ins)
+        case Some(password) => WorkbookFactory.create(ins, password)
+      }
+    finally ins.close
   }
 
   /** Get cell-row iterator for excel file in given URI
