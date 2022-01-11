@@ -203,10 +203,10 @@ object ExcelHelper {
   def apply(options: ExcelOptions): ExcelHelper = new ExcelHelper(options)
 
   def configureProviders() : Unit = {
-    WorkbookFactory.removeProvider(Class[HSSFWorkbookFactory])
+    WorkbookFactory.removeProvider(classOf[HSSFWorkbookFactory])
     WorkbookFactory.addProvider(new HSSFWorkbookFactory)
 
-    WorkbookFactory.removeProvider(Class[XSSFWorkbookFactory])
+    WorkbookFactory.removeProvider(classOf[XSSFWorkbookFactory])
     WorkbookFactory.addProvider(new XSSFWorkbookFactory)
   }
 }
