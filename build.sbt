@@ -17,7 +17,7 @@ version := testSparkVersion.value + "_" + version.value
 
 resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
-libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.32" % "provided")
+libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.33" % "provided")
   .map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 shadedDeps ++= Seq(
