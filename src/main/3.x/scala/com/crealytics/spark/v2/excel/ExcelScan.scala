@@ -94,7 +94,7 @@ case class ExcelScan(
   override def equals(obj: Any): Boolean = obj match {
     case c: ExcelScan =>
       super.equals(c) && dataSchema == c.dataSchema && options == c.options &&
-        equivalentFilters(pushedFilters, c.pushedFilters)
+      equivalentFilters(pushedFilters, c.pushedFilters)
     case _ => false
   }
 
