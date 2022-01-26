@@ -6,7 +6,7 @@ crossScalaVersions := Seq("2.12.15", "2.13.8")
 
 scalaVersion := crossScalaVersions.value.head
 
-lazy val sparkVersion = "3.2.0"
+lazy val sparkVersion = "3.2.1"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
@@ -54,7 +54,7 @@ libraryDependencies ++= Seq(
 
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {
-  if (testSparkVersion.value >= "3.2.0")
+  if (testSparkVersion.value >= "3.2.1")
     Seq(
       (Compile / sourceDirectory)(_ / "scala"),
       (Compile / sourceDirectory)(_ / "3.x/scala"),
