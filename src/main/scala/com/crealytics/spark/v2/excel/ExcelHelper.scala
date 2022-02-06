@@ -202,7 +202,7 @@ class ExcelHelper(options: ExcelOptions) {
 object ExcelHelper {
   def apply(options: ExcelOptions): ExcelHelper = new ExcelHelper(options)
 
-  def configureProviders() : Unit = {
+  def configureProviders(): Unit = {
     synchronized {
       WorkbookFactory.removeProvider(classOf[HSSFWorkbookFactory])
       WorkbookFactory.addProvider(new HSSFWorkbookFactory)
