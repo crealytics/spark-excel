@@ -25,9 +25,11 @@ import java.text.Format
 import java.text.ParsePosition
 
 import java.net.URI
+import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory
 import org.apache.poi.ss.util.AreaReference
 import org.apache.poi.ss.util.CellReference
 import org.apache.poi.ss.SpreadsheetVersion
+import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory
 import scala.util.Try
 
 /** A format that formats a double as a plain string without rounding and scientific notation. All other operations are
@@ -101,6 +103,7 @@ class ExcelHelper(options: ExcelOptions) {
     *   workbook
     */
   def getWorkbook(conf: Configuration, uri: URI): Workbook = {
+    ExcelHelper.configureProviders()
     val ins = FileSystem.get(uri, conf).open(new Path(uri))
 
     try
@@ -198,4 +201,14 @@ class ExcelHelper(options: ExcelOptions) {
 
 object ExcelHelper {
   def apply(options: ExcelOptions): ExcelHelper = new ExcelHelper(options)
+
+  def configureProviders() : Unit = {
+    synchronized {
+      WorkbookFactory.removeProvider(classOf[HSSFWorkbookFactory])
+      WorkbookFactory.addProvider(new HSSFWorkbookFactory)
+
+      WorkbookFactory.removeProvider(classOf[XSSFWorkbookFactory])
+      WorkbookFactory.addProvider(new XSSFWorkbookFactory)
+    }
+  }
 }
