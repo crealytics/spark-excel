@@ -10,7 +10,7 @@ lazy val sparkVersion = "3.2.1"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
-testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.value)
+testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion)
 
 // For Spark DataSource API V2, spark-excel jar file depends on spark-version
 version := testSparkVersion.value + "_" + version.value
@@ -20,13 +20,14 @@ resolvers ++= Seq("jitpack" at "https://jitpack.io")
 libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
   .map(_.excludeAll(ExclusionRule(organization = "stax")))
 
+enablePlugins(ThinFatJar)
 shadedDeps ++= Seq(
-  "org.apache.poi" ^ "poi" ^ "5.2.0",
-  "org.apache.poi" ^ "poi-ooxml" ^ "5.2.0",
-  "com.norbitltd" ^^ "spoiwo" ^ "2.1.0",
-  "com.github.pjfanning" ^ "excel-streaming-reader" ^ "3.4.1",
-  "com.github.pjfanning" ^ "poi-shared-strings" ^ "2.4.1",
-  "org.apache.commons" ^ "commons-compress" ^ "1.21"
+  "org.apache.poi" % "poi" % "5.2.0",
+  "org.apache.poi" % "poi-ooxml" % "5.2.0",
+  "com.norbitltd" %% "spoiwo" % "2.1.0",
+  "com.github.pjfanning" % "excel-streaming-reader" % "3.4.1",
+  "com.github.pjfanning" % "poi-shared-strings" % "2.4.1",
+  "org.apache.commons" % "commons-compress" % "1.21"
 )
 
 shadeRenames ++= Seq(
