@@ -12,7 +12,7 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
 addSbtPlugin("org.hammerlab.sbt" % "assembly" % "5.0.0")
 
-addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.7")
+addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.10")
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.12")
 
