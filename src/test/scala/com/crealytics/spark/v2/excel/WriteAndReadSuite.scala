@@ -22,10 +22,11 @@ import java.nio.file.Files
 import java.sql.{Date, Timestamp}
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import org.apache.spark.sql.internal.SQLConf
 
 /** Writing and reading back */
 object WriteAndReadSuite {
+
+  val DATETIME_JAVA8API_ENABLED = "spark.sql.datetime.java8API.enabled"
 
   val userDefinedSchema_01 = StructType(
     List(
@@ -147,7 +148,7 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
 
   test("write then read java.sql.date and java.sql.timestamp") {
     val path = Files.createTempDirectory("spark_excel_wr_03_").toString()
-    spark.conf.set(SQLConf.DATETIME_JAVA8API_ENABLED.key, false)
+    spark.conf.set(DATETIME_JAVA8API_ENABLED, false)
     val df_source = spark.createDataFrame(expectedData_03, userDefinedSchema_03).sort("Id")
     df_source.write.format("excel").mode(SaveMode.Append).save(path)
 
@@ -160,13 +161,13 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
     assertDataFrameEquals(df_source, df_read)
 
     /* Cleanup, should after the checking */
-    spark.conf.unset(SQLConf.DATETIME_JAVA8API_ENABLED.key)
+    spark.conf.unset(DATETIME_JAVA8API_ENABLED)
     deleteDirectory(path)
   }
 
   test("write then read java.time.Instant and java.time.LocalDate") {
     val path = Files.createTempDirectory("spark_excel_wr_03_").toString()
-    spark.conf.set(SQLConf.DATETIME_JAVA8API_ENABLED.key, true)
+    spark.conf.set(DATETIME_JAVA8API_ENABLED, true)
     val df_source = spark.createDataFrame(expectedData_03, userDefinedSchema_03).sort("Id")
     df_source.write.format("excel").mode(SaveMode.Append).save(path)
 
@@ -179,7 +180,7 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
     assertDataFrameEquals(df_source, df_read)
 
     /* Cleanup, should after the checking */
-    spark.conf.unset(SQLConf.DATETIME_JAVA8API_ENABLED.key)
+    spark.conf.unset(DATETIME_JAVA8API_ENABLED)
     deleteDirectory(path)
   }
 
