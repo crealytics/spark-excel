@@ -22,6 +22,7 @@ import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.apache.poi.ss.util.WorkbookUtil
 import org.apache.hadoop.conf.Configuration
+import org.apache.spark.sql.catalyst.util.DateTimeUtils
 
 class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Configuration, val options: ExcelOptions) {
   /* Prepare target Excel workbook, sheet and where to write to */
@@ -65,7 +66,8 @@ class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Con
   private lazy val DateCellStyle = createStyle(options.dateFormat)
   private lazy val TimestampCellStyle = createStyle(options.timestampFormat)
   private lazy val WholeNumberCellStyle = createStyle("General")
-  private lazy val DecimalNumberCellStyle = createStyle("0.00E+000")
+  private lazy val DecimalNumberCellStyle =
+    if (options.usePlainNumberFormat) createStyle("General") else createStyle("0.00E+000")
   private lazy val StringCellStyle = createStyle("@")
 
   private def makeConverter(dataType: DataType): ValueConverter = dataType match {
@@ -106,7 +108,7 @@ class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Con
       }
     case DateType =>
       (row: InternalRow, ordinal: Int, cell: Cell) => {
-        cell.setCellValue(new java.util.Date(row.getInt(ordinal).toLong))
+        cell.setCellValue(DateTimeUtils.toJavaDate(row.getInt(ordinal)))
         cell.setCellStyle(DateCellStyle)
       }
 
