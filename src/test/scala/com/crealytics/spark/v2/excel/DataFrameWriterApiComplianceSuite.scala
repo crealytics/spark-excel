@@ -26,7 +26,25 @@ class DataFrameWriterApiComplianceSuite extends AnyWordSpec with DataFrameSuiteB
       .load()
   }
 
-  "excel v2" can {
+  /** Checks that the excel data files in given folder equal the provided dataframe */
+  private def assertWrittenExcelData(expectedDf: DataFrame, folder: String): Unit = {
+    val actualDf = spark.read
+      .format("excel")
+      .option("path", folder)
+      .load()
+
+    /* assertDataFrameNoOrderEquals is sensitive to order of columns, so we
+      order both dataframes in the same way
+     */
+    val orderedSchemaColumns = expectedDf.schema.fields.map(f => f.name).sorted
+
+    assertDataFrameNoOrderEquals(
+      expectedDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*),
+      actualDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*)
+    )
+
+  }
+  "excel v2 complies to DataFrameWriter SaveMode and Partitioning behavior" can {
 
     val writeModes = Seq(SaveMode.Overwrite, SaveMode.Append)
 
@@ -42,11 +60,12 @@ class DataFrameWriterApiComplianceSuite extends AnyWordSpec with DataFrameSuiteB
           .mode(writeMode)
           .save()
 
-        val listOfFiles = getFilteredFileList(targetDir, "xlsx")
-        // scalastyle:off println
-        println(listOfFiles)
-        // scalastyle:on println
-        assert(listOfFiles.length == 1)
+        val listOfFiles = getListOfFilesFilteredByExtension(targetDir, "xlsx")
+        assert(listOfFiles.nonEmpty, s"Expected a single file but got more: $listOfFiles")
+
+        // is the result really the same?
+        assertWrittenExcelData(dfCsv, targetDir)
+
       }
       s"write a dataframe to xlsx with ${writeMode.toString} (partitioned)" in withExistingCleanTempDir("v2") {
         targetDir =>
@@ -62,20 +81,49 @@ class DataFrameWriterApiComplianceSuite extends AnyWordSpec with DataFrameSuiteB
             .mode(writeMode)
             .save()
 
+          // some file based checks
           val listOfFolders = getListOfFolders(targetDir)
-          // scalastyle:off println
-
-          println(listOfFolders)
-          assert(listOfFolders.length == 2)
+          assert(listOfFolders.length == 2, s"expected two folders because there are two partitions")
           for (folder <- listOfFolders) {
-            val listOfFiles = getFilteredFileList(folder.getAbsolutePath, "xlsx")
-            println(listOfFiles)
-            assert(listOfFiles.nonEmpty)
+            assert(folder.getName.startsWith("col1="), s"expected partition folders and those must start with col1=")
+            val listOfFiles = getListOfFilesFilteredByExtension(folder.getAbsolutePath, "xlsx")
+            assert(listOfFiles.nonEmpty, s"expected at least one xlsx per folder but got $listOfFiles")
           }
+
+          // is the result really the same?
+          assertWrittenExcelData(dfCsv, targetDir)
 
       }
     }
 
-  }
+    for (isPartitioned <- Seq(false, true)) {
+      s"multiple appends to folder (partitioned == $isPartitioned)" in withExistingCleanTempDir("v2") { targetDir =>
+        if (isPartitioned) {
+          assume(spark.sparkContext.version >= "3.0.1")
+        }
 
+        val dfCsv = readSimpleCsv
+
+        val dfWriter = if (isPartitioned) dfCsv.write else dfCsv.write.partitionBy("col1")
+
+        dfWriter
+          .format("excel")
+          .option("path", targetDir)
+          .option("header", value = true)
+          .mode(SaveMode.Append)
+          .save()
+        dfWriter
+          .format("excel")
+          .option("path", targetDir)
+          .option("header", value = true)
+          .mode(SaveMode.Append)
+          .save()
+
+        val orderedSchemaColumns = dfCsv.schema.fields.map(f => f.name).sorted
+        val expectedDf = dfCsv.unionAll(dfCsv).select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*)
+
+        assertWrittenExcelData(expectedDf, targetDir)
+      }
+    }
+  }
 }
