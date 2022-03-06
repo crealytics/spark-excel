@@ -87,7 +87,7 @@ javaOptions ++= Seq("-Xms512M", "-Xmx2048M")
 
 publishMavenStyle := true
 
-publishTo := githubPublishTo.value
+publishTo := sonatypePublishToBundle.value
 
 Global / useGpgPinentry := true
 
@@ -122,7 +122,3 @@ fork := true
 
 mimaPreviousArtifacts := Set("com.crealytics" %% "spark-excel" % "0.0.1")
 // ------------------------------------------------------------------------------------------------
-
-githubOwner := "christianknoepfle"
-githubRepository := "spark-excel"
-githubTokenSource := TokenSource.Environment("GITHUB_TOKEN") || TokenSource.GitConfig("github.token")

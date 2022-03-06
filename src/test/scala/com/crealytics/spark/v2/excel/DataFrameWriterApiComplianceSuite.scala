@@ -15,7 +15,7 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql._
 import org.scalatest.wordspec.AnyWordSpec
 
-class SparkIntegrationExcelSuite extends AnyWordSpec with DataFrameSuiteBase with LocalFileTestingUtilities {
+class DataFrameWriterApiComplianceSuite extends AnyWordSpec with DataFrameSuiteBase with LocalFileTestingUtilities {
 
   private def readSimpleCsv = {
     spark.read
@@ -48,9 +48,9 @@ class SparkIntegrationExcelSuite extends AnyWordSpec with DataFrameSuiteBase wit
         // scalastyle:on println
         assert(listOfFiles.length == 1)
       }
-
       s"write a dataframe to xlsx with ${writeMode.toString} (partitioned)" in withExistingCleanTempDir("v2") {
         targetDir =>
+          assume(spark.sparkContext.version >= "3.0.1")
           // create a df from csv then write as xlsx
           val dfCsv = readSimpleCsv
 
@@ -64,6 +64,7 @@ class SparkIntegrationExcelSuite extends AnyWordSpec with DataFrameSuiteBase wit
 
           val listOfFolders = getListOfFolders(targetDir)
           // scalastyle:off println
+
           println(listOfFolders)
           assert(listOfFolders.length == 2)
           for (folder <- listOfFolders) {
@@ -74,6 +75,7 @@ class SparkIntegrationExcelSuite extends AnyWordSpec with DataFrameSuiteBase wit
 
       }
     }
+
   }
 
 }
