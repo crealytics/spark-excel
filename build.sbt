@@ -21,10 +21,10 @@ libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
   .map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 shadedDeps ++= Seq(
-  "org.apache.poi" ^ "poi" ^ "5.2.0",
-  "org.apache.poi" ^ "poi-ooxml" ^ "5.2.0",
+  "org.apache.poi" ^ "poi" ^ "5.2.1",
+  "org.apache.poi" ^ "poi-ooxml" ^ "5.2.1",
   "com.norbitltd" ^^ "spoiwo" ^ "2.1.0",
-  "com.github.pjfanning" ^ "excel-streaming-reader" ^ "3.5.0",
+  "com.github.pjfanning" ^ "excel-streaming-reader" ^ "3.6.0",
   "com.github.pjfanning" ^ "poi-shared-strings" ^ "2.5.0",
   "org.apache.commons" ^ "commons-compress" ^ "1.21"
 )
