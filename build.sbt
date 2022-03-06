@@ -54,14 +54,14 @@ libraryDependencies ++= Seq(
 
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {
-  if (testSparkVersion.value >= "3.2.1")
+  if (testSparkVersion.value >= "3.2.1") {
     Seq(
       (Compile / sourceDirectory)(_ / "scala"),
       (Compile / sourceDirectory)(_ / "3.x/scala"),
       (Compile / sourceDirectory)(_ / "3.1_3.2/scala"),
       (Compile / sourceDirectory)(_ / "3.2/scala")
     ).join.value
-  else if (testSparkVersion.value >= "3.1.0")
+  } else if (testSparkVersion.value >= "3.1.0") {
     Seq(
       (Compile / sourceDirectory)(_ / "scala"),
       (Compile / sourceDirectory)(_ / "3.x/scala"),
@@ -69,16 +69,18 @@ Compile / unmanagedSourceDirectories := {
       (Compile / sourceDirectory)(_ / "3.1/scala"),
       (Compile / sourceDirectory)(_ / "3.1_3.2/scala")
     ).join.value
-  else if (testSparkVersion.value >= "3.0.0")
+  } else if (testSparkVersion.value >= "3.0.0") {
     Seq(
       (Compile / sourceDirectory)(_ / "scala"),
       (Compile / sourceDirectory)(_ / "3.x/scala"),
       (Compile / sourceDirectory)(_ / "3.0/scala"),
       (Compile / sourceDirectory)(_ / "3.0_3.1/scala")
     ).join.value
-  else if (testSparkVersion.value >= "2.4.0")
+  } else if (testSparkVersion.value >= "2.4.0") {
     Seq((Compile / sourceDirectory)(_ / "scala"), (Compile / sourceDirectory)(_ / "2.4/scala")).join.value
-  else throw new UnsupportedOperationException(s"testSparkVersion ${testSparkVersion.value} is not supported")
+  } else {
+    throw new UnsupportedOperationException(s"testSparkVersion ${testSparkVersion.value} is not supported")
+  }
 }
 
 Test / fork := true

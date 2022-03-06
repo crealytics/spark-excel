@@ -26,8 +26,8 @@ import org.apache.spark.sql.execution.datasources.{FileFormat, OutputWriter, Out
 import org.apache.spark.sql.sources.{DataSourceRegister, Filter}
 import org.apache.spark.sql.types._
 
-/** derived from binary file data source. */
-
+/** derived from binary file data source. Needed to support writing excel using the V2 API
+  */
 class ExcelFileFormat extends FileFormat with DataSourceRegister {
 
   override def inferSchema(
@@ -35,7 +35,7 @@ class ExcelFileFormat extends FileFormat with DataSourceRegister {
     options: Map[String, String],
     files: Seq[FileStatus]
   ): Option[StructType] = {
-    throw new UnsupportedOperationException("excel V1 supports writing only")
+    throw new UnsupportedOperationException("ExcelFileFormat as fallback format for V2 supports writing only")
   }
 
   override def prepareWrite(
@@ -74,7 +74,7 @@ class ExcelFileFormat extends FileFormat with DataSourceRegister {
     options: Map[String, String],
     hadoopConf: Configuration
   ): PartitionedFile => Iterator[InternalRow] = {
-    throw new UnsupportedOperationException("excel V1 supports writing only")
+    throw new UnsupportedOperationException("ExcelFileFormat as fallback format for V2 supports writing only")
   }
 
 }
