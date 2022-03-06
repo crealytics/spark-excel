@@ -66,7 +66,7 @@ $SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:<spark-ve
       See below for further details
 
 To use V2 implementation, just change your .format from `.format("com.crealytics.spark.excel")` to `.format("excel")`.
-See below for some details
+See [below](#excel-api-based-on-datasourcev2) for some details
 
 See the [changelog](CHANGELOG.md) for latest features, fixes etc.
 
@@ -203,20 +203,28 @@ and works in a very similar way than data sources like csv and parquet.
 To use V2 implementation, just change your .format from `.format("com.crealytics.spark.excel")` to `.format("excel")`
 
 The big difference is the fact that you provide a path to read / write data from/to and not
-an individual single file only.
+an individual single file only:
 
 ```scala
-dataFram.write
+dataFrame.write
         .format("excel")
         .save("some/path")
 ```
+
+```scala
+spark.read
+        .format("excel")
+        // ... insert excel read specific options you need
+        .load("some/path")
+```
+
 
 Because folders are supported you can read/write from/to a "partitioned" folder structure, just
 the same way as csv or parquet. Note that writing partitioned structures is only 
 available for spark >=3.0.1
 
 ````scala
-dfCsv.write
+dataFrame.write
         .partitionBy("col1")
         .format("excel")
         .save("some/path")
