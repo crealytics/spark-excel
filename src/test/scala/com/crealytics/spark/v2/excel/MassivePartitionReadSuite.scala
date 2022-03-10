@@ -15,9 +15,16 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.IntegerType
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpec
 
-class MassivePartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with LocalFileTestingUtilities {
+import java.io.File
+
+class MassivePartitionReadSuite
+    extends AnyWordSpec
+    with DataFrameSuiteBase
+    with LocalFileTestingUtilities
+    with BeforeAndAfterAll {
 
   /** Checks that the excel data files in given folder equal the provided dataframe */
   private def assertWrittenExcelData(expectedDf: DataFrame, folder: String): Unit = {
@@ -38,8 +45,11 @@ class MassivePartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with
 
   }
 
-  s"many partitions read and write" in withExistingCleanTempDir("v2") { targetDir =>
-    assume(spark.sparkContext.version >= "3.0.1")
+  var targetDir: File = null
+  var expectedDf: DataFrame = null
+
+  def createExpected(): Unit = {
+    targetDir = createTemporaryDirectory("v2")
 
     val dfCsv = spark.read
       .format("csv")
@@ -48,12 +58,12 @@ class MassivePartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with
       .option("path", "src/test/resources/v2readwritetest/partition_csv/partition.csv")
       .load()
 
-    val dfFinal = dfCsv.unionAll(dfCsv).unionAll(dfCsv)
+    val dfFinal = dfCsv.unionAll(dfCsv)
 
     val dfWriter = dfFinal.write
       .partitionBy("col1")
       .format("excel")
-      .option("path", targetDir)
+      .option("path", targetDir.getPath)
       .option("header", value = true)
       .mode(SaveMode.Append)
 
@@ -61,11 +71,26 @@ class MassivePartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with
     dfWriter.save()
 
     val orderedSchemaColumns = dfCsv.schema.fields.map(f => f.name).sorted
-    val expectedDf = dfFinal
+    expectedDf = dfFinal
       .unionAll(dfFinal)
       .withColumn("col1", col("col1").cast(IntegerType))
       .select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*)
-
-    assertWrittenExcelData(expectedDf, targetDir)
   }
+
+  // Delete the temp file
+  override def afterAll(): Unit = {
+    deleteDirectory(targetDir)
+  }
+
+  for (run <- Range(0, 5)) {
+
+    s"many partitions read (run=$run)" in {
+      assume(spark.sparkContext.version >= "3.0.1")
+      if (run == 0) {
+        createExpected()
+      }
+      assertWrittenExcelData(expectedDf, targetDir.getPath)
+    }
+  }
+
 }
