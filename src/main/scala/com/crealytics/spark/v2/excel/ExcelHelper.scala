@@ -30,6 +30,8 @@ import org.apache.poi.ss.util.AreaReference
 import org.apache.poi.ss.util.CellReference
 import org.apache.poi.ss.SpreadsheetVersion
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory
+
+import java.util.concurrent.atomic.AtomicBoolean
 import scala.util.Try
 
 /** A format that formats a double as a plain string without rounding and scientific notation. All other operations are
@@ -97,8 +99,6 @@ class ExcelHelper(options: ExcelOptions) {
     *   Hadoop configuration
     * @param uri
     *   to the file, this can be on any support file system back end
-    * @param password
-    *   optional password to open workbook
     * @return
     *   workbook
     */
@@ -200,15 +200,43 @@ class ExcelHelper(options: ExcelOptions) {
 }
 
 object ExcelHelper {
-  def apply(options: ExcelOptions): ExcelHelper = new ExcelHelper(options)
+
+  import java.util.concurrent.atomic.AtomicInteger
+
+  private val configurationNeeded = new AtomicBoolean()
+  private val configuredIsDone = new AtomicBoolean()
+
+  def apply(options: ExcelOptions): ExcelHelper = {
+    new ExcelHelper(options)
+  }
 
   def configureProviders(): Unit = {
-    synchronized {
+    /*  execute configuration on first call of configProviders,
+        all other (parallel) calls wait until config is done.
+        Assumption is that we need to exchange the providers only once.
+
+        The previous implementation only guarded the remove/add calls in a
+        synchronized block. This ensured that the block is called only by one thread
+        at a time but other threads can access the underlying data structure
+        Singleton.INSTANCE.provider at the same time (i.e. while it is changing).
+
+        This can lead to a java.util.ConcurrentModificationException exception while looping
+        over the mentioned data structure  (code fragment
+        at org.apache.poi.ss.usermodel.WorkbookFactory.wp(WorkbookFactory.java:327)
+
+        In case we need to exchange the provider on each call, we need to move the
+        synchronized so it guards the call to the .wp() function too.
+     */
+    if (!configurationNeeded.getAndSet(true)) {
       WorkbookFactory.removeProvider(classOf[HSSFWorkbookFactory])
       WorkbookFactory.addProvider(new HSSFWorkbookFactory)
 
       WorkbookFactory.removeProvider(classOf[XSSFWorkbookFactory])
       WorkbookFactory.addProvider(new XSSFWorkbookFactory)
+      configuredIsDone.set(true)
+    } else {
+      while (!configuredIsDone.get())
+        Thread.sleep(100)
     }
   }
 }

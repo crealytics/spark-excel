@@ -47,15 +47,7 @@ trait LocalFileTestingUtilities {
 
     def fixture(testCode: String => Unit): Unit = {
 
-      val rnd = new scala.util.Random
-      val randomValue = rnd.nextInt(10000)
-      val directory = new File(s"tmp/$randomValue/$name")
-      if (directory.exists) {
-        deleteDirectory(directory)
-      }
-      if (!directory.exists) {
-        directory.mkdirs()
-      }
+      val directory: File = createTemporaryDirectory(name)
 
       try testCode(directory.getPath)
       finally deleteDirectory(directory)
@@ -64,4 +56,16 @@ trait LocalFileTestingUtilities {
     fixture
   }
 
+  def createTemporaryDirectory(name: String): File = {
+    val rnd = new util.Random
+    val randomValue = rnd.nextInt(10000)
+    val directory = new File(s"tmp/$randomValue/$name")
+    if (directory.exists) {
+      deleteDirectory(directory)
+    }
+    if (!directory.exists) {
+      directory.mkdirs()
+    }
+    directory
+  }
 }
