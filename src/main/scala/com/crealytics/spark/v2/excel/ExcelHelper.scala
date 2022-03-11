@@ -103,15 +103,47 @@ class ExcelHelper(options: ExcelOptions) {
     *   workbook
     */
   def getWorkbook(conf: Configuration, uri: URI): Workbook = {
-    ExcelHelper.configureProviders()
-    val ins = FileSystem.get(uri, conf).open(new Path(uri))
+    /*  this block need synchronized because configureProviders() ultimately manipulates the
+        poi global data structure Singleton.INSTANCE.provider.
 
-    try
-      options.workbookPassword match {
-        case None => WorkbookFactory.create(ins)
-        case Some(password) => WorkbookFactory.create(ins, password)
-      }
-    finally ins.close
+        This data structure will be accesses in WorkbookFactory.create(). Just follow the call graph down to
+        org.apache.poi.ss.usermodel.WorkbookFactory.wp(WorkbookFactory.java:327). There the code loops over this data
+        structure. So if a parallel thread manipulates that data structure while another thread is looping over it you
+        get a java.util.ConcurrentModificationException.
+
+        Thus both calls need to me in this synchronized block. Also note that the synchronized block is given as
+        ExcelHelper.synchronized, because we need a singleton as synchronization object. Using this.synchronized
+        would not help at all because each threat has its own instance of the ExcelHelper class and no synchronization
+        would occur.
+
+        configureProviders() is (now) a function of this function to avoid accidental calls to it that could reintroduce
+        the issue we are fixing with synchronized here.
+
+        Further Discussion:
+        Honestly I do not know why we need to call configureProviders() at all or even each time we call getWorkbook().
+        If we only need to do it once, pls see the alternate implementation ExcelHelper.configureProviderOnce(). If
+        we use that one we remove the synchronized block here and call ExcelHelper.configureProviderOnce() instead
+        of configureProviders()
+     */
+    def configureProviders(): Unit = {
+      WorkbookFactory.removeProvider(classOf[HSSFWorkbookFactory])
+      WorkbookFactory.addProvider(new HSSFWorkbookFactory)
+
+      WorkbookFactory.removeProvider(classOf[XSSFWorkbookFactory])
+      WorkbookFactory.addProvider(new XSSFWorkbookFactory)
+    }
+
+    ExcelHelper.synchronized {
+      configureProviders()
+      val ins = FileSystem.get(uri, conf).open(new Path(uri))
+
+      try
+        options.workbookPassword match {
+          case None => WorkbookFactory.create(ins)
+          case Some(password) => WorkbookFactory.create(ins, password)
+        }
+      finally ins.close()
+    }
   }
 
   /** Get cell-row iterator for excel file in given URI
@@ -127,15 +159,13 @@ class ExcelHelper(options: ExcelOptions) {
     val workbook = getWorkbook(conf, uri)
     val excelReader = DataLocator(options)
     try { excelReader.readFrom(workbook) }
-    finally workbook.close
+    finally workbook.close()
   }
 
   /** Get column name by list of cells (row)
     *
     * @param firstRow
     *   column names will be based on this
-    * @param options
-    *   excel option
     * @return
     *   list of column names
     */
@@ -197,11 +227,10 @@ class ExcelHelper(options: ExcelOptions) {
       SpreadsheetVersion.EXCEL2007
     )
   }.getOrElse(new AreaReference(options.dataAddress, SpreadsheetVersion.EXCEL2007))
+
 }
 
 object ExcelHelper {
-
-  import java.util.concurrent.atomic.AtomicInteger
 
   private val configurationNeeded = new AtomicBoolean()
   private val configuredIsDone = new AtomicBoolean()
@@ -210,7 +239,7 @@ object ExcelHelper {
     new ExcelHelper(options)
   }
 
-  def configureProviders(): Unit = {
+  def configureProvidersOnce(): Unit = {
     /*  execute configuration on first call of configProviders,
         all other (parallel) calls wait until config is done.
         Assumption is that we need to exchange the providers only once.
@@ -224,8 +253,6 @@ object ExcelHelper {
         over the mentioned data structure  (code fragment
         at org.apache.poi.ss.usermodel.WorkbookFactory.wp(WorkbookFactory.java:327)
 
-        In case we need to exchange the provider on each call, we need to move the
-        synchronized so it guards the call to the .wp() function too.
      */
     if (!configurationNeeded.getAndSet(true)) {
       WorkbookFactory.removeProvider(classOf[HSSFWorkbookFactory])

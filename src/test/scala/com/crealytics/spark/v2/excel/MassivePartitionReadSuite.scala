@@ -20,11 +20,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.File
 
-class MassivePartitionReadSuite
-    extends AnyWordSpec
-    with DataFrameSuiteBase
-    with LocalFileTestingUtilities
-    with BeforeAndAfterAll {
+class MassivePartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with LocalFileTestingUtilities {
 
   /** Checks that the excel data files in given folder equal the provided dataframe */
   private def assertWrittenExcelData(expectedDf: DataFrame, folder: String): Unit = {
@@ -45,11 +41,7 @@ class MassivePartitionReadSuite
 
   }
 
-  var targetDir: File = null
-  var expectedDf: DataFrame = null
-
-  def createExpected(): Unit = {
-    targetDir = createTemporaryDirectory("v2")
+  def createExpected(targetDir: String): DataFrame = {
 
     val dfCsv = spark.read
       .format("csv")
@@ -63,7 +55,7 @@ class MassivePartitionReadSuite
     val dfWriter = dfFinal.write
       .partitionBy("col1")
       .format("excel")
-      .option("path", targetDir.getPath)
+      .option("path", targetDir)
       .option("header", value = true)
       .mode(SaveMode.Append)
 
@@ -71,25 +63,20 @@ class MassivePartitionReadSuite
     dfWriter.save()
 
     val orderedSchemaColumns = dfCsv.schema.fields.map(f => f.name).sorted
-    expectedDf = dfFinal
+
+    dfFinal
       .unionAll(dfFinal)
       .withColumn("col1", col("col1").cast(IntegerType))
       .select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*)
-  }
 
-  // Delete the temp file
-  override def afterAll(): Unit = {
-    deleteDirectory(targetDir)
   }
 
   for (run <- Range(0, 5)) {
 
-    s"many partitions read (run=$run)" in {
+    s"many partitions read (run=$run)" in withExistingCleanTempDir("v2") { targetDir =>
       assume(spark.sparkContext.version >= "3.0.1")
-      if (run == 0) {
-        createExpected()
-      }
-      assertWrittenExcelData(expectedDf, targetDir.getPath)
+      val expectedDf = createExpected(targetDir)
+      assertWrittenExcelData(expectedDf, targetDir)
     }
   }
 
