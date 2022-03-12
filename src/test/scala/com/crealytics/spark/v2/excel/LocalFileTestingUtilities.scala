@@ -1,7 +1,6 @@
 package com.crealytics.spark.v2.excel
 
 import java.io.File
-import java.util.Random
 
 trait LocalFileTestingUtilities {
 
@@ -55,11 +54,10 @@ trait LocalFileTestingUtilities {
 
     fixture
   }
-
-  def createTemporaryDirectory(name: String): File = {
+  def createTemporaryDirectory(prefix: String): File = {
     val rnd = new util.Random
     val randomValue = rnd.nextInt(10000)
-    val directory = new File(s"tmp/$randomValue/$name")
+    val directory = new File(s"tmp/${prefix}_$randomValue")
     if (directory.exists) {
       deleteDirectory(directory)
     }
