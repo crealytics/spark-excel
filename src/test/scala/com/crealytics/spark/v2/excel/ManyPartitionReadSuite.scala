@@ -15,12 +15,9 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.IntegerType
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.io.File
-
-class MassivePartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with LocalFileTestingUtilities {
+class ManyPartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with LocalFileTestingUtilities {
 
   /** Checks that the excel data files in given folder equal the provided dataframe */
   private def assertWrittenExcelData(expectedDf: DataFrame, folder: String): Unit = {
@@ -71,7 +68,7 @@ class MassivePartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with
 
   }
 
-  for (run <- Range(0, 5)) {
+  for (run <- Range(0, 3)) {
 
     s"many partitions read (run=$run)" in withExistingCleanTempDir("v2") { targetDir =>
       assume(spark.sparkContext.version >= "3.0.1")
