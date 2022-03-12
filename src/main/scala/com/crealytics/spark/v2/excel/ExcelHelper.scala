@@ -50,7 +50,7 @@ object PlainNumberFormat extends Format {
 }
 
 /* Excel parsing and utility methods */
-class ExcelHelper(options: ExcelOptions) {
+class ExcelHelper private (options: ExcelOptions) {
 
   /* For get cell string value */
   private lazy val dataFormatter = {
@@ -103,47 +103,13 @@ class ExcelHelper(options: ExcelOptions) {
     *   workbook
     */
   def getWorkbook(conf: Configuration, uri: URI): Workbook = {
-    /*  this block need synchronized because configureProviders() ultimately manipulates the
-        poi global data structure Singleton.INSTANCE.provider.
-
-        This data structure will be accesses in WorkbookFactory.create(). Just follow the call graph down to
-        org.apache.poi.ss.usermodel.WorkbookFactory.wp(WorkbookFactory.java:327). There the code loops over this data
-        structure. So if a parallel thread manipulates that data structure while another thread is looping over it you
-        get a java.util.ConcurrentModificationException.
-
-        Thus both calls need to me in this synchronized block. Also note that the synchronized block is given as
-        ExcelHelper.synchronized, because we need a singleton as synchronization object. Using this.synchronized
-        would not help at all because each threat has its own instance of the ExcelHelper class and no synchronization
-        would occur.
-
-        configureProviders() is (now) a function of this function to avoid accidental calls to it that could reintroduce
-        the issue we are fixing with synchronized here.
-
-        Further Discussion:
-        Honestly I do not know why we need to call configureProviders() at all or even each time we call getWorkbook().
-        If we only need to do it once, pls see the alternate implementation ExcelHelper.configureProviderOnce(). If
-        we use that one we remove the synchronized block here and call ExcelHelper.configureProviderOnce() instead
-        of configureProviders()
-     */
-    def configureProviders(): Unit = {
-      WorkbookFactory.removeProvider(classOf[HSSFWorkbookFactory])
-      WorkbookFactory.addProvider(new HSSFWorkbookFactory)
-
-      WorkbookFactory.removeProvider(classOf[XSSFWorkbookFactory])
-      WorkbookFactory.addProvider(new XSSFWorkbookFactory)
-    }
-
-    ExcelHelper.synchronized {
-      configureProviders()
-      val ins = FileSystem.get(uri, conf).open(new Path(uri))
-
-      try
-        options.workbookPassword match {
-          case None => WorkbookFactory.create(ins)
-          case Some(password) => WorkbookFactory.create(ins, password)
-        }
-      finally ins.close()
-    }
+    val ins = FileSystem.get(uri, conf).open(new Path(uri))
+    try
+      options.workbookPassword match {
+        case None => WorkbookFactory.create(ins)
+        case Some(password) => WorkbookFactory.create(ins, password)
+      }
+    finally ins.close()
   }
 
   /** Get cell-row iterator for excel file in given URI
@@ -232,38 +198,42 @@ class ExcelHelper(options: ExcelOptions) {
 
 object ExcelHelper {
 
-  private val configurationNeeded = new AtomicBoolean()
-  private val configuredIsDone = new AtomicBoolean()
+  private val configurationNeeded = new AtomicBoolean() // initializes with false
+  private val configurationIsDone = new AtomicBoolean() // initializes with false
 
   def apply(options: ExcelOptions): ExcelHelper = {
+    configureProvidersOnce() // ExcelHelper ctor is private, so we guarantee that this is called!
     new ExcelHelper(options)
   }
 
   def configureProvidersOnce(): Unit = {
-    /*  execute configuration on first call of configProviders,
-        all other (parallel) calls wait until config is done.
-        Assumption is that we need to exchange the providers only once.
+    /*  initially introduced for issue #480 (PR #513) later changed to cope with
+        threading issue described in PR #562
 
-        The previous implementation only guarded the remove/add calls in a
-        synchronized block. This ensured that the block is called only by one thread
-        at a time but other threads can access the underlying data structure
-        Singleton.INSTANCE.provider at the same time (i.e. while it is changing).
+        ensures that the WorkbookFactory is initialized with the two POI providers for
+        xls and xlsx. It seems that the default loading within WorkbookFactory doesn't
+        work as expected. This needs to be done only once, because the providers are stored
+        within a Singleton data structure.
 
+        To avoid multi-threading issue the initialization is done by the first thread and
+        all other threads running in parallel have to wait  until initialization is done.
+        Otherwise the Singleton gets manipulated while another thread accesses it.
         This can lead to a java.util.ConcurrentModificationException exception while looping
-        over the mentioned data structure  (code fragment
-        at org.apache.poi.ss.usermodel.WorkbookFactory.wp(WorkbookFactory.java:327)
-
+        over the Singleton (see code fragment
+        at org.apache.poi.ss.usermodel.WorkbookFactory.wp(WorkbookFactory.java:327).
      */
-    if (!configurationNeeded.getAndSet(true)) {
-      WorkbookFactory.removeProvider(classOf[HSSFWorkbookFactory])
-      WorkbookFactory.addProvider(new HSSFWorkbookFactory)
+    if (!configurationIsDone.get()) {
+      if (!configurationNeeded.getAndSet(true)) {
+        WorkbookFactory.removeProvider(classOf[HSSFWorkbookFactory])
+        WorkbookFactory.addProvider(new HSSFWorkbookFactory)
 
-      WorkbookFactory.removeProvider(classOf[XSSFWorkbookFactory])
-      WorkbookFactory.addProvider(new XSSFWorkbookFactory)
-      configuredIsDone.set(true)
-    } else {
-      while (!configuredIsDone.get())
-        Thread.sleep(100)
+        WorkbookFactory.removeProvider(classOf[XSSFWorkbookFactory])
+        WorkbookFactory.addProvider(new XSSFWorkbookFactory)
+        configurationIsDone.set(true)
+      } else {
+        while (!configurationIsDone.get())
+          Thread.sleep(100)
+      }
     }
   }
 }
