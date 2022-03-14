@@ -1,7 +1,7 @@
 package com.crealytics.spark.v2.excel
 
 import java.io.File
-import java.nio.file.{Files, Path}
+import java.util.Random
 
 trait LocalFileTestingUtilities {
 
