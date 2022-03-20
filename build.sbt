@@ -24,7 +24,7 @@ shadedDeps ++= Seq(
   "org.apache.poi" ^ "poi" ^ "5.2.1",
   "org.apache.poi" ^ "poi-ooxml" ^ "5.2.1",
   "com.norbitltd" ^^ "spoiwo" ^ "2.2.1",
-  "com.github.pjfanning" ^ "excel-streaming-reader" ^ "3.6.1",
+  "com.github.pjfanning" ^ "excel-streaming-reader" ^ "3.6.0",
   "com.github.pjfanning" ^ "poi-shared-strings" ^ "2.5.1",
   "org.apache.commons" ^ "commons-compress" ^ "1.21"
 )
