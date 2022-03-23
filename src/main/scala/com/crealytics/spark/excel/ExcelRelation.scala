@@ -73,8 +73,7 @@ case class ExcelRelation(
             None
           }.get
         )
-      val result = rows.to[Vector]
-      parallelize(result.map(Row.fromSeq))
+      parallelize(rows.map(Row.fromSeq).toSeq)
     }
   }
 
