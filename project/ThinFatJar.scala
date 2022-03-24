@@ -12,8 +12,6 @@ object ThinFatJar extends sbt.AutoPlugin {
     val shadedDeps = settingKey[Seq[ModuleID]]("When set, the main JAR produced will include these libraries shaded")
     val shadeRenames = settingKey[Seq[(String, String)]]("Shading renames to perform")
 
-    val assemblyIncludeScala = settingKey[Boolean]("When set, include Scala libraries in the assembled JAR")
-
     val takeFirstLog4JProperties =
       assemblyMergeStrategy in assembly := {
         // Two org.bdgenomics deps include the same log4j.properties.
@@ -122,12 +120,8 @@ object ThinFatJar extends sbt.AutoPlugin {
       // Don't run tests when building assembly JAR, by default.
       test in assembly := {},
 
-      // Don't include scala in the assembly JAR, by default; if it is used with Spark downstream, the runtime will
-      // include the Scala libraries.
-      assemblyIncludeScala := false,
-
       // If the user overrides the above by setting assemblyIncludeScala to true, pick that up here.
-      assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = assemblyIncludeScala.value),
+      assemblyOption in assembly ~= { _.withIncludeScala(false) },
 
       libraryDependencies ++= shadedDeps.value,
 
