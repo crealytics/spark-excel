@@ -13,15 +13,15 @@ object ThinFatJar extends sbt.AutoPlugin {
     val shadeRenames = settingKey[Seq[(String, String)]]("Shading renames to perform")
 
     val takeFirstLog4JProperties =
-      assemblyMergeStrategy in assembly := {
+      assembly / assemblyMergeStrategy := {
         // Two org.bdgenomics deps include the same log4j.properties.
         case PathList("log4j.properties") ⇒ MergeStrategy.first
-        case x ⇒ (assemblyMergeStrategy in assembly).value(x)
+        case x ⇒ (assembly / assemblyMergeStrategy).value(x)
       }
 
     val assemblyExcludeLib =
-      assemblyExcludedJars in assembly ++= {
-        (fullClasspath in assembly).value.filter {
+      assembly / assemblyExcludedJars ++= {
+        (assembly / fullClasspath).value.filter {
           _.data.getParent.endsWith("/lib")
         }
       }
@@ -30,10 +30,10 @@ object ThinFatJar extends sbt.AutoPlugin {
     // usual (unshaded) JAR.
     val publishThinShadedJar: SettingsDefinition =
       Seq(
-        assemblyExcludedJars in assembly := {
+        assembly / assemblyExcludedJars := {
           val log = streams.value.log
 
-          val cp = (fullClasspath in assembly).value
+          val cp = (assembly / fullClasspath).value
 
           // Build best-guesses of basenames of JARs corresponding to the deps we want to shade: s"$name-$version.jar".
           val shadedDepJars =
@@ -73,32 +73,32 @@ object ThinFatJar extends sbt.AutoPlugin {
           }
         },
 
-        assemblyJarName in assembly := {
+        assembly / assemblyJarName := {
           val newName = s"${name.value}_${scalaBinaryVersion.value}-${version.value}.jar"
-          streams.value.log.debug(s"overwriting assemblyJarName: ${assemblyJarName in assembly value} -> $newName")
+          streams.value.log.debug(s"overwriting assemblyJarName: ${(assembly / assemblyJarName).value} -> $newName")
           newName
         },
 
         // Add a classifier to the default (unshaded) JAR, so that it is not the default artifact at this coordinate.
-        artifactClassifier in (Compile, packageBin) := Some("unshaded"),
+        Compile / packageBin / artifactClassifier := Some("unshaded"),
 
         // The "-tests" JAR doesn't need the "unshaded" classifier
-        artifactClassifier in (sbt.Test, packageBin) := None,
+        sbt.Test / packageBin / artifactClassifier := None,
 
         // Make the assembly JAR the unclassified artifact.
-        artifact in (Compile, assembly) := (artifact in (Compile, assembly)).value.withClassifier(None),
+        Compile / assembly / artifact := (Compile / assembly / artifact).value.withClassifier(None),
 
       ) ++
-        addArtifact(artifact in (Compile, assembly), assembly)  // Publish the assembly JAR.
+        addArtifact(Compile / assembly / artifact, assembly)  // Publish the assembly JAR.
 
     val publishAssemblyJar =
       Seq(
-        artifact in (Compile, assembly) := {
-          val art = (artifact in (Compile, assembly)).value
+        Compile / assembly / artifact := {
+          val art = (Compile / assembly / artifact).value
           art.withClassifier(Some("assembly"))
         }
       ) ++
-        addArtifact(artifact in (Compile, assembly), assembly)
+        addArtifact(Compile / assembly / artifact, assembly)
 
     val main = settingKey[String]("Main class; non-Option wrapper for `mainClass`")
   }
@@ -111,17 +111,17 @@ object ThinFatJar extends sbt.AutoPlugin {
       shadedDeps := Nil,
 
       // If any shadeRenames are specified, apply them.
-      assemblyShadeRules in assembly ++= Seq(
+      assembly / assemblyShadeRules ++= Seq(
         ShadeRule.rename(
           shadeRenames.value: _*
         ).inAll
       ),
 
       // Don't run tests when building assembly JAR, by default.
-      test in assembly := {},
+      assembly / test := {},
 
       // If the user overrides the above by setting assemblyIncludeScala to true, pick that up here.
-      assemblyOption in assembly ~= { _.withIncludeScala(false) },
+      assembly / assemblyOption ~= { _.withIncludeScala(false) },
 
       libraryDependencies ++= shadedDeps.value,
 
