@@ -74,7 +74,8 @@ case class ExcelRelation(
             None
           }.get
         )
-      parallelize(rows.map(Row.fromSeq).toSeq)
+      val result = rows.toVector
+      parallelize(result.map(Row.fromSeq))
     }
   }
 
