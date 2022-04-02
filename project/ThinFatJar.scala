@@ -1,10 +1,8 @@
-
 import sbt.Keys._
 import sbt._
 import sbtassembly.AssemblyKeys.assemblyOption
 import sbtassembly.AssemblyPlugin.autoImport._
-import sbtassembly.{ AssemblyPlugin, PathList }
-
+import sbtassembly.{AssemblyPlugin, PathList}
 
 object ThinFatJar extends sbt.AutoPlugin {
 
@@ -37,42 +35,32 @@ object ThinFatJar extends sbt.AutoPlugin {
 
           // Build best-guesses of basenames of JARs corresponding to the deps we want to shade: s"$name-$version.jar".
           val shadedDepJars =
-            shadedDeps
-              .value
-              .map {
-                dep ⇒
-                  val crossFn =
-                    CrossVersion(
-                      dep.crossVersion,
-                      scalaVersion.value,
-                      scalaBinaryVersion.value
-                    )
-                    .getOrElse((x: String) ⇒ x)
+            shadedDeps.value.map { dep ⇒
+              val crossFn =
+                CrossVersion(dep.crossVersion, scalaVersion.value, scalaBinaryVersion.value)
+                  .getOrElse((x: String) ⇒ x)
 
-                  val name = crossFn(dep.name)
-                  s"$name-${dep.revision}.jar"
-              }
-              .toSet
+              val name = crossFn(dep.name)
+              s"$name-${dep.revision}.jar"
+            }.toSet
 
           log.debug(s"Looking for jars to shade:\n${shadedDepJars.mkString("\t", "\n\t", "")}")
 
           // Scan the classpath flagging JARs *to exclude*: all JARs whose basenames don't match our JARs-to-shade list
           // from above.
-          cp filter {
-            path ⇒
-              val name = path.data.getName
+          cp filter { path ⇒
+            val name = path.data.getName
 
-              val exclude = !shadedDepJars(name)
+            val exclude = !shadedDepJars(name)
 
-              if (exclude)
-                log.debug(s"Skipping JAR: $name")
-              else
-                log.debug(s"Shading classes jar: $name")
+            if (exclude)
+              log.debug(s"Skipping JAR: $name")
+            else
+              log.debug(s"Shading classes jar: $name")
 
-              exclude
+            exclude
           }
         },
-
         assembly / assemblyJarName := {
           val newName = s"${name.value}_${scalaBinaryVersion.value}-${version.value}.jar"
           streams.value.log.debug(s"overwriting assemblyJarName: ${(assembly / assemblyJarName).value} -> $newName")
@@ -86,18 +74,15 @@ object ThinFatJar extends sbt.AutoPlugin {
         sbt.Test / packageBin / artifactClassifier := None,
 
         // Make the assembly JAR the unclassified artifact.
-        Compile / assembly / artifact := (Compile / assembly / artifact).value.withClassifier(None),
-
+        Compile / assembly / artifact := (Compile / assembly / artifact).value.withClassifier(None)
       ) ++
-        addArtifact(Compile / assembly / artifact, assembly)  // Publish the assembly JAR.
+        addArtifact(Compile / assembly / artifact, assembly) // Publish the assembly JAR.
 
     val publishAssemblyJar =
-      Seq(
-        Compile / assembly / artifact := {
-          val art = (Compile / assembly / artifact).value
-          art.withClassifier(Some("assembly"))
-        }
-      ) ++
+      Seq(Compile / assembly / artifact := {
+        val art = (Compile / assembly / artifact).value
+        art.withClassifier(Some("assembly"))
+      }) ++
         addArtifact(Compile / assembly / artifact, assembly)
 
     val main = settingKey[String]("Main class; non-Option wrapper for `mainClass`")
@@ -111,26 +96,20 @@ object ThinFatJar extends sbt.AutoPlugin {
       shadedDeps := Nil,
 
       // If any shadeRenames are specified, apply them.
-      assembly / assemblyShadeRules ++= Seq(
-        ShadeRule.rename(
-          shadeRenames.value: _*
-        ).inAll
-      ),
+      assembly / assemblyShadeRules ++= Seq(ShadeRule.rename(shadeRenames.value: _*).inAll),
 
       // Don't run tests when building assembly JAR, by default.
       assembly / test := {},
 
       // If the user overrides the above by setting assemblyIncludeScala to true, pick that up here.
       assembly / assemblyOption ~= { _.withIncludeScala(false) },
-
       libraryDependencies ++= shadedDeps.value,
-
       main := "",
       mainClass := (
         if (main.value.isEmpty)
           None
         else
           Some(main.value)
-        )
+      )
     )
 }
