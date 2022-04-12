@@ -10,7 +10,7 @@ lazy val sparkVersion = "3.2.1"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
-testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.value)
+testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion)
 
 // For Spark DataSource API V2, spark-excel jar file depends on spark-version
 version := testSparkVersion.value + "_" + version.value
@@ -20,19 +20,22 @@ resolvers ++= Seq("jitpack" at "https://jitpack.io")
 libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
   .map(_.excludeAll(ExclusionRule(organization = "stax")))
 
+enablePlugins(ThinFatJar)
 shadedDeps ++= Seq(
-  "org.apache.poi" ^ "poi" ^ "5.2.0",
-  "org.apache.poi" ^ "poi-ooxml" ^ "5.2.0",
-  "com.norbitltd" ^^ "spoiwo" ^ "2.1.0",
-  "com.github.pjfanning" ^ "excel-streaming-reader" ^ "3.4.2",
-  "com.github.pjfanning" ^ "poi-shared-strings" ^ "2.5.0",
-  "org.apache.commons" ^ "commons-compress" ^ "1.21"
+  "org.apache.poi" % "poi" % "5.2.2",
+  "org.apache.poi" % "poi-ooxml" % "5.2.2",
+  "com.norbitltd" %% "spoiwo" % "2.2.1",
+  "com.github.pjfanning" % "excel-streaming-reader" % "3.6.1",
+  "com.github.pjfanning" % "poi-shared-strings" % "2.5.2",
+  "commons-io" % "commons-io" % "2.11.0",
+  "org.apache.commons" % "commons-compress" % "1.21"
 )
 
 shadeRenames ++= Seq(
   "org.apache.poi.**" -> "shadeio.poi.@1",
   "spoiwo.**" -> "shadeio.spoiwo.@1",
   "com.github.pjfanning.**" -> "shadeio.pjfanning.@1",
+  "org.apache.commons.io.**" -> "shadeio.commons.io.@1",
   "org.apache.commons.compress.**" -> "shadeio.commons.compress.@1"
 )
 
@@ -45,7 +48,7 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-core" % "2.7.0" % Test,
   "org.scalatest" %% "scalatest" % "3.2.11" % Test,
   "org.scalatestplus" %% "scalacheck-1-15" % "3.2.11.0" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.15.4" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.16.0" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.15" % "1.3.0" % Test,
   //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
   "org.scalamock" %% "scalamock" % "5.2.0" % Test
