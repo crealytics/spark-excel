@@ -23,7 +23,14 @@ jobs:
             key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
       - name: Test
         run: sbt -Dspark.testVersion=${{ matrix.spark  }} ++${{ matrix.scala }} test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Assembly
         run: sbt ++${{ matrix.scala }} assembly
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Scalastyle
         run: sbt ++${{ matrix.scala }} scalastyle "test:scalastyle"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
