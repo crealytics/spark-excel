@@ -114,7 +114,7 @@ class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Con
 
     case TimestampType =>
       (row: InternalRow, ordinal: Int, cell: Cell) => {
-        cell.setCellValue(new java.util.Date(row.getLong(ordinal).toLong))
+        cell.setCellValue(DateTimeUtils.toJavaTimestamp(row.getLong(ordinal)))
         cell.setCellStyle(TimestampCellStyle)
       }
 

@@ -16,6 +16,7 @@ import org.apache.spark.sql.catalyst.util.DateFormatter
 import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.apache.spark.sql.catalyst.util.ParseMode
 import org.apache.spark.sql.catalyst.util.PermissiveMode
+import org.apache.spark.sql.catalyst.util.TimestampFormatter
 import org.apache.spark.sql.internal.SQLConf
 
 import java.time.ZoneId
@@ -72,8 +73,7 @@ class ExcelOptions(
 
   val dateFormat: String = parameters.getOrElse("dateFormat", DateFormatter.defaultPattern)
 
-  val timestampFormat: String = parameters
-    .getOrElse("timestampFormat", s"${DateFormatter.defaultPattern}'T'HH:mm:ss[.SSS][XXX]")
+  val timestampFormat: String = parameters.getOrElse("timestampFormat", TimestampFormatter.defaultPattern)
 
   /* Have header line when reading and writing */
   val header = getBool("header", default = true)
