@@ -153,7 +153,7 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
     val path = Files.createTempDirectory("spark_excel_wr_02_").toString()
     val previousConfigValue = spark.conf.getOption(DATETIME_JAVA8API_ENABLED)
     if (previousConfigValue.isEmpty) {
-      println(DATETIME_JAVA8API_ENABLED + " didn't exist before spark 3.0. Nothing to test!")
+      print(DATETIME_JAVA8API_ENABLED + " didn't exist before spark 3.0. Nothing to test!")
       succeed
     }
     spark.conf.set(DATETIME_JAVA8API_ENABLED, true)
