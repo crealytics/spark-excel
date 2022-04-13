@@ -126,7 +126,7 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
     })
   }
 
-  test("write then read java.sql.date and java.sql.timestamp") {
+  test("write then read java.sql.Date and java.sql.Timestamp") {
     val path = Files.createTempDirectory("spark_excel_wr_02_").toString()
     val previousConfigValue = spark.conf.get(DATETIME_JAVA8API_ENABLED, "false")
     spark.conf.set(DATETIME_JAVA8API_ENABLED, false)
@@ -138,7 +138,7 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
 
     val df_read = spark.read
       .format("excel")
-      .schema(userDefinedSchema_03)
+      .schema(userDefinedSchema_02)
       .load(path)
       .sort("Id")
 
@@ -151,28 +151,31 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
 
   test("write then read java.time.Instant and java.time.LocalDate") {
     val path = Files.createTempDirectory("spark_excel_wr_02_").toString()
-    val previousConfigValue = spark.conf.get(DATETIME_JAVA8API_ENABLED, "false")
+    val previousConfigValue = spark.conf.getOption(DATETIME_JAVA8API_ENABLED)
+    if (previousConfigValue.isEmpty) {
+      println(DATETIME_JAVA8API_ENABLED + " didn't exist before spark 3.0. Nothing to test!")
+      succeed
+    }
     spark.conf.set(DATETIME_JAVA8API_ENABLED, true)
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault)
     val expectedData_02_time = expectedData_02
-      .map(r => Row.fromTuple(
-        r.getInt(0),
-        LocalDate.parse(r.getString(1)),
-        Instant.from(formatter.parse(r.getString(2)))))
+      .map(r =>
+        Row.fromTuple(r.getInt(0), LocalDate.parse(r.getString(1)), Instant.from(formatter.parse(r.getString(2))))
+      )
       .asJava
     val df_source = spark.createDataFrame(expectedData_02_time, userDefinedSchema_02).sort("Id")
     df_source.write.format("excel").mode(SaveMode.Append).save(path)
 
     val df_read = spark.read
       .format("excel")
-      .schema(userDefinedSchema_03)
+      .schema(userDefinedSchema_02)
       .load(path)
       .sort("Id")
 
     assertDataFrameEquals(df_source, df_read)
 
     /* Cleanup, should after the checking */
-    spark.conf.set(DATETIME_JAVA8API_ENABLED, previousConfigValue)
+    spark.conf.set(DATETIME_JAVA8API_ENABLED, previousConfigValue.get)
     deleteDirectory(path)
   }
 
