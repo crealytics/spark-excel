@@ -52,7 +52,7 @@ object WriteAndReadSuite {
     Row(1, 12, "CA873", "Nguyễn Thị Teresa Teng", null, null, 1200, null, "Jesse Thomas")
   ).asJava
 
-  val userDefinedSchema_03 = StructType(
+  val userDefinedSchema_02 = StructType(
     List(
       StructField("Id", IntegerType, nullable = true),
       StructField("Date", DateType, nullable = true),
@@ -60,7 +60,7 @@ object WriteAndReadSuite {
     )
   )
 
-  val expectedData_03: List[Row] = List(
+  val expectedData_02: List[Row] = List(
     Row(1, "2021-10-01", "2021-10-01 01:23:45"),
     Row(2, "2021-11-01", "2021-11-01 11:23:45"),
     Row(3, "2021-10-11", "2021-10-11 01:23:45"),
@@ -127,13 +127,13 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
   }
 
   test("write then read java.sql.date and java.sql.timestamp") {
-    val path = Files.createTempDirectory("spark_excel_wr_03_").toString()
-    val previousConfigValue = spark.conf.get(DATETIME_JAVA8API_ENABLED)
+    val path = Files.createTempDirectory("spark_excel_wr_02_").toString()
+    val previousConfigValue = spark.conf.get(DATETIME_JAVA8API_ENABLED, "false")
     spark.conf.set(DATETIME_JAVA8API_ENABLED, false)
-    val expectedData_03_sql = expectedData_03
+    val expectedData_02_sql = expectedData_02
       .map(r => Row.fromTuple(r.getInt(0), Date.valueOf(r.getString(1)), Timestamp.valueOf(r.getString(2))))
       .asJava
-    val df_source = spark.createDataFrame(expectedData_03_sql, userDefinedSchema_03).sort("Id")
+    val df_source = spark.createDataFrame(expectedData_02_sql, userDefinedSchema_02).sort("Id")
     df_source.write.format("excel").mode(SaveMode.Append).save(path)
 
     val df_read = spark.read
@@ -150,17 +150,17 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
   }
 
   test("write then read java.time.Instant and java.time.LocalDate") {
-    val path = Files.createTempDirectory("spark_excel_wr_03_").toString()
-    val previousConfigValue = spark.conf.get(DATETIME_JAVA8API_ENABLED)
+    val path = Files.createTempDirectory("spark_excel_wr_02_").toString()
+    val previousConfigValue = spark.conf.get(DATETIME_JAVA8API_ENABLED, "false")
     spark.conf.set(DATETIME_JAVA8API_ENABLED, true)
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault)
-    val expectedData_03_time = expectedData_03
+    val expectedData_02_time = expectedData_02
       .map(r => Row.fromTuple(
         r.getInt(0),
         LocalDate.parse(r.getString(1)),
         Instant.from(formatter.parse(r.getString(2)))))
       .asJava
-    val df_source = spark.createDataFrame(expectedData_03_time, userDefinedSchema_03).sort("Id")
+    val df_source = spark.createDataFrame(expectedData_02_time, userDefinedSchema_02).sort("Id")
     df_source.write.format("excel").mode(SaveMode.Append).save(path)
 
     val df_read = spark.read
