@@ -128,7 +128,7 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
 
   test("write then read java.sql.Date and java.sql.Timestamp") {
     val path = Files.createTempDirectory("spark_excel_wr_02_").toString()
-    val previousConfigValue = spark.conf.get(DATETIME_JAVA8API_ENABLED, "false")
+    val previousConfigValue = spark.conf.getOption(DATETIME_JAVA8API_ENABLED)
     spark.conf.set(DATETIME_JAVA8API_ENABLED, false)
     val expectedData_02_sql = expectedData_02
       .map(r => Row.fromTuple(r.getInt(0), Date.valueOf(r.getString(1)), Timestamp.valueOf(r.getString(2))))
@@ -145,17 +145,20 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
     assertDataFrameEquals(df_source, df_read)
 
     /* Cleanup, should after the checking */
-    spark.conf.set(DATETIME_JAVA8API_ENABLED, previousConfigValue)
+    if (previousConfigValue.isEmpty) {
+      spark.conf.unset(DATETIME_JAVA8API_ENABLED)
+    } else {
+      spark.conf.set(DATETIME_JAVA8API_ENABLED, previousConfigValue.get)
+    }
     deleteDirectory(path)
   }
 
   test("write then read java.time.Instant and java.time.LocalDate") {
-    val path = Files.createTempDirectory("spark_excel_wr_02_").toString()
-    val previousConfigValue = spark.conf.getOption(DATETIME_JAVA8API_ENABLED)
-    if (previousConfigValue.isEmpty) {
-      print(DATETIME_JAVA8API_ENABLED + " didn't exist before spark 3.0. Nothing to test!")
-      succeed
+    if (spark.version.startsWith("2.")) {
+      cancel(DATETIME_JAVA8API_ENABLED + " didn't exist before spark 3.0. Nothing to test!")
     }
+    val path = Files.createTempDirectory("spark_excel_wr_02_").toString()
+    val previousConfigValue = spark.conf.get(DATETIME_JAVA8API_ENABLED)
     spark.conf.set(DATETIME_JAVA8API_ENABLED, true)
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault)
     val expectedData_02_time = expectedData_02
@@ -175,7 +178,7 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
     assertDataFrameEquals(df_source, df_read)
 
     /* Cleanup, should after the checking */
-    spark.conf.set(DATETIME_JAVA8API_ENABLED, previousConfigValue.get)
+    spark.conf.set(DATETIME_JAVA8API_ENABLED, previousConfigValue)
     deleteDirectory(path)
   }
 
