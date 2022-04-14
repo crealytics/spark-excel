@@ -1,0 +1,66 @@
+name: 🐞 Bug
+description: File a bug/issue
+title: "[BUG] <title>"
+labels: [Bug, Needs Triage]
+body:
+- type: checkboxes
+  attributes:
+    label: Is there an existing issue for this?
+    description: Please search to see if an issue already exists for the bug you encountered.
+    options:
+    - label: I have searched the existing issues
+      required: true
+- type: textarea
+  attributes:
+    label: Current Behavior
+    description: A concise description of what you're experiencing.
+  validations:
+    required: false
+- type: textarea
+  attributes:
+    label: Expected Behavior
+    description: A concise description of what you expected to happen.
+  validations:
+    required: false
+- type: textarea
+  attributes:
+    label: Steps To Reproduce
+    description: Steps to reproduce the behavior.
+    placeholder: |
+      Steps to Reproduce (for bugs)
+      Provide a link to a live example, or an unambiguous set of steps to reproduce this bug. Include code to reproduce, if relevant. Example:
+      Download the example file uploaded here
+      Start Spark from command line as spark-shell --packages com.crealytics:spark-excel_2.12:x.y.z --foo=bar
+      Read the downloaded example file
+      val df = spark.read
+        .format("com.crealytics.spark.excel")
+        .option("dataAddress", "'My Sheet'!B3:C35")
+        .load("example_file_exhibiting_bug.xlsx")
+  validations:
+    required: false
+- type: textarea
+  attributes:
+    label: Environment
+    description: |
+      examples:
+        Include as many relevant details about the environment you experienced the bug in
+        Spark version and language (Scala, Java, Python, R, ...):
+        Spark-Excel version:
+        Operating System and versioncluster environment, ...:
+    value: |
+        - Spark version:
+        - Spark-Excel version:
+        - OS:
+        - Cluster environment
+    render: markdown
+  validations:
+    required: false
+- type: textarea
+  attributes:
+    label: Anything else?
+    description: |
+      Links? References? Anything that will give us more context about the issue you are encountering!
+
+      Tip: You can attach images or log files by clicking this area to highlight it and then dragging files in.
+  validations:
+    required: false
