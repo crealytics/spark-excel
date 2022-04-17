@@ -1,6 +1,7 @@
 package com.crealytics.spark.v2.excel
 
 import java.io.File
+import java.nio.file.Files
 
 trait LocalFileTestingUtilities {
 
@@ -33,10 +34,10 @@ trait LocalFileTestingUtilities {
 
   /** Deletes the (non-empty) directory (recursively)
     */
-  def deleteDirectory(folderToDelete: File): Unit = {
+  def deleteDirectoryRecursively(folderToDelete: File): Unit = {
     val allContents = folderToDelete.listFiles
     if (allContents != null) for (file <- allContents) {
-      deleteDirectory(file)
+      deleteDirectoryRecursively(file)
     }
     folderToDelete.delete
   }
@@ -46,24 +47,13 @@ trait LocalFileTestingUtilities {
 
     def fixture(testCode: String => Unit): Unit = {
 
-      val directory: File = createTemporaryDirectory(name)
+      val directory = Files.createTempDirectory(name)
 
-      try testCode(directory.getPath)
-      finally deleteDirectory(directory)
+      try testCode(directory.toString)
+      finally deleteDirectoryRecursively(directory.toFile)
     }
 
     fixture
   }
-  def createTemporaryDirectory(prefix: String): File = {
-    val rnd = new util.Random
-    val randomValue = rnd.nextInt(10000)
-    val directory = new File(s"tmp/${prefix}_$randomValue")
-    if (directory.exists) {
-      deleteDirectory(directory)
-    }
-    if (!directory.exists) {
-      directory.mkdirs()
-    }
-    directory
-  }
+
 }
