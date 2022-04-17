@@ -61,7 +61,7 @@ class DataFrameWriterApiComplianceSuite extends AnyWordSpec with DataFrameSuiteB
           .save()
 
         val listOfFiles = getListOfFilesFilteredByExtension(targetDir, "xlsx")
-        assert(listOfFiles.nonEmpty, s"Expected a single file but got more: $listOfFiles")
+        assert(listOfFiles.nonEmpty, s"expected at least one excel file")
 
         // is the result really the same?
         assertWrittenExcelData(dfCsv, targetDir)
