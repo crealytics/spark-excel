@@ -25,6 +25,6 @@ jobs:
         with:
             fetch-depth: 0
       - name: Publish
-        run: sbt -Dspark.testVersion=${{ matrix.spark  }} ++${{ matrix.scala }} publish
+        run: sbt -Dspark.testVersion=${{ matrix.spark  }} ++${{ matrix.scala }} ci-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
