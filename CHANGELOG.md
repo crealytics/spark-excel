@@ -1,5 +1,8 @@
 Next
 ====
+
+0.17.0
+======
 - Feature: Add PlainNumberFormat that does not round or use scientific notations for long numbers.
            Can be enabled by setting `usePlainNumberFormat=true` when reading the excel file. 
 - Bugfix: Fixed SaveMode.Overwrite and SaveMode.Append for V2 API and spark >=3.0.1 
