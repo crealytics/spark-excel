@@ -19,10 +19,16 @@ import org.scalatest.funsuite.AnyFunSuite
 import java.util
 import scala.collection.JavaConverters._
 import java.nio.file.Files
+import java.sql.{Date, Timestamp}
+import java.time.{Instant, LocalDate, ZoneId}
+import java.time.format.DateTimeFormatter
+
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 
 /** Writing and reading back */
 object WriteAndReadSuite {
+
+  val DATETIME_JAVA8API_ENABLED = "spark.sql.datetime.java8API.enabled"
 
   val userDefinedSchema_01 = StructType(
     List(
@@ -48,25 +54,19 @@ object WriteAndReadSuite {
 
   val userDefinedSchema_02 = StructType(
     List(
-      StructField("Day", LongType, true),
-      StructField("Month", LongType, true),
-      StructField("Customer ID", StringType, true),
-      StructField("Customer Name", StringType, true),
-      StructField("Standard Package", IntegerType, true),
-      StructField("Extra Option 1", IntegerType, true),
-      StructField("Extra Option 2", IntegerType, true),
-      StructField("Extra Option 3", LongType, true),
-      StructField("Staff", StringType, true)
+      StructField("Id", IntegerType, nullable = true),
+      StructField("Date", DateType, nullable = true),
+      StructField("Timestamp", TimestampType, nullable = true)
     )
   )
 
-  val expectedData_02: util.List[Row] = List(
-    Row(1L, 12L, "CA869", "Phạm Uyển Trinh", null, null, 2200, null, "Ella Fitzgerald"),
-    Row(1L, 12L, "CA870", "Nguyễn Liên Thảo", null, null, 2000, 1350L, "Ella Fitzgerald"),
-    Row(1L, 12L, "CA871", "Lê Thị Nga", 17000, null, null, null, "Ella Fitzgerald"),
-    Row(1L, 12L, "CA872", "Phan Tố Nga", null, null, 2000, null, "Teresa Teng"),
-    Row(1L, 12L, "CA873", "Nguyễn Thị Teresa Teng", null, null, 1200, null, "Jesse Thomas")
-  ).asJava
+  val expectedData_02: List[Row] = List(
+    Row(1, "2021-10-01", "2021-10-01 01:23:45"),
+    Row(2, "2021-11-01", "2021-11-01 11:23:45"),
+    Row(3, "2021-10-11", "2021-10-11 01:23:45"),
+    Row(4, "2021-11-11", "2021-11-11 01:23:05"),
+    Row(5, "2022-10-01", "2022-10-01 16:23:45")
+  )
 }
 
 /** Write then read excel file, with both XLSX and XLS formats. There are two open questions:
@@ -124,6 +124,62 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
       /* Cleanup, should after the checking */
       deleteDirectory(path)
     })
+  }
+
+  test("write then read java.sql.Date and java.sql.Timestamp") {
+    val path = Files.createTempDirectory("spark_excel_wr_02_").toString()
+    val previousConfigValue = spark.conf.getOption(DATETIME_JAVA8API_ENABLED)
+    spark.conf.set(DATETIME_JAVA8API_ENABLED, false)
+    val expectedData_02_sql = expectedData_02
+      .map(r => Row.fromTuple(r.getInt(0), Date.valueOf(r.getString(1)), Timestamp.valueOf(r.getString(2))))
+      .asJava
+    val df_source = spark.createDataFrame(expectedData_02_sql, userDefinedSchema_02).sort("Id")
+    df_source.write.format("excel").mode(SaveMode.Append).save(path)
+
+    val df_read = spark.read
+      .format("excel")
+      .schema(userDefinedSchema_02)
+      .load(path)
+      .sort("Id")
+
+    assertDataFrameEquals(df_source, df_read)
+
+    /* Cleanup, should after the checking */
+    if (previousConfigValue.isEmpty) {
+      spark.conf.unset(DATETIME_JAVA8API_ENABLED)
+    } else {
+      spark.conf.set(DATETIME_JAVA8API_ENABLED, previousConfigValue.get)
+    }
+    deleteDirectory(path)
+  }
+
+  test("write then read java.time.Instant and java.time.LocalDate") {
+    if (spark.version.startsWith("2.")) {
+      cancel(DATETIME_JAVA8API_ENABLED + " didn't exist before spark 3.0. Nothing to test!")
+    }
+    val path = Files.createTempDirectory("spark_excel_wr_02_").toString()
+    val previousConfigValue = spark.conf.get(DATETIME_JAVA8API_ENABLED)
+    spark.conf.set(DATETIME_JAVA8API_ENABLED, true)
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault)
+    val expectedData_02_time = expectedData_02
+      .map(r =>
+        Row.fromTuple(r.getInt(0), LocalDate.parse(r.getString(1)), Instant.from(formatter.parse(r.getString(2))))
+      )
+      .asJava
+    val df_source = spark.createDataFrame(expectedData_02_time, userDefinedSchema_02).sort("Id")
+    df_source.write.format("excel").mode(SaveMode.Append).save(path)
+
+    val df_read = spark.read
+      .format("excel")
+      .schema(userDefinedSchema_02)
+      .load(path)
+      .sort("Id")
+
+    assertDataFrameEquals(df_source, df_read)
+
+    /* Cleanup, should after the checking */
+    spark.conf.set(DATETIME_JAVA8API_ENABLED, previousConfigValue)
+    deleteDirectory(path)
   }
 
 }
