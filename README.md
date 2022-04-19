@@ -5,6 +5,7 @@ A library for querying Excel files with Apache Spark, for Spark SQL and DataFram
 [![Build Status](https://github.com/crealytics/spark-excel/workflows/CI/badge.svg)](https://github.com/crealytics/spark-excel/actions)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.crealytics/spark-excel_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.crealytics/spark-excel_2.12)
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/crealytics/spark-excel)
+ 
 
 ## Co-maintainers wanted
 Due to personal and professional constraints, the development of this library has been rather slow.
@@ -23,7 +24,7 @@ This library requires Spark 2.0+.
 
 List of spark versions, those are automatically tested:
 ```
-spark: ["2.4.1", "2.4.7", "2.4.8", "3.0.0", "3.0.3", "3.1.1", "3.1.2"]
+spark: ["2.4.1", "2.4.7", "2.4.8", "3.0.1", "3.0.3", "3.1.1", "3.1.2", "3.2.1"]
 ```
 For more detail, please refer to project CI: [ci.yml](https://github.com/crealytics/spark-excel/blob/main/.github/workflows/ci.yml#L10)
 
@@ -61,10 +62,13 @@ $SPARK_HOME/bin/spark-shell --packages com.crealytics:spark-excel_2.11:<spark-ve
 * This package allows querying Excel spreadsheets as [Spark DataFrames](https://spark.apache.org/docs/latest/sql-programming-guide.html).
 * From spark-excel [0.14.0](https://github.com/crealytics/spark-excel/releases/tag/v0.14.0) (August 24, 2021), there are two implementation of spark-excel
     * Original Spark-Excel with Spark data source API 1.0
-    * Spark-Excel V2 with data source API V2.0+, which supports loading from multiple files, corrupted record handling and some improvement on handling data types.
+    * Spark-Excel V2 with data source API V2.0+, which supports loading from multiple files, corrupted record handling and some improvement on handling data types. 
+      See below for further details
 
-To use V2 implementation, just change your .format from `.format("com.crealytics.spark.excel")` to `.format("excel")`
+To use V2 implementation, just change your .format from `.format("com.crealytics.spark.excel")` to `.format("excel")`.
+See [below](#excel-api-based-on-datasourcev2) for some details
 
+See the [changelog](CHANGELOG.md) for latest features, fixes etc.
 
 ### Scala API
 __Spark 2.0+:__
@@ -192,6 +196,42 @@ Currently the following address styles are supported:
   Writing will only write within the current range of the table.
   No growing of the table will be performed. PRs to change this are welcome.
 
+### Excel API based on DataSourceV2
+The V2 API offers you several improvements when it comes to file and folder handling.
+and works in a very similar way than data sources like csv and parquet.
+
+To use V2 implementation, just change your .format from `.format("com.crealytics.spark.excel")` to `.format("excel")`
+
+The big difference is the fact that you provide a path to read / write data from/to and not
+an individual single file only:
+
+```scala
+dataFrame.write
+        .format("excel")
+        .save("some/path")
+```
+
+```scala
+spark.read
+        .format("excel")
+        // ... insert excel read specific options you need
+        .load("some/path")
+```
+
+
+Because folders are supported you can read/write from/to a "partitioned" folder structure, just
+the same way as csv or parquet. Note that writing partitioned structures is only 
+available for spark >=3.0.1
+
+````scala
+dataFrame.write
+        .partitionBy("col1")
+        .format("excel")
+        .save("some/path")
+````
+
+Need some more examples? Check out the [test cases](src/test/scala/com/crealytics/spark/v2/excel/DataFrameWriterApiComplianceSuite.scala)
+or have a look at our wiki
 
 ## Building From Source
 This library is built with [SBT](http://www.scala-sbt.org/0.13/docs/Command-Line-Reference.html).

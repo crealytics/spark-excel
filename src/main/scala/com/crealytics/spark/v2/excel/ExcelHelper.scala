@@ -30,6 +30,8 @@ import org.apache.poi.ss.util.AreaReference
 import org.apache.poi.ss.util.CellReference
 import org.apache.poi.ss.SpreadsheetVersion
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory
+
+import java.util.concurrent.atomic.AtomicBoolean
 import scala.util.Try
 
 /** A format that formats a double as a plain string without rounding and scientific notation. All other operations are
@@ -48,7 +50,7 @@ object PlainNumberFormat extends Format {
 }
 
 /* Excel parsing and utility methods */
-class ExcelHelper(options: ExcelOptions) {
+class ExcelHelper private (options: ExcelOptions) {
 
   /* For get cell string value */
   private lazy val dataFormatter = {
@@ -97,21 +99,17 @@ class ExcelHelper(options: ExcelOptions) {
     *   Hadoop configuration
     * @param uri
     *   to the file, this can be on any support file system back end
-    * @param password
-    *   optional password to open workbook
     * @return
     *   workbook
     */
   def getWorkbook(conf: Configuration, uri: URI): Workbook = {
-    ExcelHelper.configureProviders()
     val ins = FileSystem.get(uri, conf).open(new Path(uri))
-
     try
       options.workbookPassword match {
         case None => WorkbookFactory.create(ins)
         case Some(password) => WorkbookFactory.create(ins, password)
       }
-    finally ins.close
+    finally ins.close()
   }
 
   /** Get cell-row iterator for excel file in given URI
@@ -127,15 +125,13 @@ class ExcelHelper(options: ExcelOptions) {
     val workbook = getWorkbook(conf, uri)
     val excelReader = DataLocator(options)
     try { excelReader.readFrom(workbook) }
-    finally workbook.close
+    finally workbook.close()
   }
 
   /** Get column name by list of cells (row)
     *
     * @param firstRow
     *   column names will be based on this
-    * @param options
-    *   excel option
     * @return
     *   list of column names
     */
@@ -197,18 +193,47 @@ class ExcelHelper(options: ExcelOptions) {
       SpreadsheetVersion.EXCEL2007
     )
   }.getOrElse(new AreaReference(options.dataAddress, SpreadsheetVersion.EXCEL2007))
+
 }
 
 object ExcelHelper {
-  def apply(options: ExcelOptions): ExcelHelper = new ExcelHelper(options)
 
-  def configureProviders(): Unit = {
-    synchronized {
-      WorkbookFactory.removeProvider(classOf[HSSFWorkbookFactory])
-      WorkbookFactory.addProvider(new HSSFWorkbookFactory)
+  private val configurationNeeded = new AtomicBoolean() // initializes with false
+  private val configurationIsDone = new AtomicBoolean() // initializes with false
 
-      WorkbookFactory.removeProvider(classOf[XSSFWorkbookFactory])
-      WorkbookFactory.addProvider(new XSSFWorkbookFactory)
+  def apply(options: ExcelOptions): ExcelHelper = {
+    configureProvidersOnce() // ExcelHelper ctor is private, so we guarantee that this is called!
+    new ExcelHelper(options)
+  }
+
+  def configureProvidersOnce(): Unit = {
+    /*  initially introduced for issue #480 (PR #513) later changed to cope with
+        threading issue described in PR #562
+
+        ensures that the WorkbookFactory is initialized with the two POI providers for
+        xls and xlsx. It seems that the default loading within WorkbookFactory doesn't
+        work as expected. This needs to be done only once, because the providers are stored
+        within a Singleton data structure.
+
+        To avoid multi-threading issue the initialization is done by the first thread and
+        all other threads running in parallel have to wait  until initialization is done.
+        Otherwise the Singleton gets manipulated while another thread accesses it.
+        This can lead to a java.util.ConcurrentModificationException exception while looping
+        over the Singleton (see code fragment
+        at org.apache.poi.ss.usermodel.WorkbookFactory.wp(WorkbookFactory.java:327).
+     */
+    if (!configurationIsDone.get()) {
+      if (!configurationNeeded.getAndSet(true)) {
+        WorkbookFactory.removeProvider(classOf[HSSFWorkbookFactory])
+        WorkbookFactory.addProvider(new HSSFWorkbookFactory)
+
+        WorkbookFactory.removeProvider(classOf[XSSFWorkbookFactory])
+        WorkbookFactory.addProvider(new XSSFWorkbookFactory)
+        configurationIsDone.set(true)
+      } else {
+        while (!configurationIsDone.get())
+          Thread.sleep(100)
+      }
     }
   }
 }

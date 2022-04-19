@@ -95,7 +95,7 @@ class GlobPartitionAndFileNameSuite extends AnyFunSuite with DataFrameSuiteBase 
       .distinct
       .collect
       .map(r => r.getString(0))
-      .map(p => Paths.get(p).getFileName.toString)
+      .map(p => p.split("[\\/]").last) // this works on Windows too
       .toSet
     assert(names == Set[String]("ca_10.xlsx", "ca_11.xlsx", "ca_12.xlsx"))
   }
