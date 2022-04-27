@@ -133,6 +133,7 @@ val df = spark.read.excel(
 or to read in the names dynamically:
 
 ```scala
+import com.crealytics.spark.excel.WorkbookReader
 val sheetNames = WorkbookReader( Map("path" -> "Worktime.xlsx")
                                , spark.sparkContext.hadoopConfiguration
                                ).sheetNames
