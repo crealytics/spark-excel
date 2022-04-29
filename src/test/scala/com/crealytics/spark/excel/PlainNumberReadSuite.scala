@@ -24,7 +24,7 @@ object PlainNumberReadSuite {
     Row(123456789012d, "123456789012", "0.01"),
     Row(-0.12345678901, "0.05", "0h 14m"),
     Row(null, null, null),
-    Row(0.0, "abc.def", null)
+    Row(null, "abc.def", null)
   ).asJava
 
   val expectedExcelDataInferSchema: util.List[Row] = List(
@@ -32,7 +32,7 @@ object PlainNumberReadSuite {
     Row(1.23456789012e11, "1.23457E+11", "0.01"), // values are displayed in scientific notation and rounded up
     Row(-0.12345678901, "0.05", "0h 14m"),
     Row(null, null, null),
-    Row(0.0, "abc.def", null)
+    Row(null, "abc.def", null)
   ).asJava
 
   val expectedNonInferredSchema = StructType(
@@ -48,7 +48,7 @@ object PlainNumberReadSuite {
     Row("123456789012", "123456789012", "0.01"),
     Row("-0.12345678901", "0.05", "0h 14m"),
     Row(null, null, null),
-    Row("-1/0", "abc.def", null)
+    Row(null, "abc.def", null)
   ).asJava
 
   val expectedExcelDataNonInferSchema: util.List[Row] = List(
@@ -56,7 +56,7 @@ object PlainNumberReadSuite {
     Row("1.23457E+11", "1.23457E+11", "0.01"), // values are displayed in scientific notation and rounded up
     Row("-0.123456789", "0.05", "0h 14m"), // values are rounded up
     Row(null, null, null),
-    Row("-1/0", "abc.def", null)
+    Row(null, "abc.def", null)
   ).asJava
 }
 
