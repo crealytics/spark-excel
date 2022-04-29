@@ -314,7 +314,8 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
   private def nullSafeDatum(datum: Cell, name: String, nullable: Boolean, options: ExcelOptions)(
     converter: ValueConverter
   ): Any = {
-    val ret = datum.getCellType match {
+    val cellType = if (datum.getCellType == CellType.FORMULA) datum.getCachedFormulaResultType else datum.getCellType
+    val ret = cellType match {
       case CellType.BLANK | CellType._NONE => null
       case CellType.ERROR => if (options.useNullForErrorCells) null else converter.apply(datum)
       case CellType.STRING =>
