@@ -22,23 +22,24 @@ object ErrorsAsStringsReadSuite {
       StructField("double", DoubleType, true),
       StructField("boolean", BooleanType, true),
       StructField("timestamp", TimestampType, true),
-      StructField("string", StringType, true)
+      StructField("string", StringType, true),
+      StructField("formula", StringType, true)
     )
   )
   private val expectedDataErrorsAsStringsInfer: util.List[Row] =
     List(
-      Row(1.0, true, dummyTimestamp, dummyText),
-      Row(2.0, false, dummyTimestamp, dummyText),
-      Row(0.0, false, epochTimestamp, ""),
-      Row(0.0, false, epochTimestamp, "")
+      Row(1.0, true, dummyTimestamp, dummyText, "A1"),
+      Row(2.0, false, dummyTimestamp, dummyText, "A3"),
+      Row(0.0, false, epochTimestamp, "", ""),
+      Row(0.0, false, epochTimestamp, "", "")
     ).asJava
 
   private val expectedDataErrorsAsNullInfer: util.List[Row] =
     List(
-      Row(1.0, true, dummyTimestamp, dummyText),
-      Row(2.0, false, dummyTimestamp, dummyText),
-      Row(null, null, null, null),
-      Row(null, null, null, null)
+      Row(1.0, true, dummyTimestamp, dummyText, "A1"),
+      Row(2.0, false, dummyTimestamp, dummyText, "A3"),
+      Row(null, null, null, null, null),
+      Row(null, null, null, null, null)
     ).asJava
 
   private val expectedSchemaNonInfer = StructType(
@@ -46,23 +47,24 @@ object ErrorsAsStringsReadSuite {
       StructField("double", StringType, true),
       StructField("boolean", StringType, true),
       StructField("timestamp", StringType, true),
-      StructField("string", StringType, true)
+      StructField("string", StringType, true),
+      StructField("formula", StringType, true)
     )
   )
   private val expectedDataErrorsAsStringsNonInfer: util.List[Row] =
     List(
-      Row("1", "TRUE", "19\"-\"Feb\"-\"2021", dummyText),
-      Row("2", "FALSE", "19\"-\"Feb\"-\"2021", dummyText),
-      Row("", "", "", ""),
-      Row("", "", "", "")
+      Row("1", "TRUE", "19\"-\"Feb\"-\"2021", dummyText, "A1"),
+      Row("2", "FALSE", "19\"-\"Feb\"-\"2021", dummyText, "A3"),
+      Row("", "", "", "", ""),
+      Row("", "", "", "", "")
     ).asJava
 
   private val expectedDataErrorsAsNullNonInfer: util.List[Row] =
     List(
-      Row("1", "TRUE", "19\"-\"Feb\"-\"2021", "hello"),
-      Row("2", "FALSE", "19\"-\"Feb\"-\"2021", "hello"),
-      Row(null, null, null, null),
-      Row(null, null, null, null)
+      Row("1", "TRUE", "19\"-\"Feb\"-\"2021", "hello", "A1"),
+      Row("2", "FALSE", "19\"-\"Feb\"-\"2021", "hello", "A3"),
+      Row(null, null, null, null, null),
+      Row(null, null, null, null, null)
     ).asJava
 
   private val excelLocation = "/spreadsheets/with_errors_all_types.xlsx"

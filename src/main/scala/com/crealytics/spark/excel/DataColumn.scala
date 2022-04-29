@@ -27,7 +27,7 @@ class HeaderDataColumn(
 ) extends DataColumn {
   def name: String = field.name
   def extractValue(cell: Cell): Any = {
-    val cellType = cell.getCellType
+    val cellType = if (cell.getCellType == CellType.FORMULA) cell.getCachedFormulaResultType else cell.getCellType
     if (cellType == CellType.BLANK) {
       return null
     }
