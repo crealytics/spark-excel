@@ -17,6 +17,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.DataFormatter
+import org.apache.poi.ss.usermodel.FormulaError
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import java.math.BigDecimal
@@ -81,9 +82,9 @@ class ExcelHelper private (options: ExcelOptions) {
       cell.getCachedFormulaResultType match {
         case CellType.BLANK | CellType._NONE => ""
 
-        /** When the cell is an error-formula, and requested type is string, get actual formula itself
+        /** When the cell is an error-formula, and requested type is string, get error value
           */
-        case CellType.ERROR => cell.getCellFormula
+        case CellType.ERROR => FormulaError.forInt(cell.getErrorCellValue).getString
         case CellType.STRING => cell.getStringCellValue
         case CellType.NUMERIC => cell.getNumericCellValue.toString
 

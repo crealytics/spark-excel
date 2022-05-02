@@ -46,8 +46,8 @@ object ErrorsAsStringsReadSuite {
   private val expectedDataErrorsAsStringsInfer: util.List[Row] = List(
     Row(1, true, dummyTimestamp, dummyText, "A1"),
     Row(2, false, dummyTimestamp, dummyText, "A3"),
-    Row(null, null, null, "#NULL!", "_xlfn.CONCAT(\"A\", 3/0)"),
-    Row(null, null, null, "#N/A", "NA")
+    Row(null, null, null, "#NULL!", "#DIV/0!"),
+    Row(null, null, null, "#N/A", "#NAME?")
   ).asJava
 
   private val expectedSchemaNonInfer = StructType(
@@ -70,12 +70,12 @@ object ErrorsAsStringsReadSuite {
   private val expectedDataErrorsAsStringsNonInfer: util.List[Row] = List(
     Row("1", "TRUE", """19"-"Feb"-"2021""", dummyText, "A1"),
     Row("2", "FALSE", """19"-"Feb"-"2021""", dummyText, "A3"),
-    Row("#NULL!", "#NULL!", "#NULL!", "#NULL!", "_xlfn.CONCAT(\"A\", 3/0)"),
-    Row("#N/A", "#N/A", "#N/A", "#N/A", "NA")
+    Row("#NULL!", "#NULL!", "#NULL!", "#NULL!", "#DIV/0!"),
+    Row("#N/A", "#N/A", "#N/A", "#N/A", "#NAME?")
   ).asJava
 }
 
-/** Breaking change with V1: For Spark String Type field, Error Cell has an option to either get original-formual-string
+/** Breaking change with V1: For Spark String Type field, Error Cell has an option to either get error value
   * or null as any other Spark Types
   *
   * Related issues: Support ERROR cell type when using inferSchema=true link:
