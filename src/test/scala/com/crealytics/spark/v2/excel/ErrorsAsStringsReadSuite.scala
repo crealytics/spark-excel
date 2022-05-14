@@ -75,8 +75,8 @@ object ErrorsAsStringsReadSuite {
   ).asJava
 }
 
-/** Breaking change with V1: For Spark String Type field, Error Cell has an option to either get error value
-  * or null as any other Spark Types
+/** Breaking change with V1: For Spark String Type field, Error Cell has an option to either get error value or null as
+  * any other Spark Types
   *
   * Related issues: Support ERROR cell type when using inferSchema=true link:
   * https://github.com/crealytics/spark-excel/pull/343
