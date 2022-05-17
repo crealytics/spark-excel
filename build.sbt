@@ -1,10 +1,38 @@
 name := "spark-excel"
 
-organization := "com.crealytics"
-
-crossScalaVersions := Seq("2.12.15", "2.13.8")
-
-scalaVersion := crossScalaVersions.value.head
+val scala213 = "2.13.8"
+val scala212 = "2.12.15"
+val spark24 = List("2.4.1", "2.4.7", "2.4.8")
+val spark30 = List("3.0.1", "3.0.3")
+val spark31 = List("3.1.1", "3.1.2")
+val spark32 = List("3.2.1")
+inThisBuild(
+  List(
+    organization := "com.crealytics",
+    organizationName := "Martin Mauch (@nightscape)",
+    homepage := Some(url("https://github.com/crealytics/spark-excel")),
+    licenses := List(License.Apache2),
+    tlBaseVersion := "0.17",
+    crossScalaVersions := Seq(scala212, scala213),
+    scalaVersion := crossScalaVersions.value.head,
+    githubWorkflowBuildMatrixFailFast := Some(false),
+    githubWorkflowBuildMatrixAdditions := Map("spark" -> (spark24 ++ spark30 ++ spark31 ++ spark32)),
+    githubWorkflowBuildMatrixExclusions := (spark24 ++ spark30 ++ spark31).map(spark =>
+      MatrixExclude(Map("spark" -> spark, "scala" -> scala213))
+    ),
+    githubWorkflowBuildSbtStepPreamble := Seq("-Dspark.testVersion=${{ matrix.spark }}", "++${{ matrix.scala }}"),
+    githubWorkflowBuild := Seq(
+      WorkflowStep.Sbt(List("test"), name = Some("Test")),
+      WorkflowStep.Sbt(List("assembly"), name = Some("Assembly")),
+      WorkflowStep.Sbt(List("scalastyle", "test:scalastyle"), name = Some("Scalastyle"))
+    ),
+    githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("tlRelease"), name = Some("Publish"))),
+    tlSonatypeUseLegacyHost := false,
+    developers := List(
+      Developer("nightscape", "Martin Mauch", "martin.mauch@gmail.com", url("https://github.com/nightscape"))
+    )
+  )
+)
 
 lazy val sparkVersion = "3.0.1"
 
@@ -90,16 +118,6 @@ Compile / unmanagedSourceDirectories := {
 Test / fork := true
 Test / parallelExecution := false
 javaOptions ++= Seq("-Xms512M", "-Xmx2048M")
-
-publishMavenStyle := true
-
-publishTo := sonatypePublishToBundle.value
-
-Global / useGpgPinentry := true
-
-licenses += "Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")
-
-homepage := Some(url("https://github.com/crealytics/spark-excel"))
 
 developers ++= List(Developer("nightscape", "Martin Mauch", "@nightscape", url("https://github.com/nightscape")))
 scmInfo := Some(ScmInfo(url("https://github.com/crealytics/spark-excel"), "git@github.com:crealytics/spark-excel.git"))
