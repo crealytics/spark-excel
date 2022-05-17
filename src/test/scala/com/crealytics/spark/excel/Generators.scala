@@ -27,7 +27,8 @@ import spoiwo.model.{Cell, CellRange, Row => SRow, Sheet, Table => STable, Table
 import java.sql.{Date, Timestamp}
 import java.time.temporal.ChronoUnit
 import java.time.{Instant, ZoneId, ZoneOffset}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
+import scala.collection.compat._
 
 case class ExampleData(
   aBoolean: Boolean,
@@ -116,7 +117,7 @@ trait Generators {
         name = sheetName,
         rows = header.toList ++ (0 until numRows)
           .map(r => SRow((0 until numCol).map(c => Cell(s"$r,$c", index = c)), index = r))
-          .to[List]
+          .to(List)
       )
     }
 
@@ -131,7 +132,9 @@ trait Generators {
     height <- Gen.choose(0, 200)
   } yield {
     val columns =
-      (startCellAddress.getCol to startCellAddress.getCol + width).map(c => TableColumn(s"col_$c", c)).toList
+      (startCellAddress.getCol.toInt to startCellAddress.getCol.toInt + width)
+        .map(c => TableColumn(s"col_$c", c.toLong))
+        .toList
     val columnsByIndex = columns.map(c => c.id -> Cell[String](value = c.name, index = c.id.toInt)).toMap
     sheet
       .withRows(sheet.rows.map {
@@ -139,7 +142,7 @@ trait Generators {
           val cellIndices = (r.cells.map(_.index.get) ++ columns.map(_.id.toInt)).toList.distinct.sorted
           r.withCells(cellIndices.map { ci =>
             columnsByIndex
-              .getOrElse(ci, r.cells.find(_.index.get == ci).get)
+              .getOrElse(ci.toLong, r.cells.find(_.index.get == ci).get)
           })
         case r => r
       })
@@ -148,7 +151,7 @@ trait Generators {
           columns = columns,
           cellRange = CellRange(
             rowRange = (startCellAddress.getRow, startCellAddress.getRow + height),
-            columnRange = (startCellAddress.getCol, startCellAddress.getCol + width)
+            columnRange = (startCellAddress.getCol.toInt, startCellAddress.getCol.toInt + width)
           ),
           name = tableName,
           displayName = tableName

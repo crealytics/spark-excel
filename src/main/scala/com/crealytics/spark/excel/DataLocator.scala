@@ -33,7 +33,7 @@ import spoiwo.model.{
   TableColumn
 }
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 trait DataLocator {
@@ -158,8 +158,10 @@ class CellRangeAddressDataLocator(
 ) extends AreaDataLocator {
   private val sheetName = Option(dataAddress.getFirstCell.getSheetName)
 
-  def columnIndices(workbook: Workbook): Range = (dataAddress.getFirstCell.getCol to dataAddress.getLastCell.getCol)
-  def rowIndices(workbook: Workbook): Range = (dataAddress.getFirstCell.getRow to dataAddress.getLastCell.getRow)
+  def columnIndices(workbook: Workbook): Range =
+    (dataAddress.getFirstCell.getCol.toInt to dataAddress.getLastCell.getCol.toInt)
+  def rowIndices(workbook: Workbook): Range =
+    (dataAddress.getFirstCell.getRow to dataAddress.getLastCell.getRow)
 
   override def readFrom(workbook: Workbook): Iterator[Seq[Cell]] = readFromSheet(workbook, sheetName)
   override def sheetName(workbook: Workbook): Option[String] = sheetName
@@ -188,7 +190,7 @@ class TableDataLocator(
       Table(cellRange = CellRange(rowRange = (minRow, maxRow), columnRange = (minCol, maxCol)), name = tableName)
     val tableWithPotentialHeader =
       header.foldLeft(table)((tbl, hdr) =>
-        tbl.withColumns(hdr.zipWithIndex.map { case (h, i) => TableColumn(h, i) }.toList)
+        tbl.withColumns(hdr.zipWithIndex.map { case (h, i) => TableColumn(h, i.toLong) }.toList)
       )
     sheet.withTables(tableWithPotentialHeader)
   }

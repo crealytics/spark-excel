@@ -23,7 +23,7 @@ import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Projection and Filter Pushdown test cases
   */

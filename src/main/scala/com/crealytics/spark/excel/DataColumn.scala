@@ -15,13 +15,11 @@
  */
 
 package com.crealytics.spark.excel
-import java.math.BigDecimal
-import java.sql.{Date, Timestamp}
-import java.time.Instant
-
 import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, DateUtil}
 import org.apache.spark.sql.types._
 
+import java.math.BigDecimal
+import java.sql.Timestamp
 import scala.util.{Failure, Success, Try}
 
 trait DataColumn extends PartialFunction[Seq[Cell], Any] {
@@ -84,6 +82,7 @@ class HeaderDataColumn(
             case CellType.STRING =>
               parseNumber(Option(cell.getRichStringCellValue).map(_.getString))
             case CellType.ERROR => Some(0.0)
+            case _ => None
           }
         case _ => throw new RuntimeException(s"Unsupported numeric value extraction from $cell")
       }

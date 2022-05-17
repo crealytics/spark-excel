@@ -24,7 +24,8 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import spoiwo.model.Workbook
 import spoiwo.natures.xlsx.Model2XlsxConversions._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
+import scala.collection.compat._
 
 class DataLocatorSuite extends AnyFunSpec with ScalaCheckPropertyChecks with Matchers with Generators {
   describe("with a table reference") {
@@ -32,7 +33,7 @@ class DataLocatorSuite extends AnyFunSpec with ScalaCheckPropertyChecks with Mat
     describe("containing #All") {
       it("extracts the entire table data") {
         forAll(sheetWithTableGen) { sheet =>
-          val actualData = dl.readFrom(sheet.convertAsXlsx()).map(_.map(_.value)).to[Seq]
+          val actualData = dl.readFrom(sheet.convertAsXlsx()).map(_.map(_.value)).to(Seq)
           actualData should contain theSameElementsAs sheet.extractTableData(0)
         }
       }
@@ -50,7 +51,7 @@ class DataLocatorSuite extends AnyFunSpec with ScalaCheckPropertyChecks with Mat
           val pTable = workbook.getTable(tableName)
           pTable.getSheetName should equal(tableName)
           pTable.getColumns.asScala.map(_.getName) should contain theSameElementsInOrderAs header
-          val actualData = dl.readFrom(workbook).map(_.map(_.value)).to[Seq]
+          val actualData = dl.readFrom(workbook).map(_.map(_.value)).to(Seq)
           actualData should contain theSameElementsAs dataSheet.rows.map(_.cells.map(_.value))
         }
       }
@@ -67,7 +68,7 @@ class DataLocatorSuite extends AnyFunSpec with ScalaCheckPropertyChecks with Mat
           val pTable = workbook.getTable(tableName)
           pTable.getSheetName should equal(sheetName)
           pTable.getColumns.asScala.map(_.getName) should contain theSameElementsInOrderAs header
-          val actualData = dl.readFrom(workbook).map(_.map(_.value)).to[Seq]
+          val actualData = dl.readFrom(workbook).map(_.map(_.value)).to(Seq)
           actualData should contain theSameElementsAs tableData
         }
       }

@@ -26,6 +26,7 @@ import org.apache.spark.sql.internal.SQLConf
 
 import java.time.ZoneId
 import java.util.Locale
+import scala.annotation.nowarn
 
 class ExcelOptions(
   @transient
@@ -78,6 +79,7 @@ class ExcelOptions(
 
   val dateFormat: String = parameters.getOrElse("dateFormat", DateFormatter.defaultPattern)
 
+  @nowarn
   val timestampFormat: String = parameters.getOrElse("timestampFormat", TimestampFormatter.defaultPattern)
 
   /* Have header line when reading and writing */

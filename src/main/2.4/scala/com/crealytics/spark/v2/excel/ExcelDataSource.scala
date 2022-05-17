@@ -33,9 +33,8 @@ import org.apache.spark.sql.types._
 
 import java.net.URI
 import java.util.Optional
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import java.{util => ju}
-import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 
 /** Creality Spark Excel data source entry point for Spark 2.4 series
   */

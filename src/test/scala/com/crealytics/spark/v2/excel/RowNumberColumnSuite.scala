@@ -23,7 +23,7 @@ import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Related issues: #40 Allow reading only a subset of rows https://github.com/crealytics/spark-excel/issues/40 #59 Rows
   * are returned in incorrect order on cluster https://github.com/crealytics/spark-excel/issues/59 #115 Add excel row

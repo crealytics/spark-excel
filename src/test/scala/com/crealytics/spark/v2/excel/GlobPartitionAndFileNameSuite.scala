@@ -21,8 +21,6 @@ import org.apache.spark.sql.functions.input_file_name
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 
-import java.nio.file.Paths
-
 /** Issue References:
   *
   * #52. input_file_name returns empty string https://github.com/crealytics/spark-excel/issues/52

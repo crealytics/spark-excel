@@ -52,7 +52,7 @@ class ManyPartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with Lo
       .option("path", "src/test/resources/v2readwritetest/partition_csv/partition.csv")
       .load()
 
-    val dfFinal = dfCsv.unionAll(dfCsv)
+    val dfFinal = dfCsv.union(dfCsv)
 
     val dfWriter = dfFinal.write
       .partitionBy("col1")
@@ -67,7 +67,7 @@ class ManyPartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with Lo
     val orderedSchemaColumns = dfCsv.schema.fields.map(f => f.name).sorted
 
     dfFinal
-      .unionAll(dfFinal)
+      .union(dfFinal)
       .withColumn("col1", col("col1").cast(IntegerType))
       .select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*)
 

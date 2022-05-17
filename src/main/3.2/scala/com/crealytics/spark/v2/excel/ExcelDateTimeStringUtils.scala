@@ -13,10 +13,13 @@ package com.crealytics.spark.v2.excel
 
 import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.sql.catalyst.util._
+
 import java.time.ZoneId
 import org.apache.spark.sql.catalyst.util.DateFormatter
 import org.apache.spark.sql.catalyst.util.TimestampFormatter
 import org.apache.spark.sql.catalyst.util.LegacyDateFormats.FAST_DATE_FORMAT
+
+import scala.annotation.nowarn
 
 object ExcelDateTimeStringUtils {
   def stringToTimestamp(v: String, zoneId: ZoneId): Option[Long] = {
@@ -24,6 +27,7 @@ object ExcelDateTimeStringUtils {
     DateTimeUtils.stringToTimestamp(str, zoneId)
   }
 
+  @nowarn
   def stringToDate(v: String, zoneId: ZoneId): Option[Int] = {
     val str = DateTimeUtils.cleanLegacyTimestampStr(UTF8String.fromString(v))
     DateTimeUtils.stringToDate(str)

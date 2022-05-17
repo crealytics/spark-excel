@@ -120,6 +120,7 @@ package object excel {
         "dataAddress" -> dataAddress,
         "dateFormat" -> dateFormat,
         "timestampFormat" -> timestampFormat,
+        "workbookPassword" -> workbookPassword,
         "preHeader" -> preHeader
       ).foldLeft(dataFrameWriter.format("com.crealytics.spark.excel")) { case (dfWriter, (key, value)) =>
         value match {

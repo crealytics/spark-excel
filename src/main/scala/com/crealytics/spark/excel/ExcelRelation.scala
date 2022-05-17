@@ -53,7 +53,7 @@ case class ExcelRelation(
 
   val dataFormatter = new DataFormatter()
 
-  override def buildScan: RDD[Row] = buildScan(schema.map(_.name).toArray)
+  override def buildScan(): RDD[Row] = buildScan(schema.map(_.name).toArray)
 
   private val timestampParser: String => Timestamp =
     timestampFormat
@@ -85,7 +85,7 @@ case class ExcelRelation(
           Try {
             val values = lookups.map(l => l(row))
             Some(values)
-          }.recover { case e =>
+          }.recover { case _ =>
             // e.printStackTrace()
             None
           }.get
@@ -109,6 +109,7 @@ case class ExcelRelation(
       case CellType.NUMERIC => if (DateUtil.isCellDateFormatted(cell)) TimestampType else DoubleType
       case CellType.BLANK => NullType
       case CellType.ERROR => NullType
+      case CellType._NONE => NullType
     }
   }
 
@@ -183,7 +184,7 @@ case class ExcelRelation(
     }
   }
 
-  private def inferSchema(): StructType =
+  private def inferSchema: StructType =
     this.userSchema.getOrElse {
       val baseSchema = StructType(headerColumns.map(_.field))
       if (addColorColumns) {

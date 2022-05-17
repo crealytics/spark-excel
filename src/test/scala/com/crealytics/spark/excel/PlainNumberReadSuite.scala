@@ -24,7 +24,7 @@ import org.apache.spark.sql.types._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object PlainNumberReadSuite {
   val expectedInferredSchema = StructType(

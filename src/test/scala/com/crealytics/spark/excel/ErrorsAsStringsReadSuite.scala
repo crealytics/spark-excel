@@ -16,17 +16,16 @@
 
 package com.crealytics.spark.excel
 
-import java.sql.Timestamp
-import java.time.{Instant, LocalDateTime}
-import java.util
-
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import org.apache.spark.sql.{Row, _}
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{Row, _}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters._
+import java.sql.Timestamp
+import java.time.LocalDateTime
+import java.util
+import scala.jdk.CollectionConverters._
 
 object ErrorsAsStringsReadSuite {
   private val dummyTimestamp = Timestamp.valueOf(LocalDateTime.of(2021, 2, 19, 0, 0))

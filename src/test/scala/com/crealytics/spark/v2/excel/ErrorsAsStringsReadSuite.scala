@@ -25,7 +25,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.util
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object ErrorsAsStringsReadSuite {
   private val dummyTimestamp = Timestamp.valueOf(LocalDateTime.of(2021, 2, 19, 0, 0))

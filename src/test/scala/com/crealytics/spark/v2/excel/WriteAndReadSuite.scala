@@ -22,7 +22,7 @@ import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import java.nio.file.Files
 import java.sql.{Date, Timestamp}
 import java.time.{Instant, LocalDate, ZoneId}
@@ -136,7 +136,7 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
     val previousConfigValue = spark.conf.getOption(DATETIME_JAVA8API_ENABLED)
     spark.conf.set(DATETIME_JAVA8API_ENABLED, false)
     val expectedData_02_sql = expectedData_02
-      .map(r => Row.fromTuple(r.getInt(0), Date.valueOf(r.getString(1)), Timestamp.valueOf(r.getString(2))))
+      .map(r => Row.fromTuple((r.getInt(0), Date.valueOf(r.getString(1)), Timestamp.valueOf(r.getString(2)))))
       .asJava
     val df_source = spark.createDataFrame(expectedData_02_sql, userDefinedSchema_02).sort("Id")
     df_source.write.format("excel").mode(SaveMode.Append).save(path)
@@ -168,7 +168,7 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault)
     val expectedData_02_time = expectedData_02
       .map(r =>
-        Row.fromTuple(r.getInt(0), LocalDate.parse(r.getString(1)), Instant.from(formatter.parse(r.getString(2))))
+        Row.fromTuple((r.getInt(0), LocalDate.parse(r.getString(1)), Instant.from(formatter.parse(r.getString(2)))))
       )
       .asJava
     val df_source = spark.createDataFrame(expectedData_02_time, userDefinedSchema_02).sort("Id")

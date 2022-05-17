@@ -416,7 +416,7 @@ object ExcelParser {
     val dataRows =
       if (parser.options.header) {
         val excelHelper = ExcelHelper(parser.options)
-        headerChecker.checkHeaderColumnNames(excelHelper.getColumnNames(rows.next))
+        headerChecker.checkHeaderColumnNames(excelHelper.getColumnNames(rows.next()))
 
         /* Ignore rows after header, if configured */
         rows.drop(parser.options.ignoreAfterHeader)

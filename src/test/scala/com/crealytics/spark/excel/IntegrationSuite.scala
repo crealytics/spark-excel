@@ -31,6 +31,7 @@ import spoiwo.model.{Cell, CellRange, Row => SRow, Sheet, Table => STable}
 import spoiwo.natures.xlsx.Model2XlsxConversions._
 
 import java.io.{File, FileOutputStream}
+import scala.collection.compat._
 
 class IntegrationSuite
     extends AnyFunSpec
@@ -65,7 +66,7 @@ class IntegrationSuite
   def expectedDataTypes(inferred: DataFrame): Seq[(String, DataType)] = {
     val data = inferred.collect()
     inferredDataTypes(exampleDataSchema)
-      .to[List]
+      .to(List)
       .zip(inferred.schema)
       .zipWithIndex
       .map { case ((f, sf), idx) => sf.name -> f(data.map(_.get(idx))) }
@@ -225,7 +226,7 @@ class IntegrationSuite
             ) ::
               (0 until 100)
                 .map(r => SRow((0 until numCols).filter(_ % 2 == 0).map(c => Cell(s"$r,$c", index = c)), index = r + 1))
-                .to[List]
+                .to(List)
           )
           existingData.convertAsXlsx.write(new FileOutputStream(new File(fileName)))
           val allData = spark.read
@@ -282,7 +283,7 @@ class IntegrationSuite
                 STable(
                   cellRange = CellRange(
                     rowRange = (startCellAddress.getRow, endCellAddress.getRow),
-                    columnRange = (startCellAddress.getCol, endCellAddress.getCol)
+                    columnRange = (startCellAddress.getCol.toInt, endCellAddress.getCol.toInt)
                   ),
                   name = tableName,
                   displayName = tableName

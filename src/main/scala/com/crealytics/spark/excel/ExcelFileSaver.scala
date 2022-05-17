@@ -23,7 +23,7 @@ import spoiwo.model._
 import spoiwo.natures.xlsx.Model2XlsxConversions._
 
 import java.io.BufferedOutputStream
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object ExcelFileSaver {
   final val DEFAULT_SHEET_NAME = "Sheet1"

@@ -45,6 +45,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "provided",
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "provided",
   "org.apache.spark" %% "spark-hive" % testSparkVersion.value % "provided",
+  "org.scala-lang.modules" %% "scala-collection-compat" % "2.7.0",
   "org.typelevel" %% "cats-core" % "2.7.0" % Test,
   "org.scalatest" %% "scalatest" % "3.2.12" % Test,
   "org.scalatestplus" %% "scalacheck-1-15" % "3.2.11.0" % Test,

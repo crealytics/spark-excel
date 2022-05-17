@@ -46,7 +46,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     val dataFields =
       if (options.inferSchema) {
         val startType: Vector[DataType] = Vector.fill[DataType](dataHeader.length)(NullType)
-        val rootTypes: Vector[DataType] = tokens.aggregate(startType)(inferRowType, mergeRowTypes)
+        val rootTypes: Vector[DataType] = tokens.foldLeft(startType)(inferRowType)
 
         toStructFields(rootTypes, dataHeader)
       } else {
@@ -74,12 +74,6 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
         else compatibleType(rowSoFar(i), NullType).getOrElse(StringType)
       )
       .toVector
-
-  private def mergeRowTypes(first: Vector[DataType], second: Vector[DataType]): Vector[DataType] = {
-    first.zipAll(second, NullType, NullType).map { case (a, b) =>
-      compatibleType(a, b).getOrElse(NullType)
-    }
-  }
 
   /** Infer type of string field. Given known type Double, and a string "1", there is no point checking if it is an Int,
     * as the final type must be Double or higher.

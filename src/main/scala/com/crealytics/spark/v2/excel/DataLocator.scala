@@ -22,7 +22,7 @@ import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 /** For handling Excel data address and read data from there */
@@ -83,7 +83,7 @@ class CellRangeAddressDataLocator(val options: ExcelOptions) extends DataLocator
   override def readFrom(workbook: Workbook): Iterator[Vector[Cell]] = {
     val sheet = findSheet(workbook, sheetName)
     val rowInd = rowIndices(sheet)
-    val colInd = columnIndices(sheet)
+    val colInd = columnIndices()
 
     actualReadFromSheet(options, sheet, rowInd, colInd)
   }
@@ -100,8 +100,8 @@ class CellRangeAddressDataLocator(val options: ExcelOptions) extends DataLocator
 
   private val sheetName = Option(dataAddress.getFirstCell.getSheetName)
 
-  private def columnIndices(sheet: Sheet): Range =
-    (dataAddress.getFirstCell.getCol.toInt to dataAddress.getLastCell.getCol.toInt)
+  private def columnIndices(): Range =
+    dataAddress.getFirstCell.getCol.toInt to dataAddress.getLastCell.getCol.toInt
 
   private def rowIndices(sheet: Sheet): Range =
     (math.max(dataAddress.getFirstCell.getRow, sheet.getFirstRowNum) to

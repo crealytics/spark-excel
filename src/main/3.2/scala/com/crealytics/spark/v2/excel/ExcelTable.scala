@@ -23,7 +23,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 import org.apache.spark.sql.connector.catalog.TableCapability
 import org.apache.spark.sql.connector.catalog.TableCapability._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 case class ExcelTable(
   name: String,
@@ -77,11 +77,11 @@ case class ExcelTable(
       /* Prepare field names */
       val colNames =
         if (options.header) { /* Get column name from the first row */
-          val r = excelHelper.getColumnNames(rows.next)
+          val r = excelHelper.getColumnNames(rows.next())
           rows = rows.drop(options.ignoreAfterHeader)
           r
         } else { /* Peek first row, then return back */
-          val headerRow = rows.next
+          val headerRow = rows.next()
           val r = excelHelper.getColumnNames(headerRow)
           rows = Iterator(headerRow) ++ rows
           r

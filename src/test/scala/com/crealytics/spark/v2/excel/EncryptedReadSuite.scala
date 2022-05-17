@@ -21,7 +21,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object EncryptedReadSuite {
   val simpleSchema = StructType(
