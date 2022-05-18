@@ -17,7 +17,7 @@
 package com.crealytics.spark.excel
 
 import cats.Monoid
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
+import com.crealytics.spark.DataFrameSuiteBase
 import org.apache.poi.ss.util.CellReference
 import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.types._

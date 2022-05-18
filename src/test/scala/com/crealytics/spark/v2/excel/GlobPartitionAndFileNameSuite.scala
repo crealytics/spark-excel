@@ -16,7 +16,7 @@
 
 package com.crealytics.spark.v2.excel
 
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
+import com.crealytics.spark.DataFrameSuiteBase
 import org.apache.spark.sql.functions.input_file_name
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite

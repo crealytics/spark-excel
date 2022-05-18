@@ -86,10 +86,9 @@ libraryDependencies ++= Seq(
   "org.scalatestplus" %% "scalacheck-1-15" % "3.2.11.0" % Test,
   "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.15" % "1.3.0" % Test,
-  //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
+  "com.github.mrpowers" %% "spark-fast-tests" % "1.3.0" % Test,
   "org.scalamock" %% "scalamock" % "5.2.0" % Test
-) ++ (if (scalaVersion.value.startsWith("2.12")) Seq("com.github.nightscape" %% "spark-testing-base" % "9496d55" % Test)
-      else Seq())
+)
 
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {

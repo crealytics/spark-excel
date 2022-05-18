@@ -18,11 +18,11 @@ package com.crealytics.spark.excel
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import scala.jdk.CollectionConverters._
 
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
+import com.crealytics.spark.DataFrameSuiteBase
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
+import scala.jdk.CollectionConverters._
 
 object EncryptedReadSuite {
   val simpleSchema = StructType(
