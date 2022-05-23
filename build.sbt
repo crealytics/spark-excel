@@ -35,6 +35,7 @@ inThisBuild(
 )
 
 lazy val sparkVersion = "3.0.1"
+val poiVersion = "5.2.2"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
@@ -50,9 +51,9 @@ libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
 
 enablePlugins(ThinFatJar)
 shadedDeps ++= Seq(
-  "org.apache.poi" % "poi" % "5.2.2",
-  "org.apache.poi" % "poi-ooxml" % "5.2.2",
-  "org.apache.poi" % "poi-ooxml-lite" % "5.2.2",
+  "org.apache.poi" % "poi" % poiVersion,
+  "org.apache.poi" % "poi-ooxml" % poiVersion,
+  "org.apache.poi" % "poi-ooxml-lite" % poiVersion,
   "org.apache.xmlbeans" % "xmlbeans" % "5.0.3",
   "com.norbitltd" %% "spoiwo" % "2.2.1",
   "com.github.pjfanning" % "excel-streaming-reader" % "4.0.1",
