@@ -52,6 +52,8 @@ enablePlugins(ThinFatJar)
 shadedDeps ++= Seq(
   "org.apache.poi" % "poi" % "5.2.2",
   "org.apache.poi" % "poi-ooxml" % "5.2.2",
+  "org.apache.poi" % "poi-ooxml-lite" % "5.2.2",
+  "org.apache.xmlbeans" % "xmlbeans" % "5.0.3",
   "com.norbitltd" %% "spoiwo" % "2.2.1",
   "com.github.pjfanning" % "excel-streaming-reader" % "4.0.1",
   "com.github.pjfanning" % "poi-shared-strings" % "2.5.3",
@@ -60,9 +62,6 @@ shadedDeps ++= Seq(
 )
 
 shadeRenames ++= Seq(
-  "org.apache.poi.**" -> "shadeio.poi.@1",
-  "spoiwo.**" -> "shadeio.spoiwo.@1",
-  "com.github.pjfanning.**" -> "shadeio.pjfanning.@1",
   "org.apache.commons.io.**" -> "shadeio.commons.io.@1",
   "org.apache.commons.compress.**" -> "shadeio.commons.compress.@1"
 )
