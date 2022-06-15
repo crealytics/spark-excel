@@ -59,7 +59,13 @@ shadedDeps ++= Seq(
   "com.github.pjfanning" % "excel-streaming-reader" % "4.0.1",
   "com.github.pjfanning" % "poi-shared-strings" % "2.5.3",
   "commons-io" % "commons-io" % "2.11.0",
-  "org.apache.commons" % "commons-compress" % "1.21"
+  "org.apache.commons" % "commons-compress" % "1.21",
+  "org.apache.logging.log4j" % "log4j-api" % "2.17.2",
+  "com.zaxxer" % "SparseBitSet" % "1.2",
+  "org.apache.commons" % "commons-collections4" % "4.4",
+  "com.github.virtuald" % "curvesapi" % "1.07",
+  "commons-codec" % "commons-codec" % "1.15",
+  "org.apache.commons" % "commons-math3" % "3.6.1"
 )
 
 shadeRenames ++= Seq(
