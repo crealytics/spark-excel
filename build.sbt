@@ -144,5 +144,5 @@ fork := true
 
 // -- MiMa binary compatibility checks ------------------------------------------------------------
 
-mimaPreviousArtifacts := Set("com.crealytics" %% "spark-excel" % "0.13.0")
+mimaPreviousArtifacts := Set.empty
 // ------------------------------------------------------------------------------------------------
