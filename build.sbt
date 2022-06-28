@@ -34,7 +34,7 @@ inThisBuild(
   )
 )
 
-lazy val sparkVersion = "3.0.1"
+lazy val sparkVersion = "3.3.0"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
