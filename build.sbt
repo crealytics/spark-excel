@@ -1,7 +1,7 @@
 name := "spark-excel"
 
 val scala213 = "2.13.8"
-val scala212 = "2.12.15"
+val scala212 = "2.12.16"
 val spark24 = List("2.4.1", "2.4.7", "2.4.8")
 val spark30 = List("3.0.1", "3.0.3")
 val spark31 = List("3.1.1", "3.1.2", "3.1.3")
@@ -79,8 +79,8 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "provided",
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "provided",
   "org.apache.spark" %% "spark-hive" % testSparkVersion.value % "provided",
-  "org.scala-lang.modules" %% "scala-collection-compat" % "2.7.0",
-  "org.typelevel" %% "cats-core" % "2.7.0" % Test,
+  "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.0",
+  "org.typelevel" %% "cats-core" % "2.8.0" % Test,
   "org.scalatest" %% "scalatest" % "3.2.12" % Test,
   "org.scalatestplus" %% "scalacheck-1-15" % "3.2.11.0" % Test,
   "org.scalacheck" %% "scalacheck" % "1.16.0" % Test,
