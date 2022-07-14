@@ -82,9 +82,9 @@ package object excel {
       dataAddress: String = null,
       timestampFormat: String = null,
       maxRowsInMemory: java.lang.Integer = null,
+      maxByteArraySize: java.lang.Integer = null,
       excerptSize: Int = 10,
-      workbookPassword: String = null,
-      maxByteArraySize: java.lang.Integer = null
+      workbookPassword: String = null
     ): DataFrameReader = {
       Map(
         "header" -> header,
@@ -96,9 +96,9 @@ package object excel {
         "dataAddress" -> dataAddress,
         "timestampFormat" -> timestampFormat,
         "maxRowsInMemory" -> maxRowsInMemory,
+        "maxByteArraySize" -> maxByteArraySize,
         "excerptSize" -> excerptSize,
-        "workbookPassword" -> workbookPassword,
-        "maxByteArraySize" -> maxByteArraySize
+        "workbookPassword" -> workbookPassword
       ).foldLeft(dataFrameReader.format("com.crealytics.spark.excel")) { case (dfReader, (key, value)) =>
         value match {
           case null => dfReader

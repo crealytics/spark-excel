@@ -140,4 +140,9 @@ class ExcelOptions(
     val r = parameters.get("samplingRatio").map(_.toDouble).getOrElse(1.0)
     if (r > 1.0 || r <= 0.0) 1.0 else r
   }
+
+  /**
+   * Optional parameter for <a href="https://poi.apache.org/apidocs/5.0/org/apache/poi/util/IOUtils.html#setByteArrayMaxOverride-int-">maxByteArraySize</a>
+   */
+  val maxByteArraySize = getInt("maxByteArraySize")
 }
