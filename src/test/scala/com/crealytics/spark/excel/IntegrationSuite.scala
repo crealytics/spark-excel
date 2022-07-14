@@ -72,7 +72,7 @@ class IntegrationSuite
       .map { case ((f, sf), idx) => sf.name -> f(data.map(_.get(idx))) }
   }
 
-  def runTests(maxRowsInMemory: Option[Int]) {
+  def runTests(maxRowsInMemory: Option[Int], maxByteArraySize: Option[Int] = None) {
     def writeThenRead(
       df: DataFrame,
       schema: Option[StructType] = Some(exampleDataSchema),
@@ -94,6 +94,7 @@ class IntegrationSuite
       val reader = spark.read.excel(dataAddress = s"'$sheetName'!A1", header = header)
       val configuredReader = Map(
         "maxRowsInMemory" -> maxRowsInMemory,
+        "maxByteArraySize" -> maxByteArraySize,
         "inferSchema" -> Some(schema.isEmpty),
         "excerptSize" -> Some(10),
         "dataAddress" -> dataAddress
@@ -116,7 +117,7 @@ class IntegrationSuite
       assertDataFrameEquals(expected, inferred)
     }
 
-    describe(s"with maxRowsInMemory = $maxRowsInMemory") {
+    describe(s"with maxRowsInMemory = $maxRowsInMemory; maxByteArraySize = $maxByteArraySize") {
       it("parses known datatypes correctly") {
         forAll(rowsGen) { rows =>
           val expected = spark.createDataset(rows).toDF
@@ -344,6 +345,8 @@ class IntegrationSuite
     differencesInNonOverwrittenData shouldBe empty
   }
   runTests(maxRowsInMemory = None)
+  runTests(maxRowsInMemory = None, maxByteArraySize = Some(100000000))
   runTests(maxRowsInMemory = Some(20))
   runTests(maxRowsInMemory = Some(1))
+  runTests(maxRowsInMemory = Some(1), maxByteArraySize = Some(100000000))
 }
