@@ -68,7 +68,7 @@ case class ExcelTable(
     val excelHelper = ExcelHelper(options)
     val conf = sparkSession.sqlContext.sparkContext.hadoopConfiguration
 
-    /** Sampling ratio on file level (not row level as in CSV) */
+    /* Sampling ratio on file level (not row level as in CSV) */
     val paths = {
       var sample = (inputPaths.size * options.samplingRatio).intValue
       sample = if (sample < 1) 1 else sample

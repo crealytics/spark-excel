@@ -54,9 +54,9 @@ class ExcelHelper private (options: ExcelOptions) {
     val r = new DataFormatter()
     if (options.usePlainNumberFormat) {
 
-      /** Overwrite ExcelGeneralNumberFormat with custom PlainNumberFormat. See
-        * https://github.com/crealytics/spark-excel/issues/321
-        */
+      /* Overwrite ExcelGeneralNumberFormat with custom PlainNumberFormat. See
+       * https://github.com/crealytics/spark-excel/issues/321
+       */
       val plainNumberFormat = PlainNumberFormat
       r.addFormat("General", plainNumberFormat)
       r.addFormat("@", plainNumberFormat)
@@ -78,8 +78,8 @@ class ExcelHelper private (options: ExcelOptions) {
       cell.getCachedFormulaResultType match {
         case CellType.BLANK | CellType._NONE => ""
 
-        /** When the cell is an error-formula, and requested type is string, get error value
-          */
+        /* When the cell is an error-formula, and requested type is string, get error value
+         */
         case CellType.ERROR => FormulaError.forInt(cell.getErrorCellValue).getString
         case CellType.STRING => cell.getStringCellValue
         case CellType.NUMERIC => cell.getNumericCellValue.toString
@@ -162,8 +162,8 @@ class ExcelHelper private (options: ExcelOptions) {
         }
       } else {
         firstRow.zipWithIndex.map { case (_, index) =>
-          /** Uses default column names, "_c#" where # is its position of fields when header option is disabled.
-            */
+          /* Uses default column names, "_c#" where # is its position of fields when header option is disabled.
+           */
           s"_c$index"
         }
       }
