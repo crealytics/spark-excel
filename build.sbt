@@ -28,6 +28,7 @@ inThisBuild(
     ),
     githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("tlRelease"), name = Some("Publish"))),
     tlSonatypeUseLegacyHost := false,
+    autoAPIMappings := true,
     developers := List(
       Developer("nightscape", "Martin Mauch", "martin.mauch@gmail.com", url("https://github.com/nightscape"))
     )

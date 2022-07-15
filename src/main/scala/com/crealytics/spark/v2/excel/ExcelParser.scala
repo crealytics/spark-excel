@@ -29,7 +29,8 @@ import org.apache.spark.unsafe.types.UTF8String
 import scala.util.control.NonFatal
 import org.apache.poi.ss.usermodel.DateUtil
 
-/** Constructs a parser for a given schema that translates Excel data to an [[InternalRow]].
+/** Constructs a parser for a given schema that translates Excel data to an
+  * [[org.apache.spark.sql.catalyst.InternalRow]].
   *
   * @param dataSchema
   *   The Excel data schema that is specified by the user, or inferred from underlying data files.
