@@ -1,0 +1,14 @@
+name: Update Dependency Graph
+on:
+  push:
+    branches:
+      - main # default branch of the project
+jobs:
+  dependency-graph:
+    name: Update Dependency Graph
+    runs-on: ubuntu-latest # or windows-latest, or macOS-latest
+    permissions:
+      contents: write # this permission is needed to submit the dependency graph
+    steps:
+      - uses: actions/checkout@v3
+      - uses: scalacenter/sbt-dependency-submission@v2
