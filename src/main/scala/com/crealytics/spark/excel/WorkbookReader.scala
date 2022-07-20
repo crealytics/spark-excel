@@ -23,6 +23,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.poi.ss.usermodel.{Workbook, WorkbookFactory}
 import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory
+import org.apache.poi.openxml4j.util.ZipInputStreamZipEntrySource
 import org.apache.poi.util.IOUtils
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory
 
@@ -45,7 +46,10 @@ trait WorkbookReader {
 
 object WorkbookReader {
   val WithLocationMaxRowsInMemoryAndPassword =
-    MapIncluding(Seq("path"), optionally = Seq("maxRowsInMemory", "workbookPassword", "maxByteArraySize"))
+    MapIncluding(
+      Seq("path"),
+      optionally = Seq("maxRowsInMemory", "workbookPassword", "maxByteArraySize", "tempFileThreshold")
+    )
 
   WorkbookFactory.addProvider(new HSSFWorkbookFactory)
   WorkbookFactory.addProvider(new XSSFWorkbookFactory)
@@ -58,28 +62,41 @@ object WorkbookReader {
     parameters match {
       case WithLocationMaxRowsInMemoryAndPassword(
             Seq(location),
-            Seq(Some(maxRowsInMemory), passwordOption, maxByteArraySizeOption)
+            Seq(Some(maxRowsInMemory), passwordOption, maxByteArraySizeOption, tempFileThreshold)
           ) =>
         new StreamingWorkbookReader(
           readFromHadoop(location),
           passwordOption,
           maxRowsInMemory.toInt,
-          maxByteArraySizeOption.map(_.toInt)
+          maxByteArraySizeOption.map(_.toInt),
+          tempFileThreshold.map(_.toInt)
         )
-      case WithLocationMaxRowsInMemoryAndPassword(Seq(location), Seq(None, passwordOption, maxByteArraySizeOption)) =>
-        new DefaultWorkbookReader(readFromHadoop(location), passwordOption, maxByteArraySizeOption.map(_.toInt))
+      case WithLocationMaxRowsInMemoryAndPassword(
+            Seq(location),
+            Seq(None, passwordOption, maxByteArraySizeOption, tempFileThresholdOption)
+          ) =>
+        new DefaultWorkbookReader(
+          readFromHadoop(location),
+          passwordOption,
+          maxByteArraySizeOption.map(_.toInt),
+          tempFileThresholdOption.map(_.toInt)
+        )
     }
   }
 }
 class DefaultWorkbookReader(
   inputStreamProvider: => InputStream,
   workbookPassword: Option[String],
-  maxByteArraySize: Option[Int]
+  maxByteArraySize: Option[Int],
+  tempFileThreshold: Option[Int]
 ) extends WorkbookReader {
 
   protected def openWorkbook(): Workbook = {
     maxByteArraySize.foreach { maxSize =>
       IOUtils.setByteArrayMaxOverride(maxSize)
+    }
+    tempFileThreshold.foreach { threshold =>
+      ZipInputStreamZipEntrySource.setThresholdBytesForTempFiles(threshold)
     }
     workbookPassword
       .fold(WorkbookFactory.create(inputStreamProvider))(password =>
@@ -92,11 +109,15 @@ class StreamingWorkbookReader(
   inputStreamProvider: => InputStream,
   workbookPassword: Option[String],
   maxRowsInMem: Int,
-  maxByteArraySize: Option[Int]
+  maxByteArraySize: Option[Int],
+  tempFileThreshold: Option[Int]
 ) extends WorkbookReader {
   override protected def openWorkbook(): Workbook = {
     maxByteArraySize.foreach { maxSize =>
       IOUtils.setByteArrayMaxOverride(maxSize)
+    }
+    tempFileThreshold.foreach { threshold =>
+      ZipInputStreamZipEntrySource.setThresholdBytesForTempFiles(threshold)
     }
     val builder = StreamingReader
       .builder()
