@@ -147,14 +147,14 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
       /* The conversion can fail when the `field` is not a form of number */
       val bigDecimal = decimalParser(field)
 
-      /** Because many other formats do not support decimal, it reduces the cases for decimals by disallowing values
-        * having scale (eg. `1.1`).
-        */
+      /* Because many other formats do not support decimal, it reduces the cases for decimals by disallowing values
+       * having scale (eg. `1.1`).
+       */
       if (bigDecimal.scale <= 0) {
 
-        /** `DecimalType` conversion can fail when
-          *   1. The precision is bigger than 38. 2. scale is bigger than precision.
-          */
+        /* `DecimalType` conversion can fail when
+         *   1. The precision is bigger than 38. 2. scale is bigger than precision.
+         */
         DecimalType(bigDecimal.precision, bigDecimal.scale)
       } else { tryParseDouble(field) }
     }
@@ -187,9 +187,9 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
     case (StringType, _) => Some(StringType)
     case (_, StringType) => Some(StringType)
 
-    /** Double support larger range than fixed decimal, DecimalType.Maximum should be enough in most case, also have
-      * better precision.
-      */
+    /* Double support larger range than fixed decimal, DecimalType.Maximum should be enough in most case, also have
+     * better precision.
+     */
     case (DoubleType, _: DecimalType) | (_: DecimalType, DoubleType) => Some(DoubleType)
 
     case (t1: DecimalType, t2: DecimalType) =>

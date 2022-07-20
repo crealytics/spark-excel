@@ -58,8 +58,8 @@ case class ExcelScan(
 
   override def createReaderFactory(): PartitionReaderFactory = {
 
-    /** Check a field requirement for corrupt records here to throw an exception in a driver side
-      */
+    /* Check a field requirement for corrupt records here to throw an exception in a driver side
+     */
     ExprUtils.verifyColumnNameOfCorruptRecord(dataSchema, parsedOptions.columnNameOfCorruptRecord)
 
     if (
@@ -80,9 +80,9 @@ case class ExcelScan(
     val broadcastedConf = sparkSession.sparkContext
       .broadcast(new SerializableConfiguration(hadoopConf))
 
-    /** The partition values are already truncated in `FileScan.partitions`. We should use `readPartitionSchema` as the
-      * partition schema here.
-      */
+    /* The partition values are already truncated in `FileScan.partitions`. We should use `readPartitionSchema` as the
+     * partition schema here.
+     */
     ExcelPartitionReaderFactory(
       sparkSession.sessionState.conf,
       broadcastedConf,

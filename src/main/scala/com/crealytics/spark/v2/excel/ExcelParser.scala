@@ -29,7 +29,8 @@ import org.apache.spark.unsafe.types.UTF8String
 import scala.util.control.NonFatal
 import org.apache.poi.ss.usermodel.DateUtil
 
-/** Constructs a parser for a given schema that translates Excel data to an [[InternalRow]].
+/** Constructs a parser for a given schema that translates Excel data to an
+  * [[org.apache.spark.sql.catalyst.InternalRow]].
   *
   * @param dataSchema
   *   The Excel data schema that is specified by the user, or inferred from underlying data files.
@@ -266,8 +267,8 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
                   try { timestampFormatter.parse(v) }
                   catch {
                     case NonFatal(e) =>
-                      /** If fails to parse, then tries the way used in 2.0 and 1.x for backwards compatibility.
-                        */
+                      /* If fails to parse, then tries the way used in 2.0 and 1.x for backwards compatibility.
+                       */
                       ExcelDateTimeStringUtils
                         .stringToTimestamp(v, options.zoneId)
                         .getOrElse(throw e)
@@ -294,8 +295,8 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
                   try { dateFormatter.parse(v) }
                   catch {
                     case NonFatal(e) =>
-                      /** If fails to parse, then tries the way used in 2.0 and 1.x for backwards compatibility.
-                        */
+                      /* If fails to parse, then tries the way used in 2.0 and 1.x for backwards compatibility.
+                       */
                       ExcelDateTimeStringUtils
                         .stringToDate(v, options.zoneId)
                         .getOrElse(throw e)
@@ -311,8 +312,8 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
             UTF8String.fromString(excelHelper.safeCellStringValue(datum))
           }
 
-      /** We don't actually hit this exception though, we keep it for understand ability
-        */
+      /* We don't actually hit this exception though, we keep it for understand ability
+       */
       case _ => throw new RuntimeException(s"Unsupported type: ${dataType.typeName}")
     }
 
@@ -357,16 +358,16 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
     var badRecordException: Option[Throwable] =
       if (tokens.length != parsedSchema.length) {
 
-        /** If the number of tokens doesn't match the schema, we should treat it as a malformed record. However, we
-          * still have chance to parse some of the tokens. It continues to parses the tokens normally and sets null when
-          * `ArrayIndexOutOfBoundsException` occurs for missing tokens.
-          */
+        /* If the number of tokens doesn't match the schema, we should treat it as a malformed record. However, we
+         * still have chance to parse some of the tokens. It continues to parses the tokens normally and sets null when
+         * `ArrayIndexOutOfBoundsException` occurs for missing tokens.
+         */
         Some(new RuntimeException("Malformed Excel record"))
       } else None
 
-    /** When the length of the returned tokens is identical to the length of the parsed schema, we just need to:
-      *   1. Convert the tokens that correspond to the required schema. 2. Apply the pushdown filters to `requiredRow`.
-      */
+    /* When the length of the returned tokens is identical to the length of the parsed schema, we just need to:
+     *   1. Convert the tokens that correspond to the required schema. 2. Apply the pushdown filters to `requiredRow`.
+     */
     var i = 0
     val row = requiredRow.get
     var skipRow = false

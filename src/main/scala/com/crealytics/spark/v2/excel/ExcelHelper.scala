@@ -17,26 +17,17 @@
 package com.crealytics.spark.v2.excel
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.fs.Path
-import org.apache.poi.ss.usermodel.Cell
-import org.apache.poi.ss.usermodel.CellType
-import org.apache.poi.ss.usermodel.DataFormatter
-import org.apache.poi.ss.usermodel.FormulaError
-import org.apache.poi.ss.usermodel.Workbook
-import org.apache.poi.ss.usermodel.WorkbookFactory
-import java.math.BigDecimal
-import java.text.FieldPosition
-import java.text.Format
-import java.text.ParsePosition
-
-import java.net.URI
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory
-import org.apache.poi.ss.util.AreaReference
-import org.apache.poi.ss.util.CellReference
 import org.apache.poi.ss.SpreadsheetVersion
+import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, FormulaError, Workbook, WorkbookFactory}
+import org.apache.poi.ss.util.{AreaReference, CellReference}
+import org.apache.poi.util.IOUtils
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory
 
+import java.math.BigDecimal
+import java.net.URI
+import java.text.{FieldPosition, Format, ParsePosition}
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.util.Try
 
@@ -63,9 +54,9 @@ class ExcelHelper private (options: ExcelOptions) {
     val r = new DataFormatter()
     if (options.usePlainNumberFormat) {
 
-      /** Overwrite ExcelGeneralNumberFormat with custom PlainNumberFormat. See
-        * https://github.com/crealytics/spark-excel/issues/321
-        */
+      /* Overwrite ExcelGeneralNumberFormat with custom PlainNumberFormat. See
+       * https://github.com/crealytics/spark-excel/issues/321
+       */
       val plainNumberFormat = PlainNumberFormat
       r.addFormat("General", plainNumberFormat)
       r.addFormat("@", plainNumberFormat)
@@ -87,8 +78,8 @@ class ExcelHelper private (options: ExcelOptions) {
       cell.getCachedFormulaResultType match {
         case CellType.BLANK | CellType._NONE => ""
 
-        /** When the cell is an error-formula, and requested type is string, get error value
-          */
+        /* When the cell is an error-formula, and requested type is string, get error value
+         */
         case CellType.ERROR => FormulaError.forInt(cell.getErrorCellValue).getString
         case CellType.STRING => cell.getStringCellValue
         case CellType.NUMERIC => cell.getNumericCellValue.toString
@@ -171,8 +162,8 @@ class ExcelHelper private (options: ExcelOptions) {
         }
       } else {
         firstRow.zipWithIndex.map { case (_, index) =>
-          /** Uses default column names, "_c#" where # is its position of fields when header option is disabled.
-            */
+          /* Uses default column names, "_c#" where # is its position of fields when header option is disabled.
+           */
           s"_c$index"
         }
       }
@@ -209,6 +200,9 @@ object ExcelHelper {
 
   def apply(options: ExcelOptions): ExcelHelper = {
     configureProvidersOnce() // ExcelHelper ctor is private, so we guarantee that this is called!
+    options.maxByteArraySize.foreach { maxSize =>
+      IOUtils.setByteArrayMaxOverride(maxSize)
+    }
     new ExcelHelper(options)
   }
 
