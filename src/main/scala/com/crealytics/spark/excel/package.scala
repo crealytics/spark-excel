@@ -83,6 +83,7 @@ package object excel {
       timestampFormat: String = null,
       maxRowsInMemory: java.lang.Integer = null,
       maxByteArraySize: java.lang.Integer = null,
+      tempFileThreshold: java.lang.Integer = null,
       excerptSize: Int = 10,
       workbookPassword: String = null
     ): DataFrameReader = {
@@ -97,6 +98,7 @@ package object excel {
         "timestampFormat" -> timestampFormat,
         "maxRowsInMemory" -> maxRowsInMemory,
         "maxByteArraySize" -> maxByteArraySize,
+        "tempFileThreshold" -> tempFileThreshold,
         "excerptSize" -> excerptSize,
         "workbookPassword" -> workbookPassword
       ).foldLeft(dataFrameReader.format("com.crealytics.spark.excel")) { case (dfReader, (key, value)) =>

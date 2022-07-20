@@ -146,4 +146,10 @@ class ExcelOptions(
     * href="https://poi.apache.org/apidocs/5.0/org/apache/poi/util/IOUtils.html#setByteArrayMaxOverride-int-">maxByteArraySize</a>
     */
   val maxByteArraySize = getInt("maxByteArraySize")
+
+  // scalastyle:on
+  /** Optional parameter for specifying the number of bytes at which a zip entry is regarded as too large for holding in
+    * memory and the data is put in a temp file instead - useful for sheets with a lot of data
+    */
+  val tempFileThreshold = getInt("tempFileThreshold")
 }
