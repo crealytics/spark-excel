@@ -19,6 +19,7 @@ package com.crealytics.spark.v2.excel
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory
+import org.apache.poi.openxml4j.util.ZipInputStreamZipEntrySource
 import org.apache.poi.ss.SpreadsheetVersion
 import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, FormulaError, Workbook, WorkbookFactory}
 import org.apache.poi.ss.util.{AreaReference, CellReference}
@@ -202,6 +203,9 @@ object ExcelHelper {
     configureProvidersOnce() // ExcelHelper ctor is private, so we guarantee that this is called!
     options.maxByteArraySize.foreach { maxSize =>
       IOUtils.setByteArrayMaxOverride(maxSize)
+    }
+    options.tempFileThreshold.foreach { threshold =>
+      ZipInputStreamZipEntrySource.setThresholdBytesForTempFiles(threshold)
     }
     new ExcelHelper(options)
   }

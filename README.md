@@ -92,6 +92,7 @@ val df = spark.read
     .option("timestampFormat", "MM-dd-yyyy HH:mm:ss") // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
     .option("maxRowsInMemory", 20) // Optional, default None. If set, uses a streaming reader which can help with big files (will fail if used with xls format files)
     .option("maxByteArraySize", 2147483647) // Optional, default None. See https://poi.apache.org/apidocs/5.0/org/apache/poi/util/IOUtils.html#setByteArrayMaxOverride-int-
+    .option("tempFileThreshold", 10000000) // Optional, default None. Number of bytes at which a zip entry is regarded as too large for holding in memory and the data is put in a temp file instead
     .option("excerptSize", 10) // Optional, default: 10. If set and if schema inferred, number of rows to infer schema from
     .option("workbookPassword", "pass") // Optional, default None. Requires unlimited strength JCE for older JVMs
     .schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
@@ -117,6 +118,7 @@ val df = spark.read.excel(
     timestampFormat = "MM-dd-yyyy HH:mm:ss",  // Optional, default: yyyy-mm-dd hh:mm:ss[.fffffffff]
     maxRowsInMemory = 20,  // Optional, default None. If set, uses a streaming reader which can help with big files (will fail if used with xls format files)
     maxByteArraySize = 2147483647,  // Optional, default None. See https://poi.apache.org/apidocs/5.0/org/apache/poi/util/IOUtils.html#setByteArrayMaxOverride-int-
+    tempFileThreshold = 10000000, // Optional, default None. Number of bytes at which a zip entry is regarded as too large for holding in memory and the data is put in a temp file instead
     excerptSize = 10,  // Optional, default: 10. If set and if schema inferred, number of rows to infer schema from
     workbookPassword = "pass"  // Optional, default None. Requires unlimited strength JCE for older JVMs
 ).schema(myCustomSchema) // Optional, default: Either inferred schema, or all columns are Strings
