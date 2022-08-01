@@ -72,6 +72,12 @@ object WriteAndReadSuite {
     Row(4, "2021-11-11", "2021-11-11 01:23:05"),
     Row(5, "2022-10-01", "2022-10-01 16:23:45")
   )
+
+  val expectedData_bool: List[Row] = List(Row(1, true), Row(2, false))
+
+  val userDefinedSchema_bool = StructType(
+    List(StructField("Id", IntegerType, nullable = true), StructField("Bool", BooleanType, nullable = true))
+  )
 }
 
 /** Write then read excel file, with both XLSX and XLS formats. There are two open questions:
@@ -184,6 +190,31 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
 
     /* Cleanup, should after the checking */
     spark.conf.set(DATETIME_JAVA8API_ENABLED, previousConfigValue)
+    deleteDirectory(path)
+  }
+
+  test("write then read boolean") {
+    val path = Files.createTempDirectory("spark_excel_wr_bool_").toString()
+    val previousConfigValue = spark.conf.getOption(DATETIME_JAVA8API_ENABLED)
+    spark.conf.set(DATETIME_JAVA8API_ENABLED, false)
+    val expectedData_bool_sql = expectedData_bool.asJava
+    val df_source = spark.createDataFrame(expectedData_bool_sql, userDefinedSchema_bool).sort("Id")
+    df_source.write.format("excel").mode(SaveMode.Append).save(path)
+
+    val df_read = spark.read
+      .format("excel")
+      .schema(userDefinedSchema_bool)
+      .load(path)
+      .sort("Id")
+
+    assertDataFrameEquals(df_source, df_read)
+
+    /* Cleanup, should after the checking */
+    if (previousConfigValue.isEmpty) {
+      spark.conf.unset(DATETIME_JAVA8API_ENABLED)
+    } else {
+      spark.conf.set(DATETIME_JAVA8API_ENABLED, previousConfigValue.get)
+    }
     deleteDirectory(path)
   }
 
