@@ -16,6 +16,7 @@
 
 package com.crealytics.spark.v2.excel
 
+import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream
 import org.apache.hadoop.fs.Path
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.usermodel.Cell
@@ -27,7 +28,12 @@ import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.apache.poi.ss.util.WorkbookUtil
 import org.apache.hadoop.conf.Configuration
+import org.apache.poi.openxml4j.opc.OPCPackage
+import org.apache.poi.poifs.crypt.{EncryptionInfo, EncryptionMode}
+import org.apache.poi.poifs.filesystem.POIFSFileSystem
 import org.apache.spark.sql.catalyst.util.DateTimeUtils
+
+import java.io.OutputStream
 
 class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Configuration, val options: ExcelOptions) {
   /* Prepare target Excel workbook, sheet and where to write to */
@@ -167,8 +173,42 @@ class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Con
       val fs = hdfsPath.getFileSystem(conf)
       fs.create(hdfsPath, true)
     }
-    wb.write(fos)
-    wb.close()
-    fos.close()
+    try {
+      options.workbookPassword match {
+        case Some(pass) if !pass.isEmpty => encrypt(wb, pass, fos)
+        case _ => wb.write(fos)
+      }
+    } finally {
+      wb.close()
+      fos.close()
+    }
+  }
+
+  // this may need to be enhanced to use a temp file instead of UnsynchronizedByteArrayOutputStream to save memory
+  private def encrypt(wb: Workbook, password: String, outputStream: OutputStream): Unit = {
+    val fs = new POIFSFileSystem
+    try {
+      val info = new EncryptionInfo(EncryptionMode.agile)
+      val enc = info.getEncryptor
+      enc.confirmPassword(password)
+      val bos = new UnsynchronizedByteArrayOutputStream()
+      try {
+        wb.write(bos)
+        val opc = OPCPackage.open(bos.toInputStream)
+        val encStream = enc.getDataStream(fs)
+        try {
+          opc.save(encStream)
+        } finally {
+          opc.close()
+          encStream.close()
+        }
+      } finally {
+        bos.close()
+      }
+      // Write out the encrypted version
+      fs.writeFilesystem(outputStream)
+    } finally {
+      fs.close()
+    }
   }
 }
