@@ -45,16 +45,17 @@ object WriteAndReadSuite {
       StructField("Extra Option 1", IntegerType, true),
       StructField("Extra Option 2", IntegerType, true),
       StructField("Extra Option 3", IntegerType, true),
+      StructField("Rewards Customer", BooleanType, true),
       StructField("Staff", StringType, true)
     )
   )
 
   val expectedData_01: util.List[Row] = List(
-    Row(1, 12, "CA869", "Phạm Uyển Trinh", null, null, 2200, null, "Ella Fitzgerald"),
-    Row(1, 12, "CA870", "Nguyễn Liên Thảo", null, null, 2000, 1350, "Ella Fitzgerald"),
-    Row(1, 12, "CA871", "Lê Thị Nga", 17000, null, null, null, "Ella Fitzgerald"),
-    Row(1, 12, "CA872", "Phan Tố Nga", null, null, 2000, null, "Teresa Teng"),
-    Row(1, 12, "CA873", "Nguyễn Thị Teresa Teng", null, null, 1200, null, "Jesse Thomas")
+    Row(1, 12, "CA869", "Phạm Uyển Trinh", null, null, 2200, null, true, "Ella Fitzgerald"),
+    Row(1, 12, "CA870", "Nguyễn Liên Thảo", null, null, 2000, 1350, false, "Ella Fitzgerald"),
+    Row(1, 12, "CA871", "Lê Thị Nga", 17000, null, null, null, false, "Ella Fitzgerald"),
+    Row(1, 12, "CA872", "Phan Tố Nga", null, null, 2000, null, true, "Teresa Teng"),
+    Row(1, 12, "CA873", "Nguyễn Thị Teresa Teng", null, null, 1200, null, null, "Jesse Thomas")
   ).asJava
 
   val userDefinedSchema_02 = StructType(

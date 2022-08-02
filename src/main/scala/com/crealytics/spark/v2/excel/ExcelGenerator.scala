@@ -129,6 +129,12 @@ class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Con
         cell.setCellStyle(StringCellStyle)
       }
 
+    case BooleanType =>
+      (row: InternalRow, ordinal: Int, cell: Cell) => {
+        cell.setCellValue(row.getBoolean(ordinal))
+        cell.setCellStyle(WholeNumberCellStyle)
+      }
+
     case _ => throw new RuntimeException(s"Unsupported type: ${dataType.typeName}")
   }
 
