@@ -16,6 +16,7 @@
 
 package com.crealytics.spark.v2.excel
 
+import com.github.pjfanning.xlsx.StreamingReader
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory
@@ -102,12 +103,24 @@ class ExcelHelper private (options: ExcelOptions) {
     */
   def getWorkbook(conf: Configuration, uri: URI): Workbook = {
     val ins = FileSystem.get(uri, conf).open(new Path(uri))
-    try
-      options.workbookPassword match {
-        case None => WorkbookFactory.create(ins)
-        case Some(password) => WorkbookFactory.create(ins, password)
+    try {
+      options.maxRowsInMemory match {
+        case Some(maxRows) => {
+          val builder = StreamingReader.builder().bufferSize(maxRows)
+          options.workbookPassword match {
+            case Some(password) => builder.password(password)
+            case _ =>
+          }
+          builder.open(ins)
+        }
+        case _ => {
+          options.workbookPassword match {
+            case Some(password) => WorkbookFactory.create(ins, password)
+            case _ => WorkbookFactory.create(ins)
+          }
+        }
       }
-    finally ins.close()
+    } finally ins.close()
   }
 
   /** Get cell-row iterator for excel file in given URI

@@ -16,10 +16,8 @@
 
 package com.crealytics.spark.v2.excel
 
-import org.apache.poi.ss.usermodel.Cell
+import org.apache.poi.ss.usermodel.{Cell, Sheet, Workbook}
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy
-import org.apache.poi.ss.usermodel.Sheet
-import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 
 import scala.jdk.CollectionConverters._
@@ -115,12 +113,16 @@ class CellRangeAddressDataLocator(val options: ExcelOptions) extends DataLocator
   */
 class TableDataLocator(val options: ExcelOptions, tableName: String) extends DataLocator {
   override def readFrom(workbook: Workbook): Iterator[Vector[Cell]] = {
-    val xwb = workbook.asInstanceOf[XSSFWorkbook]
-    val table = xwb.getTable(tableName)
-    val sheet = table.getXSSFSheet()
-    val rowInd = (table.getStartRowIndex to table.getEndRowIndex)
-    val colInd = (table.getStartColIndex to table.getEndColIndex)
+    workbook match {
+      case xssfWorkbook: XSSFWorkbook => {
+        val table = xssfWorkbook.getTable(tableName)
+        val sheet = table.getXSSFSheet()
+        val rowInd = (table.getStartRowIndex to table.getEndRowIndex)
+        val colInd = (table.getStartColIndex to table.getEndColIndex)
 
-    actualReadFromSheet(options, sheet, rowInd, colInd)
+        actualReadFromSheet(options, sheet, rowInd, colInd)
+      }
+      case _ => List.empty.iterator
+    }
   }
 }

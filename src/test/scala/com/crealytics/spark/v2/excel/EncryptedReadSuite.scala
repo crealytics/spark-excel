@@ -55,6 +55,21 @@ class EncryptedReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelT
     assertDataFrameEquals(expected, df)
   }
 
+  test("read encrypted xslx file (maxRowsInMemory)") {
+    val df = readFromResources(
+      spark,
+      path = "simple_encrypted.xlsx",
+      options = Map(
+        "dataAddress" -> "Sheet1!A1",
+        "treatEmptyValuesAsNulls" -> true,
+        "workbookPassword" -> "fooba",
+        "maxRowsInMemory" -> 1,
+        "inferSchema" -> true
+      )
+    )
+    assertDataFrameEquals(expected, df)
+  }
+
   test("read encrypted xls file") {
     val df = readFromResources(
       spark,
