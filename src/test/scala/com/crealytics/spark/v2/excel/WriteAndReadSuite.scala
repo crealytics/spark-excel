@@ -16,6 +16,8 @@
 
 package com.crealytics.spark.v2.excel
 
+import com.holdenkarau.spark.testing.DataFrameSuiteBase
+import org.apache.spark.SparkException
 import org.apache.spark.sql.Row
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
@@ -27,8 +29,6 @@ import java.nio.file.Files
 import java.sql.{Date, Timestamp}
 import java.time.{Instant, LocalDate, ZoneId}
 import java.time.format.DateTimeFormatter
-
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
 
 /** Writing and reading back */
 object WriteAndReadSuite {
@@ -93,6 +93,10 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
 
   test("simple write then read (maxRowsInMemory=1)") {
     simpleTest(Some(1))
+  }
+
+  test("simple write then read (invalid maxRowsInMemory)") {
+    assertThrows[SparkException](simpleTest(Some(-10)))
   }
 
   test("write and read with difference addresses") {
