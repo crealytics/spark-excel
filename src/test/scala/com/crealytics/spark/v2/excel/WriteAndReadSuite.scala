@@ -88,20 +88,11 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
   import WriteAndReadSuite._
 
   test("simple write then read") {
-    val path = Files.createTempDirectory("spark_excel_wr_01_").toString()
-    val df_source = spark.createDataFrame(expectedData_01, userDefinedSchema_01).sort("Customer ID")
-    df_source.write.format("excel").mode(SaveMode.Append).save(path)
+    simpleTest()
+  }
 
-    val df_read = spark.read
-      .format("excel")
-      .schema(userDefinedSchema_01)
-      .load(path)
-      .sort("Customer ID")
-
-    assertDataFrameEquals(df_source, df_read)
-
-    /* Cleanup, should after the checking */
-    deleteDirectory(path)
+  test("simple write then read (maxRowsInMemory=1)") {
+    simpleTest(Some(1))
   }
 
   test("write and read with difference addresses") {
@@ -185,6 +176,27 @@ class WriteAndReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTe
 
     /* Cleanup, should after the checking */
     spark.conf.set(DATETIME_JAVA8API_ENABLED, previousConfigValue)
+    deleteDirectory(path)
+  }
+
+  private def simpleTest(maxRowsInMemory: Option[Int] = None): Unit = {
+    val path = Files.createTempDirectory("spark_excel_wr_01_").toString()
+    val df_source = spark.createDataFrame(expectedData_01, userDefinedSchema_01).sort("Customer ID")
+    val options: Map[String, String] = maxRowsInMemory match {
+      case Some(maxRows) => Map("maxRowsInMemory" -> maxRows.toString)
+      case _ => Map.empty[String, String]
+    }
+    df_source.write.format("excel").options(options).mode(SaveMode.Append).save(path)
+
+    val df_read = spark.read
+      .format("excel")
+      .schema(userDefinedSchema_01)
+      .load(path)
+      .sort("Customer ID")
+
+    assertDataFrameEquals(df_source, df_read)
+
+    /* Cleanup, should after the checking */
     deleteDirectory(path)
   }
 
