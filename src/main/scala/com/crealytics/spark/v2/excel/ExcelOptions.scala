@@ -141,6 +141,11 @@ class ExcelOptions(
     if (r > 1.0 || r <= 0.0) 1.0 else r
   }
 
+  /** Optional parameter for using a streaming reader which can help with big files (will fail if used with xls format
+    * files)
+    */
+  val maxRowsInMemory = getInt("maxRowsInMemory")
+
   // scalastyle:off
   /** Optional parameter for <a
     * href="https://poi.apache.org/apidocs/5.0/org/apache/poi/util/IOUtils.html#setByteArrayMaxOverride-int-">maxByteArraySize</a>

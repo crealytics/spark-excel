@@ -93,6 +93,16 @@ class PlainNumberReadSuite extends AnyFunSuite with DataFrameSuiteBase with Exce
     assertDataFrameEquals(expected, df)
   }
 
+  test("plain number format when usePlainNumberFormat=true, inferSchema=true and maxRowsInMemory") {
+    val df = readFromResources(
+      spark,
+      path = "plain_number.xlsx",
+      options = Map("usePlainNumberFormat" -> true, "inferSchema" -> true, "maxRowsInMemory" -> 1)
+    )
+    val expected = spark.createDataFrame(expectedPlainDataInferSchema, expectedInferredSchema)
+    assertDataFrameEquals(expected, df)
+  }
+
   test("plain number format when usePlainNumberFormat=true and inferSchema=false") {
     val df = readFromResources(
       spark,

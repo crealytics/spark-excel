@@ -16,23 +16,30 @@
 
 package com.crealytics.spark.v2.excel
 
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
-import org.apache.poi.ss.usermodel.Cell
-import org.apache.poi.ss.usermodel.CellStyle
+import org.apache.poi.ss.usermodel.{Cell, CellStyle, Workbook}
+import org.apache.poi.ss.util.WorkbookUtil
+import org.apache.poi.xssf.streaming.SXSSFWorkbook
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types._
-import org.apache.poi.ss.usermodel.Workbook
-import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import org.apache.poi.ss.util.WorkbookUtil
-import org.apache.hadoop.conf.Configuration
-import org.apache.spark.sql.catalyst.util.DateTimeUtils
 
 class ExcelGenerator(val path: String, val dataSchema: StructType, val conf: Configuration, val options: ExcelOptions) {
   /* Prepare target Excel workbook, sheet and where to write to */
-  private val wb: Workbook =
-    if (options.fileExtension.toLowerCase == "xlsx") new XSSFWorkbook() else new HSSFWorkbook()
+  private val wb: Workbook = {
+    if (options.fileExtension.toLowerCase == "xlsx") {
+      options.maxRowsInMemory match {
+        case Some(maxRows) => new SXSSFWorkbook(maxRows)
+        case _ => new XSSFWorkbook()
+      }
+    } else {
+      new HSSFWorkbook()
+    }
+  }
 
   private val (sheet, firstCol, firstRow) = {
     val dataAddress = ExcelHelper(options).parsedRangeAddress()

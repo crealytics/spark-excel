@@ -16,11 +16,10 @@
 
 package com.crealytics.spark.v2.excel
 
-import org.apache.poi.ss.usermodel.Cell
+import org.apache.poi.ss.usermodel.{Cell, Sheet, Workbook}
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy
-import org.apache.poi.ss.usermodel.Sheet
-import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.apache.spark.internal.Logging
 
 import scala.jdk.CollectionConverters._
 import scala.util.Try
@@ -113,14 +112,21 @@ class CellRangeAddressDataLocator(val options: ExcelOptions) extends DataLocator
   * @param options
   *   user specified excel option
   */
-class TableDataLocator(val options: ExcelOptions, tableName: String) extends DataLocator {
+class TableDataLocator(val options: ExcelOptions, tableName: String) extends DataLocator with Logging {
   override def readFrom(workbook: Workbook): Iterator[Vector[Cell]] = {
-    val xwb = workbook.asInstanceOf[XSSFWorkbook]
-    val table = xwb.getTable(tableName)
-    val sheet = table.getXSSFSheet()
-    val rowInd = (table.getStartRowIndex to table.getEndRowIndex)
-    val colInd = (table.getStartColIndex to table.getEndColIndex)
+    workbook match {
+      case xssfWorkbook: XSSFWorkbook => {
+        val table = xssfWorkbook.getTable(tableName)
+        val sheet = table.getXSSFSheet()
+        val rowInd = (table.getStartRowIndex to table.getEndRowIndex)
+        val colInd = (table.getStartColIndex to table.getEndColIndex)
 
-    actualReadFromSheet(options, sheet, rowInd, colInd)
+        actualReadFromSheet(options, sheet, rowInd, colInd)
+      }
+      case _ => {
+        logWarning("TableDataLocator only properly supports xlsx files read without maxRowsInMemory setting")
+        List.empty.iterator
+      }
+    }
   }
 }
