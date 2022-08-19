@@ -27,7 +27,7 @@ inThisBuild(
       WorkflowStep.Sbt(List("scalastyle", "test:scalastyle"), name = Some("Scalastyle"))
     ),
     githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("tlRelease"), name = Some("Publish"))),
-    tlSonatypeUseLegacyHost := false,
+    tlSonatypeUseLegacyHost := true,
     autoAPIMappings := true,
     developers := List(
       Developer("nightscape", "Martin Mauch", "martin.mauch@gmail.com", url("https://github.com/nightscape"))
