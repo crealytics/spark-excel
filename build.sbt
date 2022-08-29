@@ -12,7 +12,7 @@ inThisBuild(
     organizationName := "Martin Mauch (@nightscape)",
     homepage := Some(url("https://github.com/crealytics/spark-excel")),
     licenses := List(License.Apache2),
-    tlBaseVersion := "0.17",
+    tlBaseVersion := "0.18",
     crossScalaVersions := Seq(scala212, scala213),
     scalaVersion := crossScalaVersions.value.head,
     githubWorkflowBuildMatrixFailFast := Some(false),
