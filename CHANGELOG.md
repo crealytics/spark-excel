@@ -145,3 +145,10 @@ Next
 =====
 - Feature: Respecting user-provided schema
 - Bugfix: Several fixes to parsing
+
+## [v0.18.0] - 2022-08-29
+### :wrench: Chores
+- [`64521bb`](https://github.com/crealytics/spark-excel/commit/64521bb6f4a9c763d9ed7d4ff8689dfc7c44bbf8) - Update base version *(commit by [@nightscape](https://github.com/nightscape))*
+
+
+[v0.18.0]: https://github.com/crealytics/spark-excel/compare/v0.18.0-beta2...v0.18.0
