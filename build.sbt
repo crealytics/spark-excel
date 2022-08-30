@@ -12,7 +12,7 @@ inThisBuild(
     organizationName := "Martin Mauch (@nightscape)",
     homepage := Some(url("https://github.com/crealytics/spark-excel")),
     licenses := List(License.Apache2),
-    tlBaseVersion := "0.17",
+    tlBaseVersion := "0.18",
     crossScalaVersions := Seq(scala212, scala213),
     scalaVersion := crossScalaVersions.value.head,
     githubWorkflowBuildMatrixFailFast := Some(false),
@@ -36,6 +36,7 @@ inThisBuild(
 )
 
 lazy val sparkVersion = "3.2.2"
+val poiVersion = "5.2.2"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
@@ -51,19 +52,24 @@ libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
 
 enablePlugins(ThinFatJar)
 shadedDeps ++= Seq(
-  "org.apache.poi" % "poi" % "5.2.2",
-  "org.apache.poi" % "poi-ooxml" % "5.2.2",
+  "org.apache.poi" % "poi" % poiVersion,
+  "org.apache.poi" % "poi-ooxml" % poiVersion,
+  "org.apache.poi" % "poi-ooxml-lite" % poiVersion,
+  "org.apache.xmlbeans" % "xmlbeans" % "5.0.3",
   "com.norbitltd" %% "spoiwo" % "2.2.1",
   "com.github.pjfanning" % "excel-streaming-reader" % "4.0.1",
   "com.github.pjfanning" % "poi-shared-strings" % "2.5.3",
   "commons-io" % "commons-io" % "2.11.0",
-  "org.apache.commons" % "commons-compress" % "1.21"
+  "org.apache.commons" % "commons-compress" % "1.21",
+  "org.apache.logging.log4j" % "log4j-api" % "2.17.2",
+  "com.zaxxer" % "SparseBitSet" % "1.2",
+  "org.apache.commons" % "commons-collections4" % "4.4",
+  "com.github.virtuald" % "curvesapi" % "1.07",
+  "commons-codec" % "commons-codec" % "1.15",
+  "org.apache.commons" % "commons-math3" % "3.6.1"
 )
 
 shadeRenames ++= Seq(
-  "org.apache.poi.**" -> "shadeio.poi.@1",
-  "spoiwo.**" -> "shadeio.spoiwo.@1",
-  "com.github.pjfanning.**" -> "shadeio.pjfanning.@1",
   "org.apache.commons.io.**" -> "shadeio.commons.io.@1",
   "org.apache.commons.compress.**" -> "shadeio.commons.compress.@1"
 )
@@ -83,7 +89,7 @@ libraryDependencies ++= Seq(
   //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
   "org.scalamock" %% "scalamock" % "5.2.0" % Test
 ) ++ (if (scalaVersion.value.startsWith("2.12")) Seq("com.github.nightscape" %% "spark-testing-base" % "9496d55" % Test)
-      else Seq())
+else Seq())
 
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {
