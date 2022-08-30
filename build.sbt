@@ -47,7 +47,7 @@ version := testSparkVersion.value + "_" + version.value
 
 resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
-libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
+libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "2.0.0" % "provided")
   .map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 enablePlugins(ThinFatJar)
@@ -89,7 +89,7 @@ libraryDependencies ++= Seq(
   //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
   "org.scalamock" %% "scalamock" % "5.2.0" % Test
 ) ++ (if (scalaVersion.value.startsWith("2.12")) Seq("com.github.nightscape" %% "spark-testing-base" % "9496d55" % Test)
-else Seq())
+      else Seq())
 
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {
