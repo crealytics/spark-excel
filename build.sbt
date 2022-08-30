@@ -61,7 +61,7 @@ shadedDeps ++= Seq(
   "com.github.pjfanning" % "poi-shared-strings" % "2.5.3",
   "commons-io" % "commons-io" % "2.11.0",
   "org.apache.commons" % "commons-compress" % "1.21",
-  "org.apache.logging.log4j" % "log4j-api" % "2.17.2",
+  "org.apache.logging.log4j" % "log4j-api" % "2.18.0",
   "com.zaxxer" % "SparseBitSet" % "1.2",
   "org.apache.commons" % "commons-collections4" % "4.4",
   "com.github.virtuald" % "curvesapi" % "1.07",
@@ -89,7 +89,7 @@ libraryDependencies ++= Seq(
   //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
   "org.scalamock" %% "scalamock" % "5.2.0" % Test
 ) ++ (if (scalaVersion.value.startsWith("2.12")) Seq("com.github.nightscape" %% "spark-testing-base" % "9496d55" % Test)
-else Seq())
+      else Seq())
 
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {
