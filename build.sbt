@@ -1,7 +1,7 @@
 name := "spark-excel"
 
 val scala213 = "2.13.8"
-val scala212 = "2.12.16"
+val scala212 = "2.12.17"
 val spark24 = List("2.4.1", "2.4.7", "2.4.8")
 val spark30 = List("3.0.1", "3.0.3")
 val spark31 = List("3.1.1", "3.1.2", "3.1.3")
@@ -36,7 +36,7 @@ inThisBuild(
 )
 
 lazy val sparkVersion = "3.2.2"
-val poiVersion = "5.2.2"
+val poiVersion = "5.2.3"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
@@ -57,11 +57,11 @@ shadedDeps ++= Seq(
   "org.apache.poi" % "poi-ooxml-lite" % poiVersion,
   "org.apache.xmlbeans" % "xmlbeans" % "5.1.1",
   "com.norbitltd" %% "spoiwo" % "2.2.1",
-  "com.github.pjfanning" % "excel-streaming-reader" % "4.0.1",
+  "com.github.pjfanning" % "excel-streaming-reader" % "4.0.2",
   "com.github.pjfanning" % "poi-shared-strings" % "2.5.3",
   "commons-io" % "commons-io" % "2.11.0",
   "org.apache.commons" % "commons-compress" % "1.21",
-  "org.apache.logging.log4j" % "log4j-api" % "2.18.0",
+  "org.apache.logging.log4j" % "log4j-api" % "2.19.0",
   "com.zaxxer" % "SparseBitSet" % "1.2",
   "org.apache.commons" % "commons-collections4" % "4.4",
   "com.github.virtuald" % "curvesapi" % "1.07",
@@ -84,7 +84,7 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-core" % "2.8.0" % Test,
   "org.scalatest" %% "scalatest" % "3.2.13" % Test,
   "org.scalatestplus" %% "scalacheck-1-15" % "3.2.11.0" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.16.0" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.15" % "1.3.0" % Test,
   //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
   "org.scalamock" %% "scalamock" % "5.2.0" % Test
