@@ -80,7 +80,10 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "provided",
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "provided",
   "org.apache.spark" %% "spark-hive" % testSparkVersion.value % "provided",
+  "org.apache.hadoop" % "hadoop-common" % "3.3.1" % Test,
+  "org.apache.hadoop" % "hadoop-auth" % "3.3.1" % Test,
   "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
+  "com.github.bigwheel" %% "util-backports" % "2.1",
   "org.typelevel" %% "cats-core" % "2.8.0" % Test,
   "org.scalatest" %% "scalatest" % "3.2.13" % Test,
   "org.scalatestplus" %% "scalacheck-1-15" % "3.2.11.0" % Test,
@@ -93,7 +96,7 @@ libraryDependencies ++= Seq(
 
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {
-  if (testSparkVersion.value >= "3.2.2") {
+  if (testSparkVersion.value >= "3.2.0") {
     Seq(
       (Compile / sourceDirectory)(_ / "scala"),
       (Compile / sourceDirectory)(_ / "3.x/scala"),

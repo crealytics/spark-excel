@@ -17,6 +17,7 @@
 package com.crealytics.spark.v2.excel
 
 import org.apache.hadoop.conf.Configuration
+import org.apache.poi.ss.usermodel.Cell
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.connector.read.PartitionReader
@@ -76,8 +77,13 @@ case class ExcelPartitionReaderFactory(
     requiredSchema: StructType
   ): Iterator[InternalRow] = {
     val excelHelper = ExcelHelper(parsedOptions)
-    val rows = excelHelper.getRows(conf, URI.create(file.filePath))
+
+    val workbook = excelHelper.getWorkbook(conf, URI.create(file.filePath))
+    val excelReader = DataLocator(parsedOptions)
+    val rows = excelReader.readFrom(workbook)
+
     ExcelParser.parseIterator(rows, parser, headerChecker, requiredSchema)
+
   }
 
 }
