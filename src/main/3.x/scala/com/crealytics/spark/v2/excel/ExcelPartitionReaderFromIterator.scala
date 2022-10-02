@@ -2,6 +2,7 @@ package com.crealytics.spark.v2.excel
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.poi.ss.usermodel.Workbook
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.PartitionedFile
 import org.apache.spark.sql.execution.datasources.v2._
@@ -14,12 +15,14 @@ import java.net.URI
   *
   * Need to be instantiated via apply() method
   */
-private[excel] class ExcelPartitionReaderFromIterator[InternalRow] private (
-  workbook: Workbook,
-  iter: Iterator[InternalRow]
-) extends PartitionReaderFromIterator[InternalRow](iter) {
+private[excel] class ExcelPartitionReaderFromIterator[T] private (workbook: Workbook, iter: Iterator[T])
+    extends PartitionReaderFromIterator[T](iter)
+    with Logging {
 
-  override def close(): Unit = workbook.close()
+  override def close(): Unit = {
+    log.error("Close workbook")
+    workbook.close()
+  }
 
 }
 

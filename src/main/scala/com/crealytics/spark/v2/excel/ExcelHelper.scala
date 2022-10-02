@@ -17,6 +17,7 @@
 package com.crealytics.spark.v2.excel
 
 import com.github.pjfanning.xlsx.StreamingReader
+import com.github.pjfanning.xlsx.impl.StreamingWorkbook
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory
@@ -26,6 +27,7 @@ import org.apache.poi.ss.usermodel.{Cell, CellType, DataFormatter, FormulaError,
 import org.apache.poi.ss.util.{AreaReference, CellReference}
 import org.apache.poi.util.IOUtils
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory
+import org.apache.spark.internal.Logging
 
 import java.math.BigDecimal
 import java.net.URI
@@ -49,7 +51,7 @@ object PlainNumberFormat extends Format {
 }
 
 /* Excel parsing and utility methods */
-class ExcelHelper private (options: ExcelOptions) {
+class ExcelHelper private (options: ExcelOptions) extends Logging {
 
   /* For get cell string value */
   private lazy val dataFormatter = {
@@ -136,7 +138,12 @@ class ExcelHelper private (options: ExcelOptions) {
     val workbook = getWorkbook(conf, uri)
     val excelReader = DataLocator(options)
     try { excelReader.readFrom(workbook) }
-    finally workbook.close()
+    finally {
+      if (workbook.isInstanceOf[StreamingWorkbook])
+        log.error("getrows close workbook not done for streaming workbook")
+      else
+        workbook.close()
+    }
   }
 
   /** Get column name by list of cells (row)
