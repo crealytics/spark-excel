@@ -20,7 +20,7 @@ private[excel] class ExcelPartitionReaderFromIterator[T] private (workbook: Work
     with Logging {
 
   override def close(): Unit = {
-    log.error("Close workbook")
+    // log.error("Close workbook partition reader")
     workbook.close()
   }
 

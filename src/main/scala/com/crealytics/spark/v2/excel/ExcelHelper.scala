@@ -139,10 +139,11 @@ class ExcelHelper private (options: ExcelOptions) extends Logging {
     val excelReader = DataLocator(options)
     try { excelReader.readFrom(workbook) }
     finally {
-      if (workbook.isInstanceOf[StreamingWorkbook])
-        log.error("getrows close workbook not done for streaming workbook")
-      else
+      if (workbook.isInstanceOf[StreamingWorkbook]) {
+        log.error("getrows close workbook not done for streaming workbook ")
+      } else {
         workbook.close()
+      }
     }
   }
 
