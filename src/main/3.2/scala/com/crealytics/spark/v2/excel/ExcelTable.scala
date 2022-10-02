@@ -101,14 +101,14 @@ case class ExcelTable(
         paths.tail.foreach(path => {
           val newRows = excelHelper.getRows(conf, path)
           rows = CloseableIterator(
-            (rows.iterator ++ newRows.iterator).drop(numberOfRowToIgnore),
+            rows.iterator ++ newRows.iterator.drop(numberOfRowToIgnore),
             rows.resourcesToClose ++ newRows.resourcesToClose
           )
         })
 
         /* Limit number of rows to be used for schema inferring */
         options.excerptSize.foreach { excerptSize =>
-          CloseableIterator(rows.iterator.take(excerptSize), rows.resourcesToClose)
+          rows = CloseableIterator(rows.iterator.take(excerptSize), rows.resourcesToClose)
         }
 
         /* Ready to infer schema */

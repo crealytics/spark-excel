@@ -258,34 +258,46 @@ class ExcelDataSourceReader(
     }
     var rows = excelHelper.getRows(conf, paths.head)
 
-    if (rows.isEmpty) { /* If the first file is empty, not checking further */
+    if (rows.iterator.isEmpty) { /* If the first file is empty, not checking further */
       StructType(Seq.empty)
     } else {
-      /* Prepare field names */
-      val colNames =
-        if (options.header) { /* Get column name from the first row */
-          val r = excelHelper.getColumnNames(rows.next)
-          rows = rows.drop(options.ignoreAfterHeader)
-          r
-        } else { /* Peek first row, then return back */
-          val headerRow = rows.next
-          val r = excelHelper.getColumnNames(headerRow)
-          rows = Iterator(headerRow) ++ rows
-          r
+      try {
+        /* Prepare field names */
+        val colNames =
+          if (options.header) {
+            /* Get column name from the first row */
+            val r = excelHelper.getColumnNames(rows.iterator.next)
+            rows = CloseableIterator(rows.iterator.drop(options.ignoreAfterHeader), rows.resourcesToClose)
+            r
+          } else {
+            /* Peek first row, then return back */
+            val headerRow = rows.iterator.next
+            val r = excelHelper.getColumnNames(headerRow)
+            rows = CloseableIterator(Iterator(headerRow) ++ rows.iterator, rows.resourcesToClose)
+            r
+          }
+
+        /* Other files also be utilized (lazily) for field types, reuse field name
+           from the first file */
+        val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
+        rows = paths.tail.foldLeft(rows) { case (rs, path) =>
+          val newRows = excelHelper.getRows(conf, path)
+          CloseableIterator(
+            rs.iterator ++ newRows.iterator.drop(numberOfRowToIgnore),
+            rs.resourcesToClose ++ newRows.resourcesToClose
+          )
         }
 
-      /* Other files also be utilized (lazily) for field types, reuse field name
-         from the first file */
-      val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
-      rows = paths.tail.foldLeft(rows) { case (rs, path) =>
-        rs ++ excelHelper.getRows(conf, path).drop(numberOfRowToIgnore)
+        /* Limit numer of rows to be used for schema infering */
+        options.excerptSize.foreach { excerptSize =>
+          rows = CloseableIterator(rows.iterator.take(excerptSize), rows.resourcesToClose)
+        }
+
+        /* Ready to infer schema */
+        ExcelInferSchema(options).infer(rows.iterator, colNames)
+      } finally {
+        rows.close()
       }
-
-      /* Limit numer of rows to be used for schema infering */
-      rows = options.excerptSize.foldLeft(rows)(_ take _)
-
-      /* Ready to infer schema */
-      ExcelInferSchema(options).infer(rows, colNames)
     }
   }
 
@@ -329,7 +341,7 @@ class ExcelInputPartitionReader(
   private val excelHelper = ExcelHelper(options)
   private val rows = excelHelper.getRows(new Configuration(), path)
 
-  val reader = ExcelParser.parseIterator(rows, parser, headerChecker, dataSchema)
+  private val reader = ExcelParser.parseIterator(rows.iterator, parser, headerChecker, dataSchema)
 
   private val fullSchema = requiredSchema
     .map(f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()) ++
@@ -349,7 +361,9 @@ class ExcelInputPartitionReader(
 
   override def next: Boolean = combinedReader.hasNext
   override def get: InternalRow = combinedReader.next
-  override def close(): Unit = {}
+  override def close(): Unit = {
+    rows.close()
+  }
 }
 
 class ExcelDataSourceWriter(
