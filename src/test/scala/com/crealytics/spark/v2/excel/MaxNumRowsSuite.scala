@@ -17,8 +17,6 @@
 package com.crealytics.spark.v2.excel
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import org.apache.spark.sql._
-import org.apache.spark.sql.functions.{col, max}
 import org.scalatest.wordspec.AnyWordSpec
 
 class MaxNumRowsSuite extends AnyWordSpec with DataFrameSuiteBase with LocalFileTestingUtilities {
