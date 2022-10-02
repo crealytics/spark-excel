@@ -80,10 +80,6 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "provided",
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "provided",
   "org.apache.spark" %% "spark-hive" % testSparkVersion.value % "provided",
-  // added hadoop libs to test allowing to execute the tests locally (from within intellij)
-  // TODO removed to make unit tests work on CI?
-  // "org.apache.hadoop" % "hadoop-common" % "3.3.1" % Test,
-  // "org.apache.hadoop" % "hadoop-auth" % "3.3.1" % Test,
   "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
   "org.typelevel" %% "cats-core" % "2.8.0" % Test,
   "org.scalatest" %% "scalatest" % "3.2.13" % Test,
@@ -93,7 +89,11 @@ libraryDependencies ++= Seq(
   //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
   "org.scalamock" %% "scalamock" % "5.2.0" % Test
 ) ++ (if (scalaVersion.value.startsWith("2.12")) Seq("com.github.nightscape" %% "spark-testing-base" % "9496d55" % Test)
-      else Seq())
+      else Seq()) ++ (
+  if (!sys.env.contains("CI"))
+    Seq("org.apache.hadoop" % "hadoop-common" % "3.3.1" % Test, "org.apache.hadoop" % "hadoop-auth" % "3.3.1" % Test)
+  else Seq()
+)
 
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {
