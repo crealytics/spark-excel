@@ -20,11 +20,11 @@ import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class MaxNumRowsSuite extends AnyWordSpec with DataFrameSuiteBase with Matchers {
+class MaxRowsReadSuite extends AnyWordSpec with DataFrameSuiteBase with Matchers {
 
   "excel v1 and maxNumRows" can {
 
-    s"read with maxNumRows=200" in {
+    "read with maxNumRows=200" in {
 
       val dfExcel = spark.read
         .format("com.crealytics.spark.excel")
