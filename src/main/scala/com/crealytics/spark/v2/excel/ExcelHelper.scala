@@ -17,6 +17,7 @@
 package com.crealytics.spark.v2.excel
 
 import com.github.pjfanning.xlsx.StreamingReader
+import com.github.pjfanning.xlsx.impl.StreamingWorkbook
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory
@@ -135,8 +136,14 @@ class ExcelHelper private (options: ExcelOptions) {
   def getRows(conf: Configuration, uri: URI): Iterator[Vector[Cell]] = {
     val workbook = getWorkbook(conf, uri)
     val excelReader = DataLocator(options)
-    try { excelReader.readFrom(workbook) }
-    finally workbook.close()
+    try {
+      excelReader.readFrom(workbook)
+    } finally {
+      workbook match {
+        case _: StreamingWorkbook =>
+        case _ => workbook.close()
+      }
+    }
   }
 
   /** Get column name by list of cells (row)
