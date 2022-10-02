@@ -33,6 +33,7 @@ import java.net.URI
 import java.text.{FieldPosition, Format, ParsePosition}
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.util.Try
+import scala.util.control.NonFatal
 
 /** A format that formats a double as a plain string without rounding and scientific notation. All other operations are
   * unsupported.
@@ -133,15 +134,22 @@ class ExcelHelper private (options: ExcelOptions) {
     * @return
     *   cell-row iterator
     */
-  def getRows(conf: Configuration, uri: URI): Iterator[Vector[Cell]] = {
+  def getRows(conf: Configuration, uri: URI): CloseableIterator[Vector[Cell]] = {
     val workbook = getWorkbook(conf, uri)
     val excelReader = DataLocator(options)
     try {
-      excelReader.readFrom(workbook)
-    } finally {
+      val rowIter = excelReader.readFrom(workbook)
       workbook match {
-        case _: StreamingWorkbook =>
-        case _ => workbook.close()
+        case _: StreamingWorkbook => CloseableIterator(rowIter, Seq(workbook))
+        case _ => {
+          workbook.close()
+          CloseableIterator(rowIter)
+        }
+      }
+    } catch {
+      case NonFatal(t) => {
+        workbook.close()
+        throw t
       }
     }
   }

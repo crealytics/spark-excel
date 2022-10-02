@@ -28,6 +28,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.util.SerializableConfiguration
 
 import java.net.URI
+import scala.util.control.NonFatal
 
 /** A factory used to create Excel readers.
   *
@@ -64,8 +65,13 @@ case class ExcelPartitionReaderFactory(
     val headerChecker =
       new ExcelHeaderChecker(actualReadDataSchema, parsedOptions, source = s"Excel file: ${file.filePath}")
     val iter = readFile(conf, file, parser, headerChecker, readDataSchema)
-    val fileReader = new PartitionReaderFromIterator[InternalRow](iter)
-    new PartitionReaderWithPartitionValues(fileReader, readDataSchema, partitionSchema, file.partitionValues)
+    try {
+      val fileReader = new PartitionReaderFromIterator[InternalRow](iter.iterator)
+      new PartitionReaderWithPartitionValues(fileReader, readDataSchema, partitionSchema, file.partitionValues)
+    } finally {
+      // TODO need to close iter
+      // iter.close()
+    }
   }
 
   private def readFile(
@@ -74,10 +80,20 @@ case class ExcelPartitionReaderFactory(
     parser: ExcelParser,
     headerChecker: ExcelHeaderChecker,
     requiredSchema: StructType
-  ): Iterator[InternalRow] = {
+  ): CloseableIterator[InternalRow] = {
     val excelHelper = ExcelHelper(parsedOptions)
     val rows = excelHelper.getRows(conf, URI.create(file.filePath))
-    ExcelParser.parseIterator(rows, parser, headerChecker, requiredSchema)
+    try {
+      CloseableIterator(
+        ExcelParser.parseIterator(rows.iterator, parser, headerChecker, requiredSchema),
+        rows.resourcesToClose
+      )
+    } catch {
+      case NonFatal(t) => {
+        rows.close()
+        throw t
+      }
+    }
   }
 
 }
