@@ -22,7 +22,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class MaxNumRowsSuite extends AnyWordSpec with DataFrameSuiteBase with Matchers {
 
-  "excel v2 and maxNumRows" can {
+  "excel v1 and maxNumRows" can {
 
     s"read with maxNumRows=200" in {
 
