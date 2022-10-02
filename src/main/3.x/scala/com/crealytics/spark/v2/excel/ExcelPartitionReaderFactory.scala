@@ -65,13 +65,8 @@ case class ExcelPartitionReaderFactory(
     val headerChecker =
       new ExcelHeaderChecker(actualReadDataSchema, parsedOptions, source = s"Excel file: ${file.filePath}")
     val iter = readFile(conf, file, parser, headerChecker, readDataSchema)
-    try {
-      val fileReader = new PartitionReaderFromIterator[InternalRow](iter.iterator)
-      new PartitionReaderWithPartitionValues(fileReader, readDataSchema, partitionSchema, file.partitionValues)
-    } finally {
-      // TODO need to close iter
-      // iter.close()
-    }
+    val partitionReader = new SparkExcelPartitionReaderFromIterator(iter)
+    new PartitionReaderWithPartitionValues(partitionReader, readDataSchema, partitionSchema, file.partitionValues)
   }
 
   private def readFile(
@@ -96,4 +91,12 @@ case class ExcelPartitionReaderFactory(
     }
   }
 
+}
+
+private class SparkExcelPartitionReaderFromIterator(rows: CloseableIterator[InternalRow])
+  extends PartitionReaderFromIterator[InternalRow](rows.iterator) {
+  override def close(): Unit = {
+    super.close()
+    rows.close()
+  }
 }
