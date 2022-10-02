@@ -16,8 +16,6 @@
 
 package com.crealytics.spark.v2.excel
 
-import org.apache.hadoop.conf.Configuration
-import org.apache.poi.ss.usermodel.Cell
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.connector.read.PartitionReader
@@ -27,8 +25,6 @@ import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.util.SerializableConfiguration
-
-import java.net.URI
 
 /** A factory used to create Excel readers.
   *
@@ -64,26 +60,9 @@ case class ExcelPartitionReaderFactory(
     val parser = new ExcelParser(actualDataSchema, actualReadDataSchema, parsedOptions, filters)
     val headerChecker =
       new ExcelHeaderChecker(actualReadDataSchema, parsedOptions, source = s"Excel file: ${file.filePath}")
-    val iter = readFile(conf, file, parser, headerChecker, readDataSchema)
-    val fileReader = new PartitionReaderFromIterator[InternalRow](iter)
+
+    val fileReader = ExcelPartitionReaderFromIterator(conf, parsedOptions, file, parser, headerChecker, readDataSchema)
     new PartitionReaderWithPartitionValues(fileReader, readDataSchema, partitionSchema, file.partitionValues)
-  }
-
-  private def readFile(
-    conf: Configuration,
-    file: PartitionedFile,
-    parser: ExcelParser,
-    headerChecker: ExcelHeaderChecker,
-    requiredSchema: StructType
-  ): Iterator[InternalRow] = {
-    val excelHelper = ExcelHelper(parsedOptions)
-
-    val workbook = excelHelper.getWorkbook(conf, URI.create(file.filePath))
-    val excelReader = DataLocator(parsedOptions)
-    val rows = excelReader.readFrom(workbook)
-
-    ExcelParser.parseIterator(rows, parser, headerChecker, requiredSchema)
-
   }
 
 }
