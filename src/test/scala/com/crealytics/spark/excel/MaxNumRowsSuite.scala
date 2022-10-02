@@ -16,7 +16,6 @@
 
 package com.crealytics.spark.excel
 
-import breeze.linalg.max
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
