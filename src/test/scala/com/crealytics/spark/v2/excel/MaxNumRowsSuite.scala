@@ -23,7 +23,7 @@ class MaxNumRowsSuite extends AnyWordSpec with DataFrameSuiteBase with LocalFile
 
   "excel v2 and maxNumRows" can {
 
-    s"read with maxNumRows=200" in {
+    "read with maxNumRows=200" in {
 
       val dfExcel = spark.read
         .format("excel")

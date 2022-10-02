@@ -135,7 +135,6 @@ class ExcelHelper private (options: ExcelOptions) {
   def getRows(conf: Configuration, uri: URI): Iterator[Vector[Cell]] = {
     val workbook = getWorkbook(conf, uri)
     val excelReader = DataLocator(options)
-    // todo this does not work with streaming reader
     try { excelReader.readFrom(workbook) }
     finally workbook.close()
   }
