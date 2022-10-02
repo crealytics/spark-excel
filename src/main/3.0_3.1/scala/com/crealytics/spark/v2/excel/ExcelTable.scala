@@ -73,34 +73,47 @@ case class ExcelTable(
     }
     var rows = excelHelper.getRows(conf, paths.head)
 
-    if (rows.isEmpty) { /* If the first file is empty, not checking further */
-      StructType(Seq.empty)
-    } else {
-      /* Prepare field names */
-      val colNames =
-        if (options.header) { /* Get column name from the first row */
-          val r = excelHelper.getColumnNames(rows.next)
-          rows = rows.drop(options.ignoreAfterHeader)
-          r
-        } else { /* Peek first row, then return back */
-          val headerRow = rows.next
-          val r = excelHelper.getColumnNames(headerRow)
-          rows = Iterator(headerRow) ++ rows
-          r
+    try {
+      if (rows.iterator.isEmpty) {
+        /* If the first file is empty, not checking further */
+        StructType(Seq.empty)
+      } else {
+        /* Prepare field names */
+        val colNames =
+          if (options.header) {
+            /* Get column name from the first row */
+            val r = excelHelper.getColumnNames(rows.iterator.next)
+            rows = CloseableIterator(rows.iterator.drop(options.ignoreAfterHeader), rows.resourcesToClose)
+            r
+          } else {
+            /* Peek first row, then return back */
+            val headerRow = rows.iterator.next
+            val r = excelHelper.getColumnNames(headerRow)
+            rows = CloseableIterator(Iterator(headerRow) ++ rows.iterator, rows.resourcesToClose)
+            r
+          }
+
+        /* Other files also be utilized (lazily) for field types, reuse field name
+           from the first file */
+        val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
+        paths.tail.foreach(path => {
+          val newRows = excelHelper.getRows(conf, path)
+          rows = CloseableIterator(
+            rows.iterator ++ newRows.iterator.drop(numberOfRowToIgnore),
+            rows.resourcesToClose ++ newRows.resourcesToClose
+          )
+        })
+
+        /* Limit numer of rows to be used for schema infering */
+        options.excerptSize.foreach { excerptSize =>
+          rows = CloseableIterator(rows.iterator.take(excerptSize), rows.resourcesToClose)
         }
 
-      /* Other files also be utilized (lazily) for field types, reuse field name
-         from the first file */
-      val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
-      paths.tail.foreach(path => {
-        rows ++= excelHelper.getRows(conf, path).drop(numberOfRowToIgnore)
-      })
-
-      /* Limit numer of rows to be used for schema infering */
-      rows = if (options.excerptSize.isDefined) rows.take(options.excerptSize.get) else rows
-
-      /* Ready to infer schema */
-      ExcelInferSchema(options).infer(rows, colNames)
+        /* Ready to infer schema */
+        ExcelInferSchema(options).infer(rows.iterator, colNames)
+      }
+    } finally {
+      rows.close()
     }
   }
 }
