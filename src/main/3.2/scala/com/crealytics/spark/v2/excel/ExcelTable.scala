@@ -85,13 +85,13 @@ case class ExcelTable(
           if (options.header) {
             /* Get column name from the first row */
             val r = excelHelper.getColumnNames(sheetData.rowIterator.next())
-            sheetData = SheetData(sheetData.rowIterator.drop(options.ignoreAfterHeader), sheetData.resourcesToClose)
+            sheetData.modifyIterator(_.drop(options.ignoreAfterHeader))
             r
           } else {
             /* Peek first row, then return back */
             val headerRow = sheetData.rowIterator.next()
             val r = excelHelper.getColumnNames(headerRow)
-            sheetData = SheetData(Iterator(headerRow) ++ sheetData.rowIterator, sheetData.resourcesToClose)
+            sheetData = sheetData.modifyIterator(iter => Iterator(headerRow) ++ iter)
             r
           }
 
@@ -99,11 +99,8 @@ case class ExcelTable(
            from the first file */
         val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
         paths.tail.foreach(path => {
-          val newRows = excelHelper.getSheetData(conf, path)
-          sheetData = SheetData(
-            sheetData.rowIterator ++ newRows.rowIterator.drop(numberOfRowToIgnore),
-            sheetData.resourcesToClose ++ newRows.resourcesToClose
-          )
+          val newRows = excelHelper.getSheetData(conf, path).modifyIterator(_.drop(numberOfRowToIgnore))
+          sheetData = sheetData.append(newRows)
         })
 
         /* Limit number of rows to be used for schema inferring */

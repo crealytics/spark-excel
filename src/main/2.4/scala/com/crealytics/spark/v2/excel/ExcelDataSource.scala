@@ -256,9 +256,9 @@ class ExcelDataSourceReader(
       sample = if (sample < 1) 1 else sample
       inputPaths.take(sample).map(_.getPath.toUri)
     }
-    var rows = excelHelper.getSheetData(conf, paths.head)
+    var sheetData = excelHelper.getSheetData(conf, paths.head)
 
-    if (rows.rowIterator.isEmpty) { /* If the first file is empty, not checking further */
+    if (sheetData.rowIterator.isEmpty) { /* If the first file is empty, not checking further */
       StructType(Seq.empty)
     } else {
       try {
@@ -266,37 +266,34 @@ class ExcelDataSourceReader(
         val colNames =
           if (options.header) {
             /* Get column name from the first row */
-            val r = excelHelper.getColumnNames(rows.rowIterator.next)
-            rows = SheetData(rows.rowIterator.drop(options.ignoreAfterHeader), rows.resourcesToClose)
+            val r = excelHelper.getColumnNames(sheetData.rowIterator.next)
+            sheetData = sheetData.modifyIterator(_.drop(options.ignoreAfterHeader))
             r
           } else {
             /* Peek first row, then return back */
-            val headerRow = rows.rowIterator.next
+            val headerRow = sheetData.rowIterator.next
             val r = excelHelper.getColumnNames(headerRow)
-            rows = SheetData(Iterator(headerRow) ++ rows.rowIterator, rows.resourcesToClose)
+            sheetData = sheetData.modifyIterator(iter => Iterator(headerRow) ++ iter)
             r
           }
 
         /* Other files also be utilized (lazily) for field types, reuse field name
            from the first file */
         val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
-        rows = paths.tail.foldLeft(rows) { case (rs, path) =>
-          val newRows = excelHelper.getSheetData(conf, path)
-          SheetData(
-            rs.rowIterator ++ newRows.rowIterator.drop(numberOfRowToIgnore),
-            rs.resourcesToClose ++ newRows.resourcesToClose
-          )
+        sheetData = paths.tail.foldLeft(sheetData) { case (rs, path) =>
+          val newRows = excelHelper.getSheetData(conf, path).modifyIterator(_.drop(numberOfRowToIgnore))
+          rs.append(newRows)
         }
 
         /* Limit numer of rows to be used for schema infering */
         options.excerptSize.foreach { excerptSize =>
-          rows = SheetData(rows.rowIterator.take(excerptSize), rows.resourcesToClose)
+          sheetData = sheetData.modifyIterator(_.take(excerptSize))
         }
 
         /* Ready to infer schema */
-        ExcelInferSchema(options).infer(rows.rowIterator, colNames)
+        ExcelInferSchema(options).infer(sheetData.rowIterator, colNames)
       } finally {
-        rows.close()
+        sheetData.close()
       }
     }
   }
