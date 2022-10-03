@@ -6,4 +6,6 @@ case class SheetData[T](rowIterator: Iterator[T], resourcesToClose: Seq[Closeabl
   override def close(): Unit = {
     resourcesToClose.foreach(_.close())
   }
+  def modifyIterator(f: Iterator[T] => Iterator[T]): SheetData[T] = SheetData(f(rowIterator), resourcesToClose)
+  def append(other: SheetData[T]): SheetData[T] = SheetData(rowIterator ++ other.rowIterator, resourcesToClose ++ other.resourcesToClose)
 }
