@@ -39,7 +39,7 @@ class MaxNumRowsSuite extends AnyWordSpec with DataFrameSuiteBase with LocalFile
             .format("excel")
             .option("path", "src/test/resources/v2readwritetest/large_excel/largefile-wide-single-sheet.xlsx")
             .option("header", value = testcase.hasHeader)
-            .option("maxRowsInMemory", testcase.maxRowsInMemory)
+            .option("maxRowsInMemory", testcase.maxRowsInMemory.toString)
             .option("inferSchema", testcase.doInferSchema)
             .load()
 
