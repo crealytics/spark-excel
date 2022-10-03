@@ -24,19 +24,29 @@ class MaxRowsReadSuite extends AnyWordSpec with DataFrameSuiteBase with Matchers
 
   "excel v2 and maxNumRows" can {
 
-    "read with maxNumRows=200" in {
+    case class Testcase(hasHeader: Boolean, doInferSchema: Boolean, numRows: Int, maxRowsInMemory: Int)
 
-      val dfExcel = spark.read
-        .format("excel")
-        .option("path", "src/test/resources/v2readwritetest/large_excel/largefile-wide-single-sheet.xlsx")
-        .option("header", value = false)
-        // .option("dataAddress", "'Sheet1'!B7:M16")
-        .option("maxRowsInMemory", "200")
-        .option("inferSchema", false)
-        .load()
+    val allTestcases = Seq(
+      Testcase(hasHeader = false, doInferSchema = false, numRows = 2241, maxRowsInMemory = 200),
+      Testcase(hasHeader = true, doInferSchema = false, numRows = 2240, maxRowsInMemory = 200),
+      Testcase(hasHeader = true, doInferSchema = true, numRows = 2240, maxRowsInMemory = 200)
+    )
 
-      dfExcel.count() shouldEqual 2241
+    for (testcase <- allTestcases) {
+      s"v2 streaming read (header = ${testcase.hasHeader}, inferSchema = ${testcase.doInferSchema}, " +
+        s"maxRowsInMemory = ${testcase.maxRowsInMemory})" in {
+
+          val dfExcel = spark.read
+            .format("excel")
+            .option("path", "src/test/resources/v2readwritetest/large_excel/largefile-wide-single-sheet.xlsx")
+            .option("header", value = testcase.hasHeader)
+            .option("maxRowsInMemory", testcase.maxRowsInMemory.toString)
+            .option("inferSchema", testcase.doInferSchema)
+            .load()
+
+          dfExcel.count() shouldEqual testcase.numRows
+
+        }
     }
-
   }
 }
