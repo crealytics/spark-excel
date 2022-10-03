@@ -72,7 +72,6 @@ case class ExcelTable(
       inputPaths.take(sample).map(_.getPath.toUri)
     }
     val (sheetData, colNames) = excelHelper.parseSheetData(conf, paths)
-
     try {
       if (sheetData.rowIterator.isEmpty) {
         /* If the first file is empty, not checking further */

@@ -74,45 +74,17 @@ case class ExcelTable(
       sample = if (sample < 1) 1 else sample
       inputPaths.take(sample).map(_.getPath.toUri)
     }
-    var sheetData = excelHelper.getSheetData(conf, paths.head)
-
-    if (sheetData.rowIterator.isEmpty) { /* If the first file is empty, not checking further */
-      StructType(Seq.empty)
-    } else {
-      try {
-        /* Prepare field names */
-        val colNames =
-          if (options.header) {
-            /* Get column name from the first row */
-            val r = excelHelper.getColumnNames(sheetData.rowIterator.next())
-            sheetData.modifyIterator(_.drop(options.ignoreAfterHeader))
-            r
-          } else {
-            /* Peek first row, then return back */
-            val headerRow = sheetData.rowIterator.next()
-            val r = excelHelper.getColumnNames(headerRow)
-            sheetData = sheetData.modifyIterator(iter => Iterator(headerRow) ++ iter)
-            r
-          }
-
-        /* Other files also be utilized (lazily) for field types, reuse field name
-           from the first file */
-        val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
-        paths.tail.foreach(path => {
-          val newRows = excelHelper.getSheetData(conf, path).modifyIterator(_.drop(numberOfRowToIgnore))
-          sheetData = sheetData.append(newRows)
-        })
-
-        /* Limit number of rows to be used for schema inferring */
-        options.excerptSize.foreach { excerptSize =>
-          sheetData = SheetData(sheetData.rowIterator.take(excerptSize), sheetData.resourcesToClose)
-        }
-
+    val (sheetData, colNames) = excelHelper.parseSheetData(conf, paths)
+    try {
+      if (sheetData.rowIterator.isEmpty) {
+        /* If the first file is empty, not checking further */
+        StructType(Seq.empty)
+      } else {
         /* Ready to infer schema */
         ExcelInferSchema(options).infer(sheetData.rowIterator, colNames)
-      } finally {
-        sheetData.close()
       }
+    } finally {
+      sheetData.close()
     }
   }
 }
