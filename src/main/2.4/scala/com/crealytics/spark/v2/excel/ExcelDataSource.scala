@@ -256,9 +256,9 @@ class ExcelDataSourceReader(
       sample = if (sample < 1) 1 else sample
       inputPaths.take(sample).map(_.getPath.toUri)
     }
-    var rows = excelHelper.getRows(conf, paths.head)
+    var rows = excelHelper.getSheetData(conf, paths.head)
 
-    if (rows.iterator.isEmpty) { /* If the first file is empty, not checking further */
+    if (rows.rowIterator.isEmpty) { /* If the first file is empty, not checking further */
       StructType(Seq.empty)
     } else {
       try {
@@ -266,14 +266,14 @@ class ExcelDataSourceReader(
         val colNames =
           if (options.header) {
             /* Get column name from the first row */
-            val r = excelHelper.getColumnNames(rows.iterator.next)
-            rows = CloseableIterator(rows.iterator.drop(options.ignoreAfterHeader), rows.resourcesToClose)
+            val r = excelHelper.getColumnNames(rows.rowIterator.next)
+            rows = SheetData(rows.rowIterator.drop(options.ignoreAfterHeader), rows.resourcesToClose)
             r
           } else {
             /* Peek first row, then return back */
-            val headerRow = rows.iterator.next
+            val headerRow = rows.rowIterator.next
             val r = excelHelper.getColumnNames(headerRow)
-            rows = CloseableIterator(Iterator(headerRow) ++ rows.iterator, rows.resourcesToClose)
+            rows = SheetData(Iterator(headerRow) ++ rows.rowIterator, rows.resourcesToClose)
             r
           }
 
@@ -281,20 +281,20 @@ class ExcelDataSourceReader(
            from the first file */
         val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
         rows = paths.tail.foldLeft(rows) { case (rs, path) =>
-          val newRows = excelHelper.getRows(conf, path)
-          CloseableIterator(
-            rs.iterator ++ newRows.iterator.drop(numberOfRowToIgnore),
+          val newRows = excelHelper.getSheetData(conf, path)
+          SheetData(
+            rs.rowIterator ++ newRows.rowIterator.drop(numberOfRowToIgnore),
             rs.resourcesToClose ++ newRows.resourcesToClose
           )
         }
 
         /* Limit numer of rows to be used for schema infering */
         options.excerptSize.foreach { excerptSize =>
-          rows = CloseableIterator(rows.iterator.take(excerptSize), rows.resourcesToClose)
+          rows = SheetData(rows.rowIterator.take(excerptSize), rows.resourcesToClose)
         }
 
         /* Ready to infer schema */
-        ExcelInferSchema(options).infer(rows.iterator, colNames)
+        ExcelInferSchema(options).infer(rows.rowIterator, colNames)
       } finally {
         rows.close()
       }
@@ -339,9 +339,9 @@ class ExcelInputPartitionReader(
   private val headerChecker =
     new ExcelHeaderChecker(dataSchema, options, source = s"Excel file: ${path}")
   private val excelHelper = ExcelHelper(options)
-  private val rows = excelHelper.getRows(new Configuration(), path)
+  private val sheetData = excelHelper.getSheetData(new Configuration(), path)
 
-  private val reader = ExcelParser.parseIterator(rows.iterator, parser, headerChecker, dataSchema)
+  private val reader = ExcelParser.parseIterator(sheetData.rowIterator, parser, headerChecker, dataSchema)
 
   private val fullSchema = requiredSchema
     .map(f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()) ++
@@ -362,7 +362,7 @@ class ExcelInputPartitionReader(
   override def next: Boolean = combinedReader.hasNext
   override def get: InternalRow = combinedReader.next
   override def close(): Unit = {
-    rows.close()
+    sheetData.close()
   }
 }
 

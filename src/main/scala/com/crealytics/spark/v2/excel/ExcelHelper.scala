@@ -17,7 +17,6 @@
 package com.crealytics.spark.v2.excel
 
 import com.github.pjfanning.xlsx.StreamingReader
-import com.github.pjfanning.xlsx.impl.StreamingWorkbook
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory
@@ -132,20 +131,14 @@ class ExcelHelper private (options: ExcelOptions) {
     * @param uri
     *   to the file, this can be on any support file system back end
     * @return
-    *   cell-row iterator
+    *   Sheet Data with row iterator (must be closed after use)
     */
-  def getRows(conf: Configuration, uri: URI): CloseableIterator[Vector[Cell]] = {
+  def getSheetData(conf: Configuration, uri: URI): SheetData[Vector[Cell]] = {
     val workbook = getWorkbook(conf, uri)
     val excelReader = DataLocator(options)
     try {
       val rowIter = excelReader.readFrom(workbook)
-      workbook match {
-        case _: StreamingWorkbook => CloseableIterator(rowIter, Seq(workbook))
-        case _ => {
-          workbook.close()
-          CloseableIterator(rowIter)
-        }
-      }
+      SheetData(rowIter, Seq(workbook))
     } catch {
       case NonFatal(t) => {
         workbook.close()

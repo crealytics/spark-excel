@@ -75,12 +75,12 @@ case class ExcelPartitionReaderFactory(
     parser: ExcelParser,
     headerChecker: ExcelHeaderChecker,
     requiredSchema: StructType
-  ): CloseableIterator[InternalRow] = {
+  ): SheetData[InternalRow] = {
     val excelHelper = ExcelHelper(parsedOptions)
-    val rows = excelHelper.getRows(conf, URI.create(file.filePath))
+    val rows = excelHelper.getSheetData(conf, URI.create(file.filePath))
     try {
-      CloseableIterator(
-        ExcelParser.parseIterator(rows.iterator, parser, headerChecker, requiredSchema),
+      SheetData(
+        ExcelParser.parseIterator(rows.rowIterator, parser, headerChecker, requiredSchema),
         rows.resourcesToClose
       )
     } catch {
@@ -93,8 +93,8 @@ case class ExcelPartitionReaderFactory(
 
 }
 
-private class SparkExcelPartitionReaderFromIterator(rows: CloseableIterator[InternalRow])
-  extends PartitionReaderFromIterator[InternalRow](rows.iterator) {
+private class SparkExcelPartitionReaderFromIterator(rows: SheetData[InternalRow])
+    extends PartitionReaderFromIterator[InternalRow](rows.rowIterator) {
   override def close(): Unit = {
     super.close()
     rows.close()

@@ -74,9 +74,9 @@ case class ExcelTable(
       sample = if (sample < 1) 1 else sample
       inputPaths.take(sample).map(_.getPath.toUri)
     }
-    var rows = excelHelper.getRows(conf, paths.head)
+    var sheetData = excelHelper.getSheetData(conf, paths.head)
 
-    if (rows.iterator.isEmpty) { /* If the first file is empty, not checking further */
+    if (sheetData.rowIterator.isEmpty) { /* If the first file is empty, not checking further */
       StructType(Seq.empty)
     } else {
       try {
@@ -84,14 +84,14 @@ case class ExcelTable(
         val colNames =
           if (options.header) {
             /* Get column name from the first row */
-            val r = excelHelper.getColumnNames(rows.iterator.next())
-            rows = CloseableIterator(rows.iterator.drop(options.ignoreAfterHeader), rows.resourcesToClose)
+            val r = excelHelper.getColumnNames(sheetData.rowIterator.next())
+            sheetData = SheetData(sheetData.rowIterator.drop(options.ignoreAfterHeader), sheetData.resourcesToClose)
             r
           } else {
             /* Peek first row, then return back */
-            val headerRow = rows.iterator.next()
+            val headerRow = sheetData.rowIterator.next()
             val r = excelHelper.getColumnNames(headerRow)
-            rows = CloseableIterator(Iterator(headerRow) ++ rows.iterator, rows.resourcesToClose)
+            sheetData = SheetData(Iterator(headerRow) ++ sheetData.rowIterator, sheetData.resourcesToClose)
             r
           }
 
@@ -99,22 +99,22 @@ case class ExcelTable(
            from the first file */
         val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
         paths.tail.foreach(path => {
-          val newRows = excelHelper.getRows(conf, path)
-          rows = CloseableIterator(
-            rows.iterator ++ newRows.iterator.drop(numberOfRowToIgnore),
-            rows.resourcesToClose ++ newRows.resourcesToClose
+          val newRows = excelHelper.getSheetData(conf, path)
+          sheetData = SheetData(
+            sheetData.rowIterator ++ newRows.rowIterator.drop(numberOfRowToIgnore),
+            sheetData.resourcesToClose ++ newRows.resourcesToClose
           )
         })
 
         /* Limit number of rows to be used for schema inferring */
         options.excerptSize.foreach { excerptSize =>
-          rows = CloseableIterator(rows.iterator.take(excerptSize), rows.resourcesToClose)
+          sheetData = SheetData(sheetData.rowIterator.take(excerptSize), sheetData.resourcesToClose)
         }
 
         /* Ready to infer schema */
-        ExcelInferSchema(options).infer(rows.iterator, colNames)
+        ExcelInferSchema(options).infer(sheetData.rowIterator, colNames)
       } finally {
-        rows.close()
+        sheetData.close()
       }
     }
   }
