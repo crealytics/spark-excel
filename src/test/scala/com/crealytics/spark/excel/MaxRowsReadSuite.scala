@@ -29,8 +29,7 @@ class MaxRowsReadSuite extends AnyWordSpec with DataFrameSuiteBase with Matchers
       val dfExcel = spark.read
         .format("com.crealytics.spark.excel")
         .option("path", "src/test/resources/v2readwritetest/large_excel/largefile-wide-single-sheet.xlsx")
-        .option("header", value = false)
-        // .option("dataAddress", "'Sheet1'!B7:M16")
+        .option("header", value = true)
         .option("maxRowsInMemory", "200")
         .option("inferSchema", false)
         .load()

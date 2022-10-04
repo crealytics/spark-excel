@@ -27,9 +27,9 @@ class MaxRowsReadSuite extends AnyWordSpec with DataFrameSuiteBase with Matchers
     case class Testcase(hasHeader: Boolean, doInferSchema: Boolean, numRows: Int, maxRowsInMemory: Int)
 
     val allTestcases = Seq(
-      Testcase(hasHeader = false, doInferSchema = false, numRows = 2241, maxRowsInMemory = 200),
-      Testcase(hasHeader = true, doInferSchema = false, numRows = 2240, maxRowsInMemory = 200),
-      Testcase(hasHeader = true, doInferSchema = true, numRows = 2240, maxRowsInMemory = 200)
+      Testcase(hasHeader = false, doInferSchema = false, numRows = 2242, maxRowsInMemory = 200),
+      Testcase(hasHeader = true, doInferSchema = false, numRows = 2241, maxRowsInMemory = 200),
+      Testcase(hasHeader = true, doInferSchema = true, numRows = 2241, maxRowsInMemory = 200)
     )
 
     for (testcase <- allTestcases) {
