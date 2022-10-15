@@ -18,7 +18,7 @@ inThisBuild(
     scalacOptions += "-Wconf:origin=scala.collection.compat.*:s",
     githubWorkflowBuildMatrixFailFast := Some(false),
     githubWorkflowBuildMatrixAdditions := Map("spark" -> (spark24 ++ spark30 ++ spark31 ++ spark32)),
-    githubWorkflowBuildMatrixExclusions := (spark24 ++ spark30 ++ spark31 ++ spark32).map(spark =>
+    githubWorkflowBuildMatrixExclusions := (spark24 ++ spark30 ++ spark31).map(spark =>
       MatrixExclude(Map("spark" -> spark, "scala" -> scala213))
     ),
     githubWorkflowBuildSbtStepPreamble := Seq("-Dspark.testVersion=${{ matrix.spark }}", "++${{ matrix.scala }}"),
