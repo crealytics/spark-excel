@@ -18,7 +18,6 @@ package com.crealytics.spark.v2.excel
 
 import com.crealytics.spark.DataFrameSuiteBase
 import org.apache.spark.sql.Row
-import org.apache.spark.sql._
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 
