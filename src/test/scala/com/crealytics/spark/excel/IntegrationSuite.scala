@@ -69,10 +69,10 @@ class IntegrationSuite
       .to(List)
       .zip(inferred.schema)
       .zipWithIndex
-      .map { case ((f, sf), idx) => sf.name -> f(data.map(_.get(idx))) }
+      .map { case ((f, sf), idx) => sf.name -> f(data.toIndexedSeq.map(_.get(idx))) }
   }
 
-  def runTests(maxRowsInMemory: Option[Int], maxByteArraySize: Option[Int] = None) {
+  def runTests(maxRowsInMemory: Option[Int], maxByteArraySize: Option[Int] = None): Unit = {
     def writeThenRead(
       df: DataFrame,
       schema: Option[StructType] = Some(exampleDataSchema),
@@ -120,7 +120,7 @@ class IntegrationSuite
     describe(s"with maxRowsInMemory = $maxRowsInMemory; maxByteArraySize = $maxByteArraySize") {
       it("parses known datatypes correctly") {
         forAll(rowsGen) { rows =>
-          val expected = spark.createDataset(rows).toDF
+          val expected = spark.createDataset(rows).toDF()
           val actual = writeThenRead(expected)
           assertDataFrameApproximateEquals(expected, actual, relTol = 1.0e-6)
         }
@@ -128,14 +128,15 @@ class IntegrationSuite
 
       it("reads blank cells as null and empty string cells as \"\"") {
         forAll(rowsGen) { rows =>
-          val expected = spark.createDataset(rows).toDF
+          val expected = spark.createDataset(rows).toDF()
 
           // We need two dataframes, one with null values, one with empty strings.
           // This is because we want ExcelFileSaver to write an empty string
           // if there's a null in that column.
           // expectedWithEmptyStr is what the dataframe should look
           // like when the Excel spreadsheet is saved.
-          val expectedWithNull = expected.withColumn("aString", lit(null: String))
+          // TODO: The following variable should actually be used for the tests
+          // val expectedWithNull = expected.withColumn("aString", lit(null: String))
           // Generate the same DataFrame but with empty strings
           val expectedWithEmptyStr = expected.withColumn("aString", lit("": String))
           // Set the schema so that aString is nullable
@@ -148,7 +149,7 @@ class IntegrationSuite
 
       it("infers schema correctly") {
         forAll(rowsGen) { rows =>
-          val df = spark.createDataset(rows).toDF
+          val df = spark.createDataset(rows).toDF()
           val inferred = writeThenRead(df, schema = None)
 
           val nonNullCounts: Array[Map[String, Int]] =
@@ -167,7 +168,7 @@ class IntegrationSuite
 
       it("returns all data rows when inferring schema") {
         forAll(rowsGen.filter(_.nonEmpty)) { rows =>
-          val original = spark.createDataset(rows).toDF
+          val original = spark.createDataset(rows).toDF()
           val inferred = writeThenRead(original, schema = None)
           assertEqualAfterInferringTypes(original, inferred)
         }
@@ -175,7 +176,7 @@ class IntegrationSuite
 
       it("handles multi-line column headers correctly") {
         forAll(rowsGen.filter(_.nonEmpty)) { rows =>
-          val original = spark.createDataset(rows).toDF
+          val original = spark.createDataset(rows).toDF()
           val multiLineHeaders = original.withColumnRenamed("aString", "a\nString")
           val inferred = writeThenRead(multiLineHeaders, schema = None)
           assertEqualAfterInferringTypes(multiLineHeaders, inferred)
@@ -185,8 +186,8 @@ class IntegrationSuite
       it("respects the given column names in a user-specified schema") {
         forAll(rowsGen.filter(_.nonEmpty)) { rows =>
           val renamedSchema = StructType(exampleDataSchema.fields.map(f => f.copy(name = s"${f.name}CustomName")))
-          val original = spark.createDataset(rows).toDF
-          val expected = spark.createDataset(rows).toDF(renamedSchema.fieldNames: _*)
+          val original = spark.createDataset(rows).toDF()
+          val expected = spark.createDataset(rows).toDF(renamedSchema.fieldNames.toIndexedSeq: _*)
           val inferred = writeThenRead(original, schema = Some(renamedSchema))
           assertDataFrameApproximateEquals(expected, inferred, relTol = 1.0e-6)
         }
@@ -194,7 +195,7 @@ class IntegrationSuite
 
       it("reads files without headers correctly") {
         forAll(dataAndLocationGen.filter(_._1.nonEmpty)) { case (rows, startCellAddress, endCellAddress) =>
-          val original = spark.createDataset(rows).toDF
+          val original = spark.createDataset(rows).toDF()
           val renamed = spark.createDataset(rows).toDF(original.schema.fieldNames.indices.map(i => s"_c$i"): _*)
           val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
           val inferred = writeThenRead(
@@ -209,7 +210,7 @@ class IntegrationSuite
       }
 
       it("reads files with missing cells correctly") {
-        forAll(rowsGen.filter(_.nonEmpty)) { rows =>
+        forAll(rowsGen.filter(_.nonEmpty)) { _ =>
           val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
           val numCols = 20
           /*
@@ -229,7 +230,7 @@ class IntegrationSuite
                 .map(r => SRow((0 until numCols).filter(_ % 2 == 0).map(c => Cell(s"$r,$c", index = c)), index = r + 1))
                 .to(List)
           )
-          existingData.convertAsXlsx.write(new FileOutputStream(new File(fileName)))
+          existingData.convertAsXlsx().write(new FileOutputStream(new File(fileName)))
           val allData = spark.read
             .excel(dataAddress = s"'$sheetName'!A1", inferSchema = true)
             .load(fileName)
@@ -255,8 +256,8 @@ class IntegrationSuite
         forAll(dataAndLocationGen.filter(_._1.nonEmpty), sheetGen) {
           case ((rows, startCellAddress, endCellAddress), existingData) =>
             val fileName = File.createTempFile("spark_excel_test_", ".xlsx").getAbsolutePath
-            withFileOutputStream(fileName)(existingData.convertAsXlsx.write)
-            val original = spark.createDataset(rows).toDF
+            withFileOutputStream(fileName)(existingData.convertAsXlsx().write)
+            val original = spark.createDataset(rows).toDF()
             val inferred =
               writeThenRead(
                 original,
@@ -290,8 +291,8 @@ class IntegrationSuite
                   displayName = tableName
                 )
               )
-              val original = spark.createDataset(rows).toDF
-              withFileOutputStream(fileName)(existingData.convertAsXlsx.write)
+              val original = spark.createDataset(rows).toDF()
+              withFileOutputStream(fileName)(existingData.convertAsXlsx().write)
               val inferred =
                 writeThenRead(
                   original,
@@ -343,6 +344,7 @@ class IntegrationSuite
       }
     }
     differencesInNonOverwrittenData shouldBe empty
+    ()
   }
   runTests(maxRowsInMemory = None)
   runTests(maxRowsInMemory = None, maxByteArraySize = Some(100000000))

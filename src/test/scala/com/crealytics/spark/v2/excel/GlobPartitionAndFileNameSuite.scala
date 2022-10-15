@@ -89,14 +89,14 @@ class GlobPartitionAndFileNameSuite extends AnyFunSuite with DataFrameSuiteBase 
 
   test("read multiple files with input_file_name") {
     val df = readFromResources(spark, "ca_dataset/2019/Quarter=4/*.xlsx", sharedOptions)
-      .withColumn("file_name", input_file_name)
+      .withColumn("file_name", input_file_name())
     assert(df.schema == expectedWithFilenameSchema)
 
     /* And validate list of filename */
     val names = df
       .select("file_name")
-      .distinct
-      .collect
+      .distinct()
+      .collect()
       .map(r => r.getString(0))
       .map(p => p.split("[\\/]").last) // this works on Windows too
       .toSet
@@ -108,7 +108,7 @@ class GlobPartitionAndFileNameSuite extends AnyFunSuite with DataFrameSuiteBase 
     assert(df.schema == expectedWithPartitionSchema)
 
     /* And validate list of Quarters */
-    val quarters = df.select("Quarter").distinct.collect.map(r => r.getInt(0)).toSet
+    val quarters = df.select("Quarter").distinct().collect().map(r => r.getInt(0)).toSet
     assert(quarters == Set[Int](1, 2, 3, 4))
   }
 

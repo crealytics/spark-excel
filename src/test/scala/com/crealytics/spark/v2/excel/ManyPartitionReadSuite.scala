@@ -37,8 +37,8 @@ class ManyPartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with Lo
     val orderedSchemaColumns = expectedDf.schema.fields.map(f => f.name).sorted
 
     assertDataFrameNoOrderEquals(
-      expectedDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*),
-      actualDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*)
+      expectedDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail.toIndexedSeq: _*),
+      actualDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail.toIndexedSeq: _*)
     )
 
   }
@@ -69,7 +69,7 @@ class ManyPartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with Lo
     dfFinal
       .union(dfFinal)
       .withColumn("col1", col("col1").cast(IntegerType))
-      .select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*)
+      .select(orderedSchemaColumns.head, orderedSchemaColumns.tail.toIndexedSeq: _*)
 
   }
 

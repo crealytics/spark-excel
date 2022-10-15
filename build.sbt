@@ -1,6 +1,6 @@
 name := "spark-excel"
 
-val scala213 = "2.13.8"
+val scala213 = "2.13.10"
 val scala212 = "2.12.17"
 val spark24 = List("2.4.1", "2.4.7", "2.4.8")
 val spark30 = List("3.0.1", "3.0.3")
@@ -15,6 +15,7 @@ inThisBuild(
     tlBaseVersion := "0.18",
     crossScalaVersions := Seq(scala212, scala213),
     scalaVersion := crossScalaVersions.value.head,
+    scalacOptions += "-Wconf:origin=scala.collection.compat.*:s",
     githubWorkflowBuildMatrixFailFast := Some(false),
     githubWorkflowBuildMatrixAdditions := Map("spark" -> (spark24 ++ spark30 ++ spark31 ++ spark32)),
     githubWorkflowBuildMatrixExclusions := (spark24 ++ spark30 ++ spark31 ++ spark32).map(spark =>

@@ -44,8 +44,8 @@ class DataFrameWriterApiComplianceSuite extends AnyWordSpec with DataFrameSuiteB
     val orderedSchemaColumns = expectedDf.schema.fields.map(f => f.name).sorted
 
     assertDataFrameNoOrderEquals(
-      expectedDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*),
-      actualDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*)
+      expectedDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail.toIndexedSeq: _*),
+      actualDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail.toIndexedSeq: _*)
     )
 
   }
@@ -125,7 +125,7 @@ class DataFrameWriterApiComplianceSuite extends AnyWordSpec with DataFrameSuiteB
           .save()
 
         val orderedSchemaColumns = dfCsv.schema.fields.map(f => f.name).sorted
-        val expectedDf = dfCsv.union(dfCsv).select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*)
+        val expectedDf = dfCsv.union(dfCsv).select(orderedSchemaColumns.head, orderedSchemaColumns.tail.toIndexedSeq: _*)
 
         assertWrittenExcelData(expectedDf, targetDir)
       }
