@@ -16,7 +16,7 @@
 
 package com.crealytics.spark.excel
 
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
+import com.crealytics.spark.DataFrameSuiteBase
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
