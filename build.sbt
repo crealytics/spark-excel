@@ -1,6 +1,6 @@
 name := "spark-excel"
 
-val scala213 = "2.13.8"
+val scala213 = "2.13.10"
 val scala212 = "2.12.17"
 val spark24 = List("2.4.1", "2.4.7", "2.4.8")
 val spark30 = List("3.0.1", "3.0.3")
@@ -15,9 +15,10 @@ inThisBuild(
     tlBaseVersion := "0.18",
     crossScalaVersions := Seq(scala212, scala213),
     scalaVersion := crossScalaVersions.value.head,
+    scalacOptions += "-Wconf:origin=scala.collection.compat.*:s",
     githubWorkflowBuildMatrixFailFast := Some(false),
     githubWorkflowBuildMatrixAdditions := Map("spark" -> (spark24 ++ spark30 ++ spark31 ++ spark32)),
-    githubWorkflowBuildMatrixExclusions := (spark24 ++ spark30 ++ spark31 ++ spark32).map(spark =>
+    githubWorkflowBuildMatrixExclusions := (spark24 ++ spark30 ++ spark31).map(spark =>
       MatrixExclude(Map("spark" -> spark, "scala" -> scala213))
     ),
     githubWorkflowBuildSbtStepPreamble := Seq("-Dspark.testVersion=${{ matrix.spark }}", "++${{ matrix.scala }}"),
@@ -58,7 +59,7 @@ shadedDeps ++= Seq(
   "org.apache.xmlbeans" % "xmlbeans" % "5.1.1",
   "com.norbitltd" %% "spoiwo" % "2.2.1",
   "com.github.pjfanning" % "excel-streaming-reader" % "4.0.2",
-  "com.github.pjfanning" % "poi-shared-strings" % "2.5.3",
+  "com.github.pjfanning" % "poi-shared-strings" % "2.5.4",
   "commons-io" % "commons-io" % "2.11.0",
   "org.apache.commons" % "commons-compress" % "1.21",
   "org.apache.logging.log4j" % "log4j-api" % "2.19.0",
@@ -86,10 +87,9 @@ libraryDependencies ++= Seq(
   "org.scalatestplus" %% "scalacheck-1-15" % "3.2.11.0" % Test,
   "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.15" % "1.3.0" % Test,
-  //  "com.holdenkarau" %% "spark-testing-base" % s"${testSparkVersion.value}_0.7.4" % Test,
+  "com.github.mrpowers" %% "spark-fast-tests" % "1.3.0" % Test,
   "org.scalamock" %% "scalamock" % "5.2.0" % Test
-) ++ (if (scalaVersion.value.startsWith("2.12")) Seq("com.github.nightscape" %% "spark-testing-base" % "9496d55" % Test)
-      else Seq())
+)
 
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {

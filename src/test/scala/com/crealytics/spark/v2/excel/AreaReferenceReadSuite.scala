@@ -16,9 +16,8 @@
 
 package com.crealytics.spark.v2.excel
 
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
+import com.crealytics.spark.DataFrameSuiteBase
 import org.apache.spark.sql.Row
-import org.apache.spark.sql._
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -73,7 +72,7 @@ class AreaReferenceReadSuite extends AnyFunSuite with DataFrameSuiteBase with Ex
       options = Map("dataAddress" -> "'Coefficient Table'!A6", "ignoreAfterHeader" -> 2, "inferSchema" -> true)
     ).limit(1)
     val expected = spark.createDataFrame(expectedData_01, expectedSchema_01)
-    assertDataFrameApproximateEquals(expected, df, 0.1e-2)
+    assertDataFrameApproximateEquals(expected, df, 0.1e-1)
   }
 
 }

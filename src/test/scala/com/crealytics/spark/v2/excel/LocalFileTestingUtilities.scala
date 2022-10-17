@@ -56,6 +56,7 @@ trait LocalFileTestingUtilities {
       deleteDirectoryRecursively(file)
     }
     folderToDelete.delete
+    ()
   }
 
   /** fixture that creates a temporary folder and deletes it after test completion */

@@ -16,7 +16,7 @@
 
 package com.crealytics.spark.v2.excel
 
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
+import com.crealytics.spark.DataFrameSuiteBase
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.IntegerType
@@ -37,8 +37,8 @@ class ManyPartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with Lo
     val orderedSchemaColumns = expectedDf.schema.fields.map(f => f.name).sorted
 
     assertDataFrameNoOrderEquals(
-      expectedDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*),
-      actualDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*)
+      expectedDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail.toIndexedSeq: _*),
+      actualDf.select(orderedSchemaColumns.head, orderedSchemaColumns.tail.toIndexedSeq: _*)
     )
 
   }
@@ -69,7 +69,7 @@ class ManyPartitionReadSuite extends AnyWordSpec with DataFrameSuiteBase with Lo
     dfFinal
       .union(dfFinal)
       .withColumn("col1", col("col1").cast(IntegerType))
-      .select(orderedSchemaColumns.head, orderedSchemaColumns.tail: _*)
+      .select(orderedSchemaColumns.head, orderedSchemaColumns.tail.toIndexedSeq: _*)
 
   }
 

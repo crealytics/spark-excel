@@ -70,5 +70,6 @@ trait ExcelTestingUtilities {
   def deleteDirectory(path: String): Unit = {
     val directory = new Directory(new File(path))
     directory.deleteRecursively()
+    ()
   }
 }
