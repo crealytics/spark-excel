@@ -48,11 +48,9 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
   val sparkDeps = Agg(
     ivy"org.apache.spark::spark-core:$sparkVersion",
     ivy"org.apache.spark::spark-sql:$sparkVersion",
-    ivy"org.apache.spark::spark-hive:$sparkVersion",
+    ivy"org.apache.spark::spark-hive:$sparkVersion"
   )
-  override def compileIvyDeps = sparkDeps ++ Agg(
-    ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax")
-  )
+  override def compileIvyDeps = sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
   val poiVersion = "5.2.3"
   override def ivyDeps = Agg(
     ivy"org.apache.poi:poi:$poiVersion",
@@ -83,7 +81,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     def repositoriesTask = T.task { super.repositoriesTask() ++ Seq(MavenRepository("https://jitpack.io")) }
     def ivyDeps = sparkDeps ++ Agg(
       ivy"org.typelevel::cats-core:2.8.0",
-      ivy"org.scalatest::scalatest:3.2.13",
+      ivy"org.scalatest::scalatest:3.2.14",
       ivy"org.scalatestplus::scalacheck-1-15:3.2.11.0",
       ivy"org.scalacheck::scalacheck:1.17.0",
       ivy"com.github.alexarchambault::scalacheck-shapeless_1.15:1.3.0",
@@ -92,7 +90,6 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     )
   }
 }
-
 
 val scala213 = "2.13.10"
 val scala212 = "2.12.17"
