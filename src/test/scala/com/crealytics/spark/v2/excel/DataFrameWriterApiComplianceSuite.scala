@@ -125,7 +125,8 @@ class DataFrameWriterApiComplianceSuite extends AnyWordSpec with DataFrameSuiteB
           .save()
 
         val orderedSchemaColumns = dfCsv.schema.fields.map(f => f.name).sorted
-        val expectedDf = dfCsv.union(dfCsv).select(orderedSchemaColumns.head, orderedSchemaColumns.tail.toIndexedSeq: _*)
+        val expectedDf =
+          dfCsv.union(dfCsv).select(orderedSchemaColumns.head, orderedSchemaColumns.tail.toIndexedSeq: _*)
 
         assertWrittenExcelData(expectedDf, targetDir)
       }
