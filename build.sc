@@ -48,9 +48,11 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
   val sparkDeps = Agg(
     ivy"org.apache.spark::spark-core:$sparkVersion",
     ivy"org.apache.spark::spark-sql:$sparkVersion",
-    ivy"org.apache.spark::spark-hive:$sparkVersion"
+    ivy"org.apache.spark::spark-hive:$sparkVersion",
   )
-  override def compileIvyDeps = sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
+  override def compileIvyDeps = sparkDeps ++ Agg(
+    ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax")
+  )
   val poiVersion = "5.2.3"
   override def ivyDeps = Agg(
     ivy"org.apache.poi:poi:$poiVersion",
@@ -59,7 +61,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     ivy"org.apache.xmlbeans:xmlbeans:5.1.1",
     ivy"com.norbitltd::spoiwo:2.2.1",
     ivy"com.github.pjfanning:excel-streaming-reader:4.0.2",
-    ivy"com.github.pjfanning:poi-shared-strings:2.5.5",
+    ivy"com.github.pjfanning:poi-shared-strings:2.5.4",
     ivy"commons-io:commons-io:2.11.0",
     ivy"org.apache.commons:commons-compress:1.21",
     ivy"org.apache.logging.log4j:log4j-api:2.19.0",
@@ -90,6 +92,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     )
   }
 }
+
 
 val scala213 = "2.13.10"
 val scala212 = "2.12.17"
