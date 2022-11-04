@@ -58,7 +58,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     ivy"org.apache.poi:poi-ooxml-lite:$poiVersion",
     ivy"org.apache.xmlbeans:xmlbeans:5.1.1",
     ivy"com.norbitltd::spoiwo:2.2.1",
-    ivy"com.github.pjfanning:excel-streaming-reader:4.0.2",
+    ivy"com.github.pjfanning:excel-streaming-reader:4.0.4",
     ivy"com.github.pjfanning:poi-shared-strings:2.5.4",
     ivy"commons-io:commons-io:2.11.0",
     ivy"org.apache.commons:commons-compress:1.21",
