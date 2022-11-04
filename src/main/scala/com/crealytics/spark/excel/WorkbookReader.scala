@@ -54,7 +54,7 @@ object WorkbookReader {
 
   WorkbookFactory.addProvider(new HSSFWorkbookFactory)
   WorkbookFactory.addProvider(new XSSFWorkbookFactory)
-
+  
   def apply(parameters: java.util.HashMap[String, String], hadoopConfiguration: Configuration): WorkbookReader = {
     apply(parameters.asScala.toMap, hadoopConfiguration)
   }
