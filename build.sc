@@ -59,7 +59,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     ivy"org.apache.xmlbeans:xmlbeans:5.1.1",
     ivy"com.norbitltd::spoiwo:2.2.1",
     ivy"com.github.pjfanning:excel-streaming-reader:4.0.2",
-    ivy"com.github.pjfanning:poi-shared-strings:2.5.4",
+    ivy"com.github.pjfanning:poi-shared-strings:2.5.5",
     ivy"commons-io:commons-io:2.11.0",
     ivy"org.apache.commons:commons-compress:1.22",
     ivy"org.apache.logging.log4j:log4j-api:2.19.0",
@@ -81,7 +81,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     def repositoriesTask = T.task { super.repositoriesTask() ++ Seq(MavenRepository("https://jitpack.io")) }
     def ivyDeps = sparkDeps ++ Agg(
       ivy"org.typelevel::cats-core:2.8.0",
-      ivy"org.scalatest::scalatest:3.2.13",
+      ivy"org.scalatest::scalatest:3.2.14",
       ivy"org.scalatestplus::scalacheck-1-15:3.2.11.0",
       ivy"org.scalacheck::scalacheck:1.17.0",
       ivy"com.github.alexarchambault::scalacheck-shapeless_1.15:1.3.0",
