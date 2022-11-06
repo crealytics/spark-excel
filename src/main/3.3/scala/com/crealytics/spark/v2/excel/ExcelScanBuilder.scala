@@ -18,10 +18,9 @@ package com.crealytics.spark.v2.excel
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.connector.read.Scan
-import org.apache.spark.sql.connector.read.SupportsPushDownFilters
 import org.apache.spark.sql.execution.datasources.PartitioningAwareFileIndex
 import org.apache.spark.sql.execution.datasources.v2.FileScanBuilder
-import org.apache.spark.sql.sources.Filter
+import org.apache.spark.sql.internal.connector.SupportsPushDownCatalystFilters
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
@@ -32,18 +31,10 @@ case class ExcelScanBuilder(
   dataSchema: StructType,
   options: CaseInsensitiveStringMap
 ) extends FileScanBuilder(sparkSession, fileIndex, dataSchema)
-    with SupportsPushDownFilters {
+    with SupportsPushDownCatalystFilters {
 
   override def build(): Scan = {
-    ExcelScan(sparkSession, fileIndex, dataSchema, readDataSchema(), readPartitionSchema(), options, pushedFilters())
+    ExcelScan(sparkSession, fileIndex, dataSchema, readDataSchema(), readPartitionSchema(), options, pushedDataFilters)
   }
 
-  private var _pushedFilters: Array[Filter] = Array.empty
-
-  override def pushFilters(filters: Array[Filter]): Array[Filter] = {
-    _pushedFilters = ExcelFilters.pushedFilters(filters, dataSchema)
-    filters
-  }
-
-  override def pushedFilters(): Array[Filter] = _pushedFilters
 }
