@@ -36,7 +36,7 @@ inThisBuild(
   )
 )
 
-lazy val sparkVersion = "3.3.0"
+lazy val sparkVersion = "3.3.1"
 val poiVersion = "5.2.3"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
@@ -89,7 +89,7 @@ libraryDependencies ++= Seq(
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.15" % "1.3.0" % Test,
   "com.github.mrpowers" %% "spark-fast-tests" % "1.3.0" % Test,
   "org.scalamock" %% "scalamock" % "5.2.0" % Test,
-  "org.apache.logging.log4j" % "log4j-core  " % "2.19.0" % Test
+  "org.apache.logging.log4j" % "log4j-core" % "2.19.0" % Test
 )
 
 // Custom source layout for Spark Data Source API 2

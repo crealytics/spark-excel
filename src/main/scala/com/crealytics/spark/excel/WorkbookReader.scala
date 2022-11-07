@@ -27,8 +27,6 @@ import org.apache.poi.openxml4j.util.ZipInputStreamZipEntrySource
 import org.apache.poi.util.IOUtils
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory
 
-import scala.jdk.CollectionConverters._
-
 trait WorkbookReader {
   protected def openWorkbook(): Workbook
   def withWorkbook[T](f: Workbook => T): T = {
@@ -55,10 +53,6 @@ object WorkbookReader {
 
   WorkbookFactory.addProvider(new HSSFWorkbookFactory)
   WorkbookFactory.addProvider(new XSSFWorkbookFactory)
-
-  def apply(parameters: java.util.HashMap[String, String], hadoopConfiguration: Configuration): WorkbookReader = {
-    apply(parameters.asScala.toMap, hadoopConfiguration)
-  }
 
   def apply(parameters: Map[String, String], hadoopConfiguration: Configuration): WorkbookReader = {
     def readFromHadoop(location: String) = {
