@@ -48,9 +48,6 @@ version := testSparkVersion.value + "_" + version.value
 
 resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
-// libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
-//  .map(_.excludeAll(ExclusionRule(organization = "stax")))
-
 enablePlugins(ThinFatJar)
 shadedDeps ++= Seq(
   "org.apache.poi" % "poi" % poiVersion,
@@ -88,9 +85,17 @@ libraryDependencies ++= Seq(
   "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.15" % "1.3.0" % Test,
   "com.github.mrpowers" %% "spark-fast-tests" % "1.3.0" % Test,
-  "org.scalamock" %% "scalamock" % "5.2.0" % Test,
-  "org.apache.logging.log4j" % "log4j-core" % "2.19.0" % Test
+  "org.scalamock" %% "scalamock" % "5.2.0" % Test
 )
+
+// spark >= 3.3 uses log4j 2.x while previous version relied on log4j 1.x
+libraryDependencies ++= {
+  if (testSparkVersion.value >= "3.3.0") {
+    Seq("org.apache.logging.log4j" % "log4j-core" % "2.19.0" % Test)
+  } else {
+    Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
+  }
+}
 
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {
