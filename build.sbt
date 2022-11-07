@@ -36,7 +36,7 @@ inThisBuild(
   )
 )
 
-lazy val sparkVersion = "3.2.2"
+lazy val sparkVersion = "3.3.0"
 val poiVersion = "5.2.3"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
@@ -48,8 +48,8 @@ version := testSparkVersion.value + "_" + version.value
 
 resolvers ++= Seq("jitpack" at "https://jitpack.io")
 
-libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
-  .map(_.excludeAll(ExclusionRule(organization = "stax")))
+// libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
+//  .map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 enablePlugins(ThinFatJar)
 shadedDeps ++= Seq(
@@ -62,7 +62,7 @@ shadedDeps ++= Seq(
   "com.github.pjfanning" % "poi-shared-strings" % "2.5.4",
   "commons-io" % "commons-io" % "2.11.0",
   "org.apache.commons" % "commons-compress" % "1.21",
-  "org.apache.logging.log4j" % "log4j-api" % "2.19.0",
+  "org.apache.logging.log4j" % "log4j-api" % "2.18.0",
   "com.zaxxer" % "SparseBitSet" % "1.2",
   "org.apache.commons" % "commons-collections4" % "4.4",
   "com.github.virtuald" % "curvesapi" % "1.07",
@@ -88,7 +88,8 @@ libraryDependencies ++= Seq(
   "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
   "com.github.alexarchambault" %% "scalacheck-shapeless_1.15" % "1.3.0" % Test,
   "com.github.mrpowers" %% "spark-fast-tests" % "1.3.0" % Test,
-  "org.scalamock" %% "scalamock" % "5.2.0" % Test
+  "org.scalamock" %% "scalamock" % "5.2.0" % Test,
+  "org.apache.logging.log4j" % "log4j-core  " % "2.18.0" % Test
 )
 
 // Custom source layout for Spark Data Source API 2
