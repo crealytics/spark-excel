@@ -74,36 +74,17 @@ case class ExcelTable(
       sample = if (sample < 1) 1 else sample
       inputPaths.take(sample).map(_.getPath.toUri)
     }
-    var rows = excelHelper.getRows(conf, paths.head)
-
-    if (rows.isEmpty) { /* If the first file is empty, not checking further */
-      StructType(Seq.empty)
-    } else {
-      /* Prepare field names */
-      val colNames =
-        if (options.header) { /* Get column name from the first row */
-          val r = excelHelper.getColumnNames(rows.next())
-          rows = rows.drop(options.ignoreAfterHeader)
-          r
-        } else { /* Peek first row, then return back */
-          val headerRow = rows.next()
-          val r = excelHelper.getColumnNames(headerRow)
-          rows = Iterator(headerRow) ++ rows
-          r
-        }
-
-      /* Other files also be utilized (lazily) for field types, reuse field name
-         from the first file */
-      val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
-      paths.tail.foreach(path => {
-        rows ++= excelHelper.getRows(conf, path).drop(numberOfRowToIgnore)
-      })
-
-      /* Limit numer of rows to be used for schema infering */
-      rows = if (options.excerptSize.isDefined) rows.take(options.excerptSize.get) else rows
-
-      /* Ready to infer schema */
-      ExcelInferSchema(options).infer(rows, colNames)
+    val (sheetData, colNames) = excelHelper.parseSheetData(conf, paths)
+    try {
+      if (sheetData.rowIterator.isEmpty) {
+        /* If the first file is empty, not checking further */
+        StructType(Seq.empty)
+      } else {
+        /* Ready to infer schema */
+        ExcelInferSchema(options).infer(sheetData.rowIterator, colNames)
+      }
+    } finally {
+      sheetData.close()
     }
   }
 }

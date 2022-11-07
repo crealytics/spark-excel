@@ -28,6 +28,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.util.SerializableConfiguration
 
 import java.net.URI
+import scala.util.control.NonFatal
 
 /** A factory used to create Excel readers.
   *
@@ -64,8 +65,8 @@ case class ExcelPartitionReaderFactory(
     val headerChecker =
       new ExcelHeaderChecker(actualReadDataSchema, parsedOptions, source = s"Excel file: ${file.filePath}")
     val iter = readFile(conf, file, parser, headerChecker, readDataSchema)
-    val fileReader = new PartitionReaderFromIterator[InternalRow](iter)
-    new PartitionReaderWithPartitionValues(fileReader, readDataSchema, partitionSchema, file.partitionValues)
+    val partitionReader = new SparkExcelPartitionReaderFromIterator(iter)
+    new PartitionReaderWithPartitionValues(partitionReader, readDataSchema, partitionSchema, file.partitionValues)
   }
 
   private def readFile(
@@ -74,10 +75,28 @@ case class ExcelPartitionReaderFactory(
     parser: ExcelParser,
     headerChecker: ExcelHeaderChecker,
     requiredSchema: StructType
-  ): Iterator[InternalRow] = {
+  ): SheetData[InternalRow] = {
     val excelHelper = ExcelHelper(parsedOptions)
-    val rows = excelHelper.getRows(conf, URI.create(file.filePath))
-    ExcelParser.parseIterator(rows, parser, headerChecker, requiredSchema)
+    val sheetData = excelHelper.getSheetData(conf, URI.create(file.filePath))
+    try {
+      SheetData(
+        ExcelParser.parseIterator(sheetData.rowIterator, parser, headerChecker, requiredSchema),
+        sheetData.resourcesToClose
+      )
+    } catch {
+      case NonFatal(t) => {
+        sheetData.close()
+        throw t
+      }
+    }
   }
 
+}
+
+private class SparkExcelPartitionReaderFromIterator(sheetData: SheetData[InternalRow])
+    extends PartitionReaderFromIterator[InternalRow](sheetData.rowIterator) {
+  override def close(): Unit = {
+    super.close()
+    sheetData.close()
+  }
 }

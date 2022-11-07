@@ -256,36 +256,16 @@ class ExcelDataSourceReader(
       sample = if (sample < 1) 1 else sample
       inputPaths.take(sample).map(_.getPath.toUri)
     }
-    var rows = excelHelper.getRows(conf, paths.head)
-
-    if (rows.isEmpty) { /* If the first file is empty, not checking further */
-      StructType(Seq.empty)
-    } else {
-      /* Prepare field names */
-      val colNames =
-        if (options.header) { /* Get column name from the first row */
-          val r = excelHelper.getColumnNames(rows.next)
-          rows = rows.drop(options.ignoreAfterHeader)
-          r
-        } else { /* Peek first row, then return back */
-          val headerRow = rows.next
-          val r = excelHelper.getColumnNames(headerRow)
-          rows = Iterator(headerRow) ++ rows
-          r
-        }
-
-      /* Other files also be utilized (lazily) for field types, reuse field name
-         from the first file */
-      val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
-      rows = paths.tail.foldLeft(rows) { case (rs, path) =>
-        rs ++ excelHelper.getRows(conf, path).drop(numberOfRowToIgnore)
+    val (sheetData, colNames) = excelHelper.parseSheetData(conf, paths)
+    try {
+      if (sheetData.rowIterator.isEmpty) {
+        StructType(Seq.empty)
+      } else {
+        /* Ready to infer schema */
+        ExcelInferSchema(options).infer(sheetData.rowIterator, colNames)
       }
-
-      /* Limit numer of rows to be used for schema infering */
-      rows = options.excerptSize.foldLeft(rows)(_ take _)
-
-      /* Ready to infer schema */
-      ExcelInferSchema(options).infer(rows, colNames)
+    } finally {
+      sheetData.close()
     }
   }
 
@@ -327,9 +307,9 @@ class ExcelInputPartitionReader(
   private val headerChecker =
     new ExcelHeaderChecker(dataSchema, options, source = s"Excel file: ${path}")
   private val excelHelper = ExcelHelper(options)
-  private val rows = excelHelper.getRows(new Configuration(), path)
+  private val sheetData = excelHelper.getSheetData(new Configuration(), path)
 
-  val reader = ExcelParser.parseIterator(rows, parser, headerChecker, dataSchema)
+  private val reader = ExcelParser.parseIterator(sheetData.rowIterator, parser, headerChecker, dataSchema)
 
   private val fullSchema = requiredSchema
     .map(f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()) ++
@@ -349,7 +329,9 @@ class ExcelInputPartitionReader(
 
   override def next: Boolean = combinedReader.hasNext
   override def get: InternalRow = combinedReader.next
-  override def close(): Unit = {}
+  override def close(): Unit = {
+    sheetData.close()
+  }
 }
 
 class ExcelDataSourceWriter(

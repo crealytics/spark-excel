@@ -32,6 +32,7 @@ import java.net.URI
 import java.text.{FieldPosition, Format, ParsePosition}
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.util.Try
+import scala.util.control.NonFatal
 
 /** A format that formats a double as a plain string without rounding and scientific notation. All other operations are
   * unsupported.
@@ -130,13 +131,76 @@ class ExcelHelper private (options: ExcelOptions) {
     * @param uri
     *   to the file, this can be on any support file system back end
     * @return
-    *   cell-row iterator
+    *   Sheet Data with row iterator (must be closed after use)
     */
-  def getRows(conf: Configuration, uri: URI): Iterator[Vector[Cell]] = {
+  def getSheetData(conf: Configuration, uri: URI): SheetData[Vector[Cell]] = {
     val workbook = getWorkbook(conf, uri)
     val excelReader = DataLocator(options)
-    try { excelReader.readFrom(workbook) }
-    finally workbook.close()
+    try {
+      val rowIter = excelReader.readFrom(workbook)
+      SheetData(rowIter, Seq(workbook))
+    } catch {
+      case NonFatal(t) => {
+        workbook.close()
+        throw t
+      }
+    }
+  }
+
+  /** Get cell-row iterator for excel file in given URIs
+    *
+    * @param conf
+    *   Hadoop configuration
+    * @param uris
+    *   a seq of files, this can be on any support file system back end
+    * @return
+    *   A tuple of Sheet Data with row iterator (must be closed after use) and Vector of column names
+    */
+  def parseSheetData(conf: Configuration, uris: Seq[URI]): (SheetData[Vector[Cell]], Vector[String]) = {
+    var sheetData = getSheetData(conf, uris.head)
+
+    val colNames = if (sheetData.rowIterator.isEmpty) {
+      Vector.empty
+    } else {
+      /* If the first file is empty, not checking further */
+      try {
+        /* Prepare field names */
+        val colNames =
+          if (options.header) {
+            /* Get column name from the first row */
+            val r = getColumnNames(sheetData.rowIterator.next)
+            sheetData = sheetData.modifyIterator(_.drop(options.ignoreAfterHeader))
+            r
+          } else {
+            /* Peek first row, then return back */
+            val headerRow = sheetData.rowIterator.next
+            val r = getColumnNames(headerRow)
+            sheetData = sheetData.modifyIterator(iter => Iterator(headerRow) ++ iter)
+            r
+          }
+
+        /* Other files also be utilized (lazily) for field types, reuse field name
+           from the first file */
+        val numberOfRowToIgnore = if (options.header) (options.ignoreAfterHeader + 1) else 0
+        sheetData = uris.tail.foldLeft(sheetData) { case (rs, path) =>
+          val newRows = getSheetData(conf, path).modifyIterator(_.drop(numberOfRowToIgnore))
+          rs.append(newRows)
+        }
+
+        /* Limit numer of rows to be used for schema infering */
+        options.excerptSize.foreach { excerptSize =>
+          sheetData = sheetData.modifyIterator(_.take(excerptSize))
+        }
+
+        colNames
+      } catch {
+        case NonFatal(t) => {
+          sheetData.close()
+          throw t
+        }
+      }
+    }
+    (sheetData, colNames)
   }
 
   /** Get column name by list of cells (row)
