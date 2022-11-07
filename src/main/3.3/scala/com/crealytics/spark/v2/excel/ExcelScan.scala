@@ -12,7 +12,7 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
 import org.apache.spark.util.SerializableConfiguration
 
 import scala.collection.compat.immutable.ArraySeq
-import scala.jdk.CollectionConverters.MapHasAsScala
+import scala.jdk.CollectionConverters._
 
 case class ExcelScan(
   sparkSession: SparkSession,

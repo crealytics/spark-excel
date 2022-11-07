@@ -27,7 +27,7 @@ import org.apache.poi.openxml4j.util.ZipInputStreamZipEntrySource
 import org.apache.poi.util.IOUtils
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory
 
-import scala.jdk.CollectionConverters.MapHasAsScala
+import scala.jdk.CollectionConverters._
 
 trait WorkbookReader {
   protected def openWorkbook(): Workbook
