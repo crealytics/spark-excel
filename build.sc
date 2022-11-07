@@ -88,7 +88,8 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
       ivy"org.scalacheck::scalacheck:1.17.0",
       ivy"com.github.alexarchambault::scalacheck-shapeless_1.15:1.3.0",
       ivy"com.github.mrpowers::spark-fast-tests:1.3.0",
-      ivy"org.scalamock::scalamock:5.2.0"
+      ivy"org.scalamock::scalamock:5.2.0",
+      ivy"org.apache.logging.log4j:log4j-core:2.19.0"
     )
   }
 }
