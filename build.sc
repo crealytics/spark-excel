@@ -53,10 +53,10 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     ivy"org.apache.spark::spark-hive:$sparkVersion"
   )
   override def compileIvyDeps = if (sparkVersion >= "3.3.0") {
-    sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
+    sparkDeps ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.19.0")
   }
   else {
-    sparkDeps ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.19.0")
+    sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
   }
 
   val poiVersion = "5.2.3"
