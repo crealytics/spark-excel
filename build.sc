@@ -11,13 +11,13 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
 
   // Custom source layout for Spark Data Source API 2
   val sparkVersionSpecificSources = if (sparkVersion >= "3.3.0") {
-    Seq("scala", "3.x/scala", "3.1_3.2/scala", "3.3/scala", "3.2/scala")
+    Seq("scala", "3.3/scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala")
     } else if (sparkVersion >= "3.2.0") {
-    Seq("scala", "3.x/scala", "3.1_3.2/scala", "3.2/scala", "3.0_3.1_3.2/scala")
+    Seq("scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala")
   } else if (sparkVersion >= "3.1.0") {
-    Seq("scala", "3.x/scala", "3.0_3.1/scala", "3.1/scala", "3.1_3.2/scala", "3.0_3.1_3.2/scala")
+    Seq("scala", "3.1/scala", "3.0_3.1/scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala", "3.1_and_up/scala")
   } else if (sparkVersion >= "3.0.0") {
-    Seq("scala", "3.x/scala", "3.0/scala", "3.0_3.1/scala", "3.0_3.1_3.2/scala")
+    Seq("scala", "3.0/scala", "3.0_3.1/scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala")
   } else if (sparkVersion >= "2.4.0") {
     Seq("scala", "2.4/scala")
   } else {

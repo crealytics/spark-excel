@@ -36,7 +36,7 @@ inThisBuild(
   )
 )
 
-lazy val sparkVersion = "3.1.3"
+lazy val sparkVersion = "3.3.1"
 val poiVersion = "5.2.3"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
@@ -104,7 +104,8 @@ Compile / unmanagedSourceDirectories := {
       (Compile / sourceDirectory)(_ / "scala"),
       (Compile / sourceDirectory)(_ / "3.3/scala"),
       (Compile / sourceDirectory)(_ / "3.0_and_up/scala"),
-      (Compile / sourceDirectory)(_ / "3.1_and_up/scala")
+      (Compile / sourceDirectory)(_ / "3.1_and_up/scala"),
+      (Compile / sourceDirectory)(_ / "3.2_and_up/scala")
     ).join.value
   } else if (testSparkVersion.value >= "3.2.0") {
     Seq(
