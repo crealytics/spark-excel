@@ -4,18 +4,8 @@ import com.github.mrpowers.spark.fast.tests.DataFrameComparer
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import java.sql.Timestamp
-import java.util.Locale
 
 trait DataFrameSuiteBase extends DataFrameComparer {
-
-  /* some tests expect a dot as decimal separator and will fail when executed
-    on e.g. a german locale, where the decimal separator is a comma. This happens
-    when unit tests are executed locally.
-
-    On github runners it is always US, therefore we set it to US to support consistent behavior
-    across different locale.
-   */
-  Locale.setDefault(Locale.US)
 
   lazy val spark: SparkSession = SparkSession
     .builder()

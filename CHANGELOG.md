@@ -2,6 +2,19 @@ Next
 ====
 
 
+## [v0.18.4] - 2022-11-07
+### :sparkles: New Features
+- [`4ceca4f`](https://github.com/crealytics/spark-excel/commit/4ceca4f18434652a9ecaab076ea381ca927588d6) - V2 streaming read *(PR [#653](https://github.com/crealytics/spark-excel/pull/653) by [@pjfanning](https://github.com/pjfanning))*
+
+### :wrench: Chores
+- [`b86ce12`](https://github.com/crealytics/spark-excel/commit/b86ce1267c4831e64766f7172a63d136457a2a42) - Update scalafmt-core from 3.5.9 to 3.6.1 *(PR [#678](https://github.com/crealytics/spark-excel/pull/678) by [@scala-steward](https://github.com/scala-steward))*
+- [`d09d232`](https://github.com/crealytics/spark-excel/commit/d09d23294ecfcb9894a8e3d7c584c011f9c042e8) - Update scalatest from 3.2.13 to 3.2.14 *(PR [#661](https://github.com/crealytics/spark-excel/pull/661) by [@scala-steward](https://github.com/scala-steward))*
+- [`2344853`](https://github.com/crealytics/spark-excel/commit/2344853b1f7e14e29118a66985c546f547dddc0e) - Update poi-shared-strings from 2.5.4 to 2.5.5 *(PR [#659](https://github.com/crealytics/spark-excel/pull/659) by [@scala-steward](https://github.com/scala-steward))*
+- [`1cd676e`](https://github.com/crealytics/spark-excel/commit/1cd676e6a14fb7e6ca0c9d0f7534526e4f7b57ae) - Update sbt-assembly from 1.2.0 to 2.0.0 *(PR [#665](https://github.com/crealytics/spark-excel/pull/665) by [@scala-steward](https://github.com/scala-steward))*
+- [`ed97118`](https://github.com/crealytics/spark-excel/commit/ed97118a1ba7df720c18971d5c2e9635d0a8e0bb) - Update excel-streaming-reader from 4.0.2 to 4.0.4 *(PR [#670](https://github.com/crealytics/spark-excel/pull/670) by [@scala-steward](https://github.com/scala-steward))*
+- [`7c96184`](https://github.com/crealytics/spark-excel/commit/7c96184398cf4e190208a61c187e06353d739f2d) - Update commons-compress from 1.21 to 1.22 *(PR [#676](https://github.com/crealytics/spark-excel/pull/676) by [@scala-steward](https://github.com/scala-steward))*
+
+
 ## [v0.18.0] - 2022-08-29
 ### :wrench: Chores
 - [`64521bb`](https://github.com/crealytics/spark-excel/commit/64521bb6f4a9c763d9ed7d4ff8689dfc7c44bbf8) - Update base version *(commit by [@nightscape](https://github.com/nightscape))*
@@ -154,3 +167,5 @@ Next
 
 
 [v0.18.0]: https://github.com/crealytics/spark-excel/compare/v0.18.0-beta2...v0.18.0
+
+[v0.18.4]: https://github.com/crealytics/spark-excel/compare/v0.18.3-beta1...v0.18.4
