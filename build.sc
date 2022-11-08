@@ -52,7 +52,13 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     ivy"org.apache.spark::spark-sql:$sparkVersion",
     ivy"org.apache.spark::spark-hive:$sparkVersion"
   )
-  override def compileIvyDeps = sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
+  override def compileIvyDeps = if (sparkVersion >= "3.3.0") {
+    sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
+  }
+  else {
+    sparkDeps ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.19.0")
+  }
+
   val poiVersion = "5.2.3"
   override def ivyDeps = Agg(
     ivy"org.apache.poi:poi:$poiVersion",
@@ -88,8 +94,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
       ivy"org.scalacheck::scalacheck:1.17.0",
       ivy"com.github.alexarchambault::scalacheck-shapeless_1.15:1.3.0",
       ivy"com.github.mrpowers::spark-fast-tests:1.3.0",
-      ivy"org.scalamock::scalamock:5.2.0",
-      ivy"org.apache.logging.log4j:log4j-core:2.19.0"
+      ivy"org.scalamock::scalamock:5.2.0"
     )
   }
 }
