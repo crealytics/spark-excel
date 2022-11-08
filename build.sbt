@@ -36,7 +36,7 @@ inThisBuild(
   )
 )
 
-lazy val sparkVersion = "3.3.1"
+lazy val sparkVersion = "3.1.3"
 val poiVersion = "5.2.3"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
@@ -102,35 +102,34 @@ Compile / unmanagedSourceDirectories := {
   if (testSparkVersion.value >= "3.3.0") {
     Seq(
       (Compile / sourceDirectory)(_ / "scala"),
-      (Compile / sourceDirectory)(_ / "3.x/scala"),
       (Compile / sourceDirectory)(_ / "3.3/scala"),
-      (Compile / sourceDirectory)(_ / "3.1_3.2/scala"),
-      (Compile / sourceDirectory)(_ / "3.2/scala")
+      (Compile / sourceDirectory)(_ / "3.0_and_up/scala"),
+      (Compile / sourceDirectory)(_ / "3.1_and_up/scala")
     ).join.value
   } else if (testSparkVersion.value >= "3.2.0") {
     Seq(
       (Compile / sourceDirectory)(_ / "scala"),
-      (Compile / sourceDirectory)(_ / "3.x/scala"),
       (Compile / sourceDirectory)(_ / "3.0_3.1_3.2/scala"),
-      (Compile / sourceDirectory)(_ / "3.1_3.2/scala"),
-      (Compile / sourceDirectory)(_ / "3.2/scala")
+      (Compile / sourceDirectory)(_ / "3.0_and_up/scala"),
+      (Compile / sourceDirectory)(_ / "3.1_and_up/scala"),
+      (Compile / sourceDirectory)(_ / "3.2_and_up/scala")
     ).join.value
   } else if (testSparkVersion.value >= "3.1.0") {
     Seq(
       (Compile / sourceDirectory)(_ / "scala"),
-      (Compile / sourceDirectory)(_ / "3.x/scala"),
+      (Compile / sourceDirectory)(_ / "3.1/scala"),
       (Compile / sourceDirectory)(_ / "3.0_3.1/scala"),
       (Compile / sourceDirectory)(_ / "3.0_3.1_3.2/scala"),
-      (Compile / sourceDirectory)(_ / "3.1/scala"),
-      (Compile / sourceDirectory)(_ / "3.1_3.2/scala")
+      (Compile / sourceDirectory)(_ / "3.0_and_up/scala"),
+      (Compile / sourceDirectory)(_ / "3.1_and_up/scala")
     ).join.value
   } else if (testSparkVersion.value >= "3.0.0") {
     Seq(
       (Compile / sourceDirectory)(_ / "scala"),
-      (Compile / sourceDirectory)(_ / "3.x/scala"),
       (Compile / sourceDirectory)(_ / "3.0/scala"),
+      (Compile / sourceDirectory)(_ / "3.0_3.1/scala"),
       (Compile / sourceDirectory)(_ / "3.0_3.1_3.2/scala"),
-      (Compile / sourceDirectory)(_ / "3.0_3.1/scala")
+      (Compile / sourceDirectory)(_ / "3.0_and_up/scala")
     ).join.value
   } else if (testSparkVersion.value >= "2.4.0") {
     Seq((Compile / sourceDirectory)(_ / "scala"), (Compile / sourceDirectory)(_ / "2.4/scala")).join.value
