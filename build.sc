@@ -50,7 +50,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     ivy"org.apache.spark::spark-sql:$sparkVersion",
     ivy"org.apache.spark::spark-hive:$sparkVersion"
   )
-  override def compileIvyDeps = sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:2.0.3".excludeOrg("stax"))
+  override def compileIvyDeps = sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
   val poiVersion = "5.2.3"
   override def ivyDeps = Agg(
     ivy"org.apache.poi:poi:$poiVersion",
