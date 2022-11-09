@@ -36,7 +36,7 @@ inThisBuild(
   )
 )
 
-lazy val sparkVersion = "3.2.2"
+lazy val sparkVersion = "3.3.1"
 val poiVersion = "5.2.3"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
@@ -47,9 +47,6 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion)
 version := testSparkVersion.value + "_" + version.value
 
 resolvers ++= Seq("jitpack" at "https://jitpack.io")
-
-libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
-  .map(_.excludeAll(ExclusionRule(organization = "stax")))
 
 enablePlugins(ThinFatJar)
 shadedDeps ++= Seq(
@@ -91,29 +88,49 @@ libraryDependencies ++= Seq(
   "org.scalamock" %% "scalamock" % "5.2.0" % Test
 )
 
+// spark >= 3.3 uses log4j 2.x while previous version relied on log4j 1.x
+libraryDependencies ++= {
+  if (testSparkVersion.value >= "3.3.0") {
+    Seq("org.apache.logging.log4j" % "log4j-core" % "2.19.0" % Test)
+  } else {
+    Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
+  }
+}
+
 // Custom source layout for Spark Data Source API 2
 Compile / unmanagedSourceDirectories := {
-  if (testSparkVersion.value >= "3.2.2") {
+  if (testSparkVersion.value >= "3.3.0") {
     Seq(
       (Compile / sourceDirectory)(_ / "scala"),
-      (Compile / sourceDirectory)(_ / "3.x/scala"),
-      (Compile / sourceDirectory)(_ / "3.1_3.2/scala"),
-      (Compile / sourceDirectory)(_ / "3.2/scala")
+      (Compile / sourceDirectory)(_ / "3.3/scala"),
+      (Compile / sourceDirectory)(_ / "3.0_and_up/scala"),
+      (Compile / sourceDirectory)(_ / "3.1_and_up/scala"),
+      (Compile / sourceDirectory)(_ / "3.2_and_up/scala")
+    ).join.value
+  } else if (testSparkVersion.value >= "3.2.0") {
+    Seq(
+      (Compile / sourceDirectory)(_ / "scala"),
+      (Compile / sourceDirectory)(_ / "3.0_3.1_3.2/scala"),
+      (Compile / sourceDirectory)(_ / "3.0_and_up/scala"),
+      (Compile / sourceDirectory)(_ / "3.1_and_up/scala"),
+      (Compile / sourceDirectory)(_ / "3.2_and_up/scala")
     ).join.value
   } else if (testSparkVersion.value >= "3.1.0") {
     Seq(
       (Compile / sourceDirectory)(_ / "scala"),
-      (Compile / sourceDirectory)(_ / "3.x/scala"),
-      (Compile / sourceDirectory)(_ / "3.0_3.1/scala"),
       (Compile / sourceDirectory)(_ / "3.1/scala"),
-      (Compile / sourceDirectory)(_ / "3.1_3.2/scala")
+      (Compile / sourceDirectory)(_ / "3.0_3.1/scala"),
+      (Compile / sourceDirectory)(_ / "3.0_3.1_3.2/scala"),
+      (Compile / sourceDirectory)(_ / "3.0_and_up/scala"),
+      (Compile / sourceDirectory)(_ / "3.1_and_up/scala")
     ).join.value
   } else if (testSparkVersion.value >= "3.0.0") {
     Seq(
       (Compile / sourceDirectory)(_ / "scala"),
-      (Compile / sourceDirectory)(_ / "3.x/scala"),
       (Compile / sourceDirectory)(_ / "3.0/scala"),
-      (Compile / sourceDirectory)(_ / "3.0_3.1/scala")
+      (Compile / sourceDirectory)(_ / "3.0_3.1/scala"),
+      (Compile / sourceDirectory)(_ / "3.0_3.1_3.2/scala"),
+      (Compile / sourceDirectory)(_ / "3.0_and_up/scala")
     ).join.value
   } else if (testSparkVersion.value >= "2.4.0") {
     Seq((Compile / sourceDirectory)(_ / "scala"), (Compile / sourceDirectory)(_ / "2.4/scala")).join.value
