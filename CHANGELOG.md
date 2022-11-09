@@ -2,6 +2,14 @@ Next
 ====
 
 
+## [v0.18.5] - 2022-11-09
+### :sparkles: New Features
+- [`db65e19`](https://github.com/crealytics/spark-excel/commit/db65e192424456577ddd61c9ecf584b2a540135b) - Support Spark 3.3.X *(PR [#679](https://github.com/crealytics/spark-excel/pull/679) by [@christianknoepfle](https://github.com/christianknoepfle))*
+
+### :recycle: Refactors
+- [`79e398e`](https://github.com/crealytics/spark-excel/commit/79e398e6434b59bfd9932c784498d21b1e8c7c7c) - Rename package v2.excel to excel.v2 *(commit by [@nightscape](https://github.com/nightscape))*
+
+
 ## [v0.18.4] - 2022-11-07
 ### :sparkles: New Features
 - [`4ceca4f`](https://github.com/crealytics/spark-excel/commit/4ceca4f18434652a9ecaab076ea381ca927588d6) - V2 streaming read *(PR [#653](https://github.com/crealytics/spark-excel/pull/653) by [@pjfanning](https://github.com/pjfanning))*
@@ -169,3 +177,4 @@ Next
 [v0.18.0]: https://github.com/crealytics/spark-excel/compare/v0.18.0-beta2...v0.18.0
 
 [v0.18.4]: https://github.com/crealytics/spark-excel/compare/v0.18.3-beta1...v0.18.4
+[v0.18.5]: https://github.com/crealytics/spark-excel/compare/v0.18.4...v0.18.5
