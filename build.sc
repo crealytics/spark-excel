@@ -12,7 +12,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
   // Custom source layout for Spark Data Source API 2
   val sparkVersionSpecificSources = if (sparkVersion >= "3.3.0") {
     Seq("scala", "3.3/scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala")
-    } else if (sparkVersion >= "3.2.0") {
+  } else if (sparkVersion >= "3.2.0") {
     Seq("scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala")
   } else if (sparkVersion >= "3.1.0") {
     Seq("scala", "3.1/scala", "3.0_3.1/scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala", "3.1_and_up/scala")
@@ -53,11 +53,10 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     ivy"org.apache.spark::spark-hive:$sparkVersion"
   )
   override def compileIvyDeps = if (sparkVersion < "3.3.0") {
-      sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
-    } else {
-      sparkDeps
-    }
-
+    sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
+  } else {
+    sparkDeps
+  }
 
   val poiVersion = "5.2.3"
   override def ivyDeps = {
@@ -95,7 +94,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     def scalaVersion = outer.scalaVersion()
     def repositoriesTask = T.task { super.repositoriesTask() ++ Seq(MavenRepository("https://jitpack.io")) }
     def ivyDeps = sparkDeps ++ Agg(
-      ivy"org.typelevel::cats-core:2.8.0",
+      ivy"org.typelevel::cats-core:2.9.0",
       ivy"org.scalatest::scalatest:3.2.14",
       ivy"org.scalatestplus::scalacheck-1-15:3.2.11.0",
       ivy"org.scalacheck::scalacheck:1.17.0",
@@ -115,6 +114,8 @@ val spark32 = List("3.2.2")
 val spark33 = List("3.3.1")
 
 val crossMatrix =
-  (spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33).map(spark => (scala212, spark)) ++ (spark32 ++ spark33).map(spark => (scala213, spark))
+  (spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33).map(spark => (scala212, spark)) ++ (spark32 ++ spark33).map(
+    spark => (scala213, spark)
+  )
 
 object `spark-excel` extends Cross[SparkModule](crossMatrix: _*) {}
