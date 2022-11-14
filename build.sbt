@@ -79,7 +79,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "provided",
   "org.apache.spark" %% "spark-hive" % testSparkVersion.value % "provided",
   "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
-  "org.typelevel" %% "cats-core" % "2.8.0" % Test,
+  "org.typelevel" %% "cats-core" % "2.9.0" % Test,
   "org.scalatest" %% "scalatest" % "3.2.14" % Test,
   "org.scalatestplus" %% "scalacheck-1-15" % "3.2.11.0" % Test,
   "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
