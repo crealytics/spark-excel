@@ -76,7 +76,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
       ivy"com.github.virtuald:curvesapi:1.07",
       ivy"commons-codec:commons-codec:1.15",
       ivy"org.apache.commons:commons-math3:3.6.1",
-      ivy"org.scala-lang.modules::scala-collection-compat:2.8.1"
+      ivy"org.scala-lang.modules::scala-collection-compat:2.9.0"
     )
     if (sparkVersion >= "3.3.0") {
       base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.19.0")
