@@ -67,7 +67,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
       ivy"org.apache.xmlbeans:xmlbeans:5.1.1",
       ivy"com.norbitltd::spoiwo:2.2.1",
       ivy"com.github.pjfanning:excel-streaming-reader:4.0.5",
-      ivy"com.github.pjfanning:poi-shared-strings:2.5.5",
+      ivy"com.github.pjfanning:poi-shared-strings:2.5.6",
       ivy"commons-io:commons-io:2.11.0",
       ivy"org.apache.commons:commons-compress:1.22",
       ivy"org.apache.logging.log4j:log4j-api:2.19.0",
@@ -110,7 +110,7 @@ val scala212 = "2.12.17"
 val spark24 = List("2.4.1", "2.4.7", "2.4.8")
 val spark30 = List("3.0.1", "3.0.3")
 val spark31 = List("3.1.1", "3.1.2", "3.1.3")
-val spark32 = List("3.2.2")
+val spark32 = List("3.2.3")
 val spark33 = List("3.3.1")
 
 val crossMatrix =
