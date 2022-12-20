@@ -45,7 +45,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     Rule.Relocate("org.apache.commons.io.**", "shadeio.commons.io.@1"),
     Rule.Relocate("org.apache.commons.compress.**", "shadeio.commons.compress.@1")
   )
-  override def extraPublish = Seq(PublishInfo(assembly(), classifier = None, ivyConfig = "compile"))
+  override def extraPublish = Seq(PublishInfo(assembly(), classifier = Some("assembly"), ivyConfig = "compile"))
 
   val sparkDeps = Agg(
     ivy"org.apache.spark::spark-core:$sparkVersion",
