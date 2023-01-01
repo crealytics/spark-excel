@@ -53,7 +53,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     ivy"org.apache.spark::spark-hive:$sparkVersion"
   )
   override def compileIvyDeps = if (sparkVersion < "3.3.0") {
-    sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
+    sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:2.0.6".excludeOrg("stax"))
   } else {
     sparkDeps
   }

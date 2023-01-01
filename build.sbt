@@ -93,7 +93,7 @@ libraryDependencies ++= {
   if (testSparkVersion.value >= "3.3.0") {
     Seq("org.apache.logging.log4j" % "log4j-core" % "2.19.0" % Test)
   } else {
-    Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
+    Seq("org.slf4j" % "slf4j-api" % "2.0.6" % "provided")
   }
 }
 
