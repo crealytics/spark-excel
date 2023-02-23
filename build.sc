@@ -70,7 +70,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
       ivy"com.github.pjfanning:poi-shared-strings:2.5.6",
       ivy"commons-io:commons-io:2.11.0",
       ivy"org.apache.commons:commons-compress:1.22",
-      ivy"org.apache.logging.log4j:log4j-api:2.19.0",
+      ivy"org.apache.logging.log4j:log4j-api:2.20.0",
       ivy"com.zaxxer:SparseBitSet:1.2",
       ivy"org.apache.commons:commons-collections4:4.4",
       ivy"com.github.virtuald:curvesapi:1.07",
@@ -79,7 +79,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
       ivy"org.scala-lang.modules::scala-collection-compat:2.9.0"
     )
     if (sparkVersion >= "3.3.0") {
-      base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.19.0")
+      base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.20.0")
     } else {
       base
     }
