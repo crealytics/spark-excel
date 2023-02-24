@@ -59,7 +59,7 @@ shadedDeps ++= Seq(
   "com.github.pjfanning" % "poi-shared-strings" % "2.5.6",
   "commons-io" % "commons-io" % "2.11.0",
   "org.apache.commons" % "commons-compress" % "1.22",
-  "org.apache.logging.log4j" % "log4j-api" % "2.19.0",
+  "org.apache.logging.log4j" % "log4j-api" % "2.20.0",
   "com.zaxxer" % "SparseBitSet" % "1.2",
   "org.apache.commons" % "commons-collections4" % "4.4",
   "com.github.virtuald" % "curvesapi" % "1.07",
@@ -91,7 +91,7 @@ libraryDependencies ++= Seq(
 // spark >= 3.3 uses log4j 2.x while previous version relied on log4j 1.x
 libraryDependencies ++= {
   if (testSparkVersion.value >= "3.3.0") {
-    Seq("org.apache.logging.log4j" % "log4j-core" % "2.19.0" % Test)
+    Seq("org.apache.logging.log4j" % "log4j-core" % "2.20.0" % Test)
   } else {
     Seq("org.slf4j" % "slf4j-api" % "1.7.36" % "provided")
   }
