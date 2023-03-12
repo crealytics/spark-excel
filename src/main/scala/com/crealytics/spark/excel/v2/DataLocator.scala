@@ -42,8 +42,9 @@ trait DataLocator {
         val r = sheet.getRow(rid)
         if (r == null) { Vector.empty }
         else {
+          val lastCellNum = r.getLastCellNum
           colInd
-            .filter(_ < r.getLastCellNum())
+            .takeWhile(_ < lastCellNum)
             .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK))
             .toVector
         }
@@ -52,12 +53,13 @@ trait DataLocator {
     } else {
       sheet.iterator.asScala
         .filter(r => rowInd.contains(r.getRowNum))
-        .map(r =>
+        .map { r =>
+          val lastCellNum = r.getLastCellNum
           colInd
-            .filter(_ < r.getLastCellNum())
+            .takeWhile(_ < lastCellNum)
             .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK))
             .toVector
-        )
+        }
     }
   }
 }
