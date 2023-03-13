@@ -22,6 +22,9 @@ import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.util
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 import scala.jdk.CollectionConverters._
 
 /** Loading data from named table
@@ -72,6 +75,25 @@ object TableReadSuite {
 
 class TableReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
   import TableReadSuite._
+
+  test("performance") {
+    val excelOptions: Map[String, String] = Map("header" -> true.toString)
+    val streamExcelOptions: Map[String, String] = excelOptions + ("maxRowsInMemory" -> 2000.toString)
+
+    val options = streamExcelOptions ++ Map(
+      "dataAddress" -> "'Crimes_-_2018'!B2",
+      "inferSchema" -> "false"
+    )
+
+    val df = spark.read
+      .options(options)
+      //.format("com.crealytics.spark.excel")
+      .format("excel")
+      .load("/home/enver/Downloads/temp/spark-excel/biggy/excel/Crimes_-_2018.xlsx")
+
+    //df.show(false)
+    println(df.count())
+  }
 
   test("named-table SmallCity with testing data from Apache POI upstream tests") {
     val df = readFromResources(

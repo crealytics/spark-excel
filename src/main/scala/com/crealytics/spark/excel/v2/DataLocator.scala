@@ -56,7 +56,8 @@ trait DataLocator {
         .map { r =>
           val lastCellNum = r.getLastCellNum
           colInd
-            .takeWhile(_ < lastCellNum)
+            .iterator
+            .filter(_ < lastCellNum)
             .map(r.getCell(_, MissingCellPolicy.CREATE_NULL_AS_BLANK))
             .toVector
         }
