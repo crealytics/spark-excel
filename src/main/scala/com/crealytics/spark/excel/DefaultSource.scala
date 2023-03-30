@@ -35,7 +35,8 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
     parameters: Map[String, String],
     schema: StructType
   ): ExcelRelation = {
-    val wbReader = WorkbookReader(parameters, sqlContext.sparkContext.hadoopConfiguration)
+    val conf = sqlContext.sparkSession.sessionState.newHadoopConf()
+    val wbReader = WorkbookReader(parameters, conf)
     val dataLocator = DataLocator(parameters)
     ExcelRelation(
       header = checkParameter(parameters, "header").toBoolean,
