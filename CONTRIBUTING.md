@@ -12,8 +12,7 @@ with the owners of this repository before making a change.
 3. If you want to do larger refactorings that are not obviously necessary for the PR
      please coordinate with the project maintainers first.
      We're open to refactorings but would like to discuss and review them independently.
-4. Auto-format your code using `sbt scalafmt test:scalafmt`.
-5. Check the code with scalastyle using `sbt scalastyle test:scalastyle`
+4. Auto-format your code using `mill mill.scalalib.scalafmt.ScalafmtModule/reformatAll __.sources`.
+5. Run all tests locally using `mill spark-excel[__].test`.
 6. Update the `README.md` and `CHANGELOG.md` with details of changes to the interface.
 7. Rebase your changes to the latest master in case something changed there.
-

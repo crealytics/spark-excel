@@ -4,7 +4,6 @@ A library for querying Excel files with Apache Spark, for Spark SQL and DataFram
 
 [![Build Status](https://github.com/crealytics/spark-excel/workflows/CI/badge.svg)](https://github.com/crealytics/spark-excel/actions)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.crealytics/spark-excel_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.crealytics/spark-excel_2.12)
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/crealytics/spark-excel)
  
 
 ## Co-maintainers wanted
@@ -239,8 +238,6 @@ Need some more examples? Check out the [test cases](src/test/scala/com/crealytic
 or have a look at our wiki
 
 ## Building From Source
-This library is built with [SBT](http://www.scala-sbt.org/0.13/docs/Command-Line-Reference.html).
-To build a JAR file simply run `sbt assembly` from the project root.
-To build for a specific spark version, for example spark-2.4.1, run `sbt -Dspark.testVersion=2.4.1 assembly`,
-also from the project root.
-The build configuration includes support for Scala 2.12 and 2.11.
+This library is built with [Mill](https://github.com/com-lihaoyi/mill).
+To build a JAR file simply run e.g. `mill spark-excel[2.13.10,3.3.1].assembly` from the project root, where `2.13.10` is the Scala version and `3.3.1` the Spark version.
+To list all available combinations of Scala and Spark, run `mill resolve spark-excel[__]`.

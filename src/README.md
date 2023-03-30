@@ -12,4 +12,4 @@ Spark-excel V2 introduces spark-version specific code folder, like:
 `3.x/.../spark/v2/excel` for all Spark 3.* Data Source API V2
 `3.1_3.2/.../spark/v2/excel` for shared code between Spark 3.1 and Spark 3.2 Data Source API V2
 
-These structures are also configured into [build.sbt](https://github.com/crealytics/spark-excel/blob/main/build.sbt#L56), so it can compile for each Spark version.
+These structures are also configured into [build.sc](https://github.com/crealytics/spark-excel/blob/main/build.sc#L13), so it can compile for each Spark version.

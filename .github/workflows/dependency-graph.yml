@@ -1,14 +1,18 @@
-name: Update Dependency Graph
+name: github-dependency-graph
+
 on:
   push:
     branches:
-      - main # default branch of the project
+      - main
+
 jobs:
-  dependency-graph:
-    name: Update Dependency Graph
-    runs-on: ubuntu-latest # or windows-latest, or macOS-latest
-    permissions:
-      contents: write # this permission is needed to submit the dependency graph
+  submit-dependency-graph:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: scalacenter/sbt-dependency-submission@v2
+    - uses: actions/checkout@v3
+    - uses: coursier/cache-action@v6
+    - uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    - uses: ckipp01/mill-dependency-submission@v1
