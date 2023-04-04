@@ -66,7 +66,7 @@ case class ExcelTable(
   /* Actual doing schema inferring */
   private def infer(sparkSession: SparkSession, inputPaths: Seq[FileStatus], options: ExcelOptions): StructType = {
     val excelHelper = ExcelHelper(options)
-    val conf = sparkSession.sqlContext.sparkContext.hadoopConfiguration
+    val conf = sparkSession.sessionState.newHadoopConf()
 
     /* Sampling ratio on file level (not row level as in CSV) */
     val paths = {
