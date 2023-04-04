@@ -62,7 +62,8 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Cr
     val path = checkParameter(parameters, "path")
     val header = checkParameter(parameters, "header").toBoolean
     val filesystemPath = new Path(path)
-    val fs = filesystemPath.getFileSystem(sqlContext.sparkContext.hadoopConfiguration)
+    val conf = sqlContext.sparkSession.sessionState.newHadoopConf()
+    val fs = filesystemPath.getFileSystem(conf)
     new ExcelFileSaver(
       fs,
       filesystemPath,
