@@ -110,7 +110,7 @@ val scala212 = "2.12.17"
 val spark24 = List("2.4.1", "2.4.7", "2.4.8")
 val spark30 = List("3.0.1", "3.0.3")
 val spark31 = List("3.1.1", "3.1.2", "3.1.3")
-val spark32 = List("3.2.3")
+val spark32 = List("3.2.4")
 val spark33 = List("3.3.1")
 
 val crossMatrix =
