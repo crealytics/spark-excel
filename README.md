@@ -241,3 +241,8 @@ or have a look at our wiki
 This library is built with [Mill](https://github.com/com-lihaoyi/mill).
 To build a JAR file simply run e.g. `mill spark-excel[2.13.10,3.3.1].assembly` from the project root, where `2.13.10` is the Scala version and `3.3.1` the Spark version.
 To list all available combinations of Scala and Spark, run `mill resolve spark-excel[__]`.
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=crealytics/spark-excel&type=Date)](https://star-history.com/#crealytics/spark-excel&Date)
+
