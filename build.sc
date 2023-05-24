@@ -95,7 +95,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     def repositoriesTask = T.task { super.repositoriesTask() ++ Seq(MavenRepository("https://jitpack.io")) }
     def ivyDeps = sparkDeps ++ Agg(
       ivy"org.typelevel::cats-core:2.9.0",
-      ivy"org.scalatest::scalatest:3.2.15",
+      ivy"org.scalatest::scalatest:3.2.16",
       ivy"org.scalatestplus::scalacheck-1-16:3.2.14.0",
       ivy"org.scalacheck::scalacheck:1.17.0",
       ivy"com.github.alexarchambault::scalacheck-shapeless_1.15:1.3.0",
