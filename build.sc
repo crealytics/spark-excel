@@ -105,7 +105,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
   }
 }
 
-val scala213 = "2.13.10"
+val scala213 = "2.13.11"
 val scala212 = "2.12.17"
 val spark24 = List("2.4.1", "2.4.7", "2.4.8")
 val spark30 = List("3.0.1", "3.0.3")
