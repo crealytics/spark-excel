@@ -23,7 +23,7 @@ This library requires Spark 2.0+.
 
 List of spark versions, those are automatically tested:
 ```
-spark: ["2.4.1", "2.4.7", "2.4.8", "3.0.1", "3.0.3", "3.1.1", "3.1.2", "3.2.1"]
+spark: ["2.4.1", "2.4.7", "2.4.8", "3.0.1", "3.0.3", "3.1.1", "3.1.2", "3.2.4", "3.3.2", "3.4.1"]
 ```
 For more detail, please refer to project CI: [ci.yml](https://github.com/crealytics/spark-excel/blob/main/.github/workflows/ci.yml#L10)
 
@@ -37,7 +37,7 @@ artifactId: spark-excel_2.12
 version: <spark-version>_0.18.0
 ```
 
-### Scala 2.11
+### Scala 2.1
 ```
 groupId: com.crealytics
 artifactId: spark-excel_2.11
@@ -165,7 +165,7 @@ val df = spark.read
     .schema(peopleSchema)
     .load("People.xlsx")
 ```
-
+°
 #### Write a DataFrame to an Excel file
 ```scala
 import org.apache.spark.sql._

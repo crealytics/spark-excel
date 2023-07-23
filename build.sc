@@ -4,25 +4,30 @@ import coursier.maven.MavenRepository
 import mill._, scalalib._, publish._
 import mill.modules.Assembly._
 
-class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule with CiReleaseModule { outer =>
+class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule with CiReleaseModule {
+  outer =>
 
   override def scalaVersion = _scalaVersion
+
   override def millSourcePath = super.millSourcePath / os.up / os.up / os.up
 
   // Custom source layout for Spark Data Source API 2
-  val sparkVersionSpecificSources = if (sparkVersion >= "3.3.0") {
-    Seq("scala", "3.3/scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala")
+  val sparkVersionSpecificSources = if (sparkVersion >= "3.4.0") {
+    Seq("scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala", "3.3_and_up/scala", "3.4_and_up/scala")
+  } else if (sparkVersion >= "3.3.0") {
+    Seq("scala",  "3.0_3.1_3.2_3.3/scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala", "3.3_and_up/scala")
   } else if (sparkVersion >= "3.2.0") {
-    Seq("scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala")
+    Seq("scala", "3.0_3.1_3.2/scala", "3.0_3.1_3.2_3.3/scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala")
   } else if (sparkVersion >= "3.1.0") {
-    Seq("scala", "3.1/scala", "3.0_3.1/scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala", "3.1_and_up/scala")
+    Seq("scala", "3.1/scala", "3.0_3.1/scala", "3.0_3.1_3.2_3.3/scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala", "3.1_and_up/scala")
   } else if (sparkVersion >= "3.0.0") {
-    Seq("scala", "3.0/scala", "3.0_3.1/scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala")
+    Seq("scala", "3.0/scala", "3.0_3.1/scala", "3.0_3.1_3.2_3.3/scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala")
   } else if (sparkVersion >= "2.4.0") {
     Seq("scala", "2.4/scala")
   } else {
     throw new UnsupportedOperationException(s"sparkVersion ${sparkVersion} is not supported")
   }
+
   override def sources = T.sources {
     super.sources() ++ sparkVersionSpecificSources.map(s => PathRef(millSourcePath / "src" / "main" / os.RelPath(s)))
   }
@@ -30,7 +35,9 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
   override def docSources = T.sources(Seq[PathRef]())
 
   override def artifactName = "spark-excel"
+
   override def publishVersion = s"${sparkVersion}_${super.publishVersion()}"
+
   def pomSettings = PomSettings(
     description = "A Spark plugin for reading and writing Excel files",
     organization = "com.crealytics",
@@ -45,6 +52,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     Rule.Relocate("org.apache.commons.io.**", "shadeio.commons.io.@1"),
     Rule.Relocate("org.apache.commons.compress.**", "shadeio.commons.compress.@1")
   )
+
   override def extraPublish = Seq(PublishInfo(assembly(), classifier = None, ivyConfig = "compile"))
 
   val sparkDeps = Agg(
@@ -52,6 +60,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     ivy"org.apache.spark::spark-sql:$sparkVersion",
     ivy"org.apache.spark::spark-hive:$sparkVersion"
   )
+
   override def compileIvyDeps = if (sparkVersion < "3.3.0") {
     sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
   } else {
@@ -59,6 +68,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
   }
 
   val poiVersion = "5.2.3"
+
   override def ivyDeps = {
     val base = Agg(
       ivy"org.apache.poi:poi:$poiVersion",
@@ -84,15 +94,25 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
       base
     }
   }
+
   object test extends Tests with SbtModule with TestModule.ScalaTest {
 
     override def millSourcePath = super.millSourcePath
+
     override def sources = T.sources {
       Seq(PathRef(millSourcePath / "src" / "test" / "scala"))
     }
-    override def resources = T.sources { Seq(PathRef(millSourcePath / "src" / "test" / "resources")) }
+
+    override def resources = T.sources {
+      Seq(PathRef(millSourcePath / "src" / "test" / "resources"))
+    }
+
     def scalaVersion = outer.scalaVersion()
-    def repositoriesTask = T.task { super.repositoriesTask() ++ Seq(MavenRepository("https://jitpack.io")) }
+
+    def repositoriesTask = T.task {
+      super.repositoriesTask() ++ Seq(MavenRepository("https://jitpack.io"))
+    }
+
     def ivyDeps = sparkDeps ++ Agg(
       ivy"org.typelevel::cats-core:2.9.0",
       ivy"org.scalatest::scalatest:3.2.16",
@@ -111,11 +131,16 @@ val spark24 = List("2.4.1", "2.4.7", "2.4.8")
 val spark30 = List("3.0.1", "3.0.3")
 val spark31 = List("3.1.1", "3.1.2", "3.1.3")
 val spark32 = List("3.2.4")
-val spark33 = List("3.3.1")
+val spark33 = List("3.3.2")
+val spark34 = List("3.4.1")
 
-val crossMatrix =
-  (spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33).map(spark => (scala212, spark)) ++ (spark32 ++ spark33).map(
+val crossMatrix = {
+
+  (spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33 ++ spark34).map(spark => (scala212, spark)) ++ (spark32 ++ spark33 ++ spark34).map(
     spark => (scala213, spark)
   )
+
+  //  (spark34).map(spark => (scala212, spark))
+}
 
 object `spark-excel` extends Cross[SparkModule](crossMatrix: _*) {}
