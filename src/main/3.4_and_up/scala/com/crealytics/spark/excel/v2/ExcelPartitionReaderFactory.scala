@@ -29,29 +29,29 @@ import org.apache.spark.util.SerializableConfiguration
 import scala.util.control.NonFatal
 
 /** A factory used to create Excel readers.
- *
- * @param sqlConf
- * SQL configuration.
- * @param broadcastedConf
- * Broadcasted serializable Hadoop Configuration.
- * @param dataSchema
- * Schema of Excel files.
- * @param readDataSchema
- * Required data schema in the batch scan.
- * @param partitionSchema
- * Schema of partitions.
- * @param options
- * Options for parsing Excel files.
- */
+  *
+  * @param sqlConf
+  * SQL configuration.
+  * @param broadcastedConf
+  * Broadcasted serializable Hadoop Configuration.
+  * @param dataSchema
+  * Schema of Excel files.
+  * @param readDataSchema
+  * Required data schema in the batch scan.
+  * @param partitionSchema
+  * Schema of partitions.
+  * @param options
+  * Options for parsing Excel files.
+  */
 case class ExcelPartitionReaderFactory(
-                                        sqlConf: SQLConf,
-                                        broadcastedConf: Broadcast[SerializableConfiguration],
-                                        dataSchema: StructType,
-                                        readDataSchema: StructType,
-                                        partitionSchema: StructType,
-                                        options: ExcelOptions,
-                                        filters: Seq[Filter]
-                                      ) extends FilePartitionReaderFactory {
+    sqlConf: SQLConf,
+    broadcastedConf: Broadcast[SerializableConfiguration],
+    dataSchema: StructType,
+    readDataSchema: StructType,
+    partitionSchema: StructType,
+    options: ExcelOptions,
+    filters: Seq[Filter]
+  ) extends FilePartitionReaderFactory {
 
   override def buildReader(file: PartitionedFile): PartitionReader[InternalRow] = {
     val conf = broadcastedConf.value.value

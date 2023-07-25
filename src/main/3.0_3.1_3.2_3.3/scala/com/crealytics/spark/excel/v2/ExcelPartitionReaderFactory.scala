@@ -31,52 +31,52 @@ import java.net.URI
 import scala.util.control.NonFatal
 
 /** A factory used to create Excel readers.
- *
- * @param sqlConf
- * SQL configuration.
- * @param broadcastedConf
- * Broadcasted serializable Hadoop Configuration.
- * @param dataSchema
- * Schema of Excel files.
- * @param readDataSchema
- * Required data schema in the batch scan.
- * @param partitionSchema
- * Schema of partitions.
- * @param options
- * Options for parsing Excel files.
- */
+  *
+  * @param sqlConf
+  *   SQL configuration.
+  * @param broadcastedConf
+  *   Broadcasted serializable Hadoop Configuration.
+  * @param dataSchema
+  *   Schema of Excel files.
+  * @param readDataSchema
+  *   Required data schema in the batch scan.
+  * @param partitionSchema
+  *   Schema of partitions.
+  * @param parsedOptions
+  *   Options for parsing Excel files.
+  */
 case class ExcelPartitionReaderFactory(
-                                        sqlConf: SQLConf,
-                                        broadcastedConf: Broadcast[SerializableConfiguration],
-                                        dataSchema: StructType,
-                                        readDataSchema: StructType,
-                                        partitionSchema: StructType,
-                                        options: ExcelOptions,
-                                        filters: Seq[Filter]
-                                      ) extends FilePartitionReaderFactory {
+  sqlConf: SQLConf,
+  broadcastedConf: Broadcast[SerializableConfiguration],
+  dataSchema: StructType,
+  readDataSchema: StructType,
+  partitionSchema: StructType,
+  parsedOptions: ExcelOptions,
+  filters: Seq[Filter]
+) extends FilePartitionReaderFactory {
 
   override def buildReader(file: PartitionedFile): PartitionReader[InternalRow] = {
     val conf = broadcastedConf.value.value
     val actualDataSchema =
-      StructType(dataSchema.filterNot(_.name == options.columnNameOfCorruptRecord))
+      StructType(dataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord))
     val actualReadDataSchema =
-      StructType(readDataSchema.filterNot(_.name == options.columnNameOfCorruptRecord))
-    val parser = new ExcelParser(actualDataSchema, actualReadDataSchema, options, filters)
+      StructType(readDataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord))
+    val parser = new ExcelParser(actualDataSchema, actualReadDataSchema, parsedOptions, filters)
     val headerChecker =
-      new ExcelHeaderChecker(actualReadDataSchema, options, source = s"Excel file: ${file.filePath}")
+      new ExcelHeaderChecker(actualReadDataSchema, parsedOptions, source = s"Excel file: ${file.filePath}")
     val iter = readFile(conf, file, parser, headerChecker, readDataSchema)
     val partitionReader = new SparkExcelPartitionReaderFromIterator(iter)
     new PartitionReaderWithPartitionValues(partitionReader, readDataSchema, partitionSchema, file.partitionValues)
   }
 
   private def readFile(
-                        conf: Configuration,
-                        file: PartitionedFile,
-                        parser: ExcelParser,
-                        headerChecker: ExcelHeaderChecker,
-                        requiredSchema: StructType
-                      ): SheetData[InternalRow] = {
-    val excelHelper = ExcelHelper(options)
+    conf: Configuration,
+    file: PartitionedFile,
+    parser: ExcelParser,
+    headerChecker: ExcelHeaderChecker,
+    requiredSchema: StructType
+  ): SheetData[InternalRow] = {
+    val excelHelper = ExcelHelper(parsedOptions)
     val sheetData = excelHelper.getSheetData(conf, URI.create(file.filePath))
     try {
       SheetData(
@@ -94,7 +94,7 @@ case class ExcelPartitionReaderFactory(
 }
 
 private class SparkExcelPartitionReaderFromIterator(sheetData: SheetData[InternalRow])
-  extends PartitionReaderFromIterator[InternalRow](sheetData.rowIterator) {
+    extends PartitionReaderFromIterator[InternalRow](sheetData.rowIterator) {
   override def close(): Unit = {
     super.close()
     sheetData.close()
