@@ -16,18 +16,10 @@
 
 package com.crealytics.spark.excel.v2
 
-import org.apache.spark.sql.catalyst.{DataSourceOptions, FileSourceOptions}
+import org.apache.spark.sql.catalyst.FileSourceOptions
 import org.apache.spark.sql.catalyst.util.CaseInsensitiveMap
-import org.apache.spark.sql.catalyst.util.DateFormatter
-import org.apache.spark.sql.catalyst.util.DateTimeUtils
-import org.apache.spark.sql.catalyst.util.ParseMode
-import org.apache.spark.sql.catalyst.util.PermissiveMode
-import org.apache.spark.sql.catalyst.util.TimestampFormatter
 import org.apache.spark.sql.internal.SQLConf
 
-import java.time.ZoneId
-import java.util.Locale
-import scala.annotation.nowarn
 
 class ExcelOptions(
                     @transient
@@ -35,15 +27,15 @@ class ExcelOptions(
                     val defaultTimeZoneId: String,
                     val defaultColumnNameOfCorruptRecord: String
                   ) extends FileSourceOptions(parameters)
-  with ExcelOptionsTrait   {
+  with ExcelOptionsTrait {
 
 
-    def this(parameters: Map[String, String], defaultTimeZoneId: String) = {
-      this(CaseInsensitiveMap(parameters), defaultTimeZoneId, SQLConf.get.columnNameOfCorruptRecord)
-    }
+  def this(parameters: Map[String, String], defaultTimeZoneId: String) = {
+    this(CaseInsensitiveMap(parameters), defaultTimeZoneId, SQLConf.get.columnNameOfCorruptRecord)
+  }
 
-    def this(parameters: Map[String, String], defaultTimeZoneId: String, defaultColumnNameOfCorruptRecord: String) = {
-      this(CaseInsensitiveMap(parameters), defaultTimeZoneId, defaultColumnNameOfCorruptRecord)
-    }
+  def this(parameters: Map[String, String], defaultTimeZoneId: String, defaultColumnNameOfCorruptRecord: String) = {
+    this(CaseInsensitiveMap(parameters), defaultTimeZoneId, defaultColumnNameOfCorruptRecord)
+  }
 
 }
