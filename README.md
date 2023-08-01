@@ -37,7 +37,7 @@ artifactId: spark-excel_2.12
 version: <spark-version>_0.18.0
 ```
 
-### Scala 2.1
+### Scala 2.11
 ```
 groupId: com.crealytics
 artifactId: spark-excel_2.11
@@ -165,7 +165,7 @@ val df = spark.read
     .schema(peopleSchema)
     .load("People.xlsx")
 ```
-°
+
 #### Write a DataFrame to an Excel file
 ```scala
 import org.apache.spark.sql._
