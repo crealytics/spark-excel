@@ -1,4 +1,4 @@
-import $ivy.`io.chris-kipp::mill-ci-release::0.1.1`
+import $ivy.`io.chris-kipp::mill-ci-release::0.1.9`
 import io.kipp.mill.ci.release.CiReleaseModule
 import coursier.maven.MavenRepository
 import mill._, scalalib._, publish._
