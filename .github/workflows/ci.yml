@@ -59,7 +59,7 @@ jobs:
       - name: Download Java (temurin@8)
         id: download-java-temurin-8
         if: matrix.java == 'temurin@8'
-        uses: typelevel/download-java@v1
+        uses: typelevel/download-java@v2
         with:
           distribution: temurin
           java-version: 8
@@ -108,7 +108,7 @@ jobs:
       - name: Download Java (temurin@8)
         id: download-java-temurin-8
         if: matrix.java == 'temurin@8'
-        uses: typelevel/download-java@v1
+        uses: typelevel/download-java@v2
         with:
           distribution: temurin
           java-version: 8
