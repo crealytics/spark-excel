@@ -4,10 +4,10 @@ import coursier.maven.MavenRepository
 import mill._, scalalib._, publish._
 import mill.modules.Assembly._
 
-class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule with CiReleaseModule {
+trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiReleaseModule {
   outer =>
-
-  override def scalaVersion = _scalaVersion
+  override def scalaVersion = crossValue
+  val sparkVersion = crossValue2
 
   override def millSourcePath = super.millSourcePath / os.up / os.up / os.up
 
@@ -95,7 +95,7 @@ class SparkModule(_scalaVersion: String, sparkVersion: String) extends SbtModule
     }
   }
 
-  object test extends Tests with SbtModule with TestModule.ScalaTest {
+  object test extends SbtModuleTests with TestModule.ScalaTest {
 
     override def millSourcePath = super.millSourcePath
 
@@ -143,4 +143,4 @@ val crossMatrix = {
   //  (spark34).map(spark => (scala212, spark))
 }
 
-object `spark-excel` extends Cross[SparkModule](crossMatrix: _*) {}
+object `spark-excel` extends Cross[SparkModule](crossMatrix) {}
