@@ -75,7 +75,7 @@ jobs:
         with:
           mill-version: 0.10.8
       - name: Cache mill
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.mill
@@ -122,7 +122,7 @@ jobs:
           jdkFile: ${{ steps.download-java-temurin-8.outputs.jdkFile }}
 
       - name: Cache mill
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.mill
