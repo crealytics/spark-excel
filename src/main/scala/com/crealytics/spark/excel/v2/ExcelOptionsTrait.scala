@@ -28,20 +28,11 @@ import java.time.ZoneId
 import java.util.Locale
 import scala.annotation.nowarn
 
-class ExcelOptions(
-  @transient
-  val parameters: CaseInsensitiveMap[String],
-  defaultTimeZoneId: String,
-  defaultColumnNameOfCorruptRecord: String
-) extends Serializable {
+trait ExcelOptionsTrait extends Serializable {
 
-  def this(parameters: Map[String, String], defaultTimeZoneId: String) = {
-    this(CaseInsensitiveMap(parameters), defaultTimeZoneId, SQLConf.get.columnNameOfCorruptRecord)
-  }
-
-  def this(parameters: Map[String, String], defaultTimeZoneId: String, defaultColumnNameOfCorruptRecord: String) = {
-    this(CaseInsensitiveMap(parameters), defaultTimeZoneId, defaultColumnNameOfCorruptRecord)
-  }
+  val parameters: CaseInsensitiveMap[String]
+  val defaultTimeZoneId: String
+  val defaultColumnNameOfCorruptRecord: String
 
   private def getInt(paramName: String): Option[Int] = {
     val paramValue = parameters.get(paramName)
@@ -49,7 +40,9 @@ class ExcelOptions(
       case None => None
       case Some(null) => None
       case Some(value) =>
-        try { Some(value.toInt) }
+        try {
+          Some(value.toInt)
+        }
         catch {
           case _: NumberFormatException =>
             throw new RuntimeException(s"$paramName should be an integer. Found $value")
@@ -59,10 +52,18 @@ class ExcelOptions(
 
   private def getBool(paramName: String, default: Boolean): Boolean = {
     val param = parameters.getOrElse(paramName, default.toString)
-    if (param == null) { default }
-    else if (param.toLowerCase(Locale.ROOT) == "true") { true }
-    else if (param.toLowerCase(Locale.ROOT) == "false") { false }
-    else { throw new Exception(s"$paramName flag can be true or false") }
+    if (param == null) {
+      default
+    }
+    else if (param.toLowerCase(Locale.ROOT) == "true") {
+      true
+    }
+    else if (param.toLowerCase(Locale.ROOT) == "false") {
+      false
+    }
+    else {
+      throw new Exception(s"$paramName flag can be true or false")
+    }
   }
 
   /* Parsing mode, how to handle corrupted record. Default to permissive */
@@ -92,8 +93,8 @@ class ExcelOptions(
   val excerptSize = getInt("excerptSize")
 
   /** Forcibly apply the specified or inferred schema to data files. If the option is enabled, headers of ABC files will
-    * be ignored.
-    */
+   * be ignored.
+   */
   val enforceSchema = getBool("enforceSchema", default = true)
 
   /* Name for column of corrupted records */
@@ -142,19 +143,19 @@ class ExcelOptions(
   }
 
   /** Optional parameter for using a streaming reader which can help with big files (will fail if used with xls format
-    * files)
-    */
+   * files)
+   */
   val maxRowsInMemory = getInt("maxRowsInMemory")
 
   // scalastyle:off
   /** Optional parameter for <a
-    * href="https://poi.apache.org/apidocs/5.0/org/apache/poi/util/IOUtils.html#setByteArrayMaxOverride-int-">maxByteArraySize</a>
-    */
+   * href="https://poi.apache.org/apidocs/5.0/org/apache/poi/util/IOUtils.html#setByteArrayMaxOverride-int-">maxByteArraySize</a>
+   */
   val maxByteArraySize = getInt("maxByteArraySize")
 
   // scalastyle:on
   /** Optional parameter for specifying the number of bytes at which a zip entry is regarded as too large for holding in
-    * memory and the data is put in a temp file instead - useful for sheets with a lot of data
-    */
+   * memory and the data is put in a temp file instead - useful for sheets with a lot of data
+   */
   val tempFileThreshold = getInt("tempFileThreshold")
 }

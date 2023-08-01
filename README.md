@@ -23,7 +23,7 @@ This library requires Spark 2.0+.
 
 List of spark versions, those are automatically tested:
 ```
-spark: ["2.4.1", "2.4.7", "2.4.8", "3.0.1", "3.0.3", "3.1.1", "3.1.2", "3.2.1"]
+spark: ["2.4.1", "2.4.7", "2.4.8", "3.0.1", "3.0.3", "3.1.1", "3.1.2", "3.2.4", "3.3.2", "3.4.1"]
 ```
 For more detail, please refer to project CI: [ci.yml](https://github.com/crealytics/spark-excel/blob/main/.github/workflows/ci.yml#L10)
 
