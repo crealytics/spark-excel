@@ -2,6 +2,19 @@ Next
 ====
 
 
+## [v0.19.0] - 2023-08-01
+### :wrench: Chores
+- [`ff059db`](https://github.com/crealytics/spark-excel/commit/ff059dbb02761910d69446f6aec00192d998e2ac) - Update spark-core, spark-hive, spark-sql from 3.2.3 to 3.2.4 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`ba5a122`](https://github.com/crealytics/spark-excel/commit/ba5a1229bf21df8d4ef718d3f2789250104416f5) - Update scala-collection-compat from 2.9.0 to 2.10.0 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`406ecc2`](https://github.com/crealytics/spark-excel/commit/406ecc23dc17175a9de9705dbdd093c5a728426d) - Update scalacheck-1-15 from 3.2.11.0 to 3.2.14.0 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`5c9219e`](https://github.com/crealytics/spark-excel/commit/5c9219e80be2d5da6aadf19108c72787b452b421) - Update scalatest from 3.2.15 to 3.2.16 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`2272117`](https://github.com/crealytics/spark-excel/commit/22721173efa4f646bd7024a9dc8cab28126c3636) - Update commons-io from 2.11.0 to 2.12.0 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`1fa2f55`](https://github.com/crealytics/spark-excel/commit/1fa2f55876919fa563ffd04417b4f4b64909cd82) - Update scalafmt-core from 3.7.3 to 3.7.4 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`2caa3ee`](https://github.com/crealytics/spark-excel/commit/2caa3ee3d15c0e3cc2e3506e99880731c4de81d4) - Update scala-library from 2.13.10 to 2.13.11 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`ed7e89c`](https://github.com/crealytics/spark-excel/commit/ed7e89c6420ad4f7dc38cc9f8f005278abca9467) - Update scala-library from 2.12.17 to 2.12.18 *(PR [#745](https://github.com/crealytics/spark-excel/pull/745) by [@scala-steward](https://github.com/scala-steward))*
+- [`4b55f83`](https://github.com/crealytics/spark-excel/commit/4b55f8391299760e261c52a927cfea577a5a6a6b) - Update commons-io from 2.12.0 to 2.13.0 *(commit by [@scala-steward](https://github.com/scala-steward))*
+
+
 ## [v0.18.6] - 2023-04-03
 ### :wrench: Chores
 - [`a1d3d30`](https://github.com/crealytics/spark-excel/commit/a1d3d3011658b4ed29313d8be3beba694493cdf5) - Update sbt-dependency-tree from 1.7.1 to 1.7.3 *(commit by [@scala-steward](https://github.com/scala-steward))*
@@ -194,3 +207,4 @@ Next
 [v0.18.4]: https://github.com/crealytics/spark-excel/compare/v0.18.3-beta1...v0.18.4
 [v0.18.5]: https://github.com/crealytics/spark-excel/compare/v0.18.4...v0.18.5
 [v0.18.6]: https://github.com/crealytics/spark-excel/compare/v0.18.6-beta1...v0.18.6
+[v0.19.0]: https://github.com/crealytics/spark-excel/compare/v0.18.7...v0.19.0
