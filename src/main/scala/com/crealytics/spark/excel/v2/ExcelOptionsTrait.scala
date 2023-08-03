@@ -42,8 +42,7 @@ trait ExcelOptionsTrait extends Serializable {
       case Some(value) =>
         try {
           Some(value.toInt)
-        }
-        catch {
+        } catch {
           case _: NumberFormatException =>
             throw new RuntimeException(s"$paramName should be an integer. Found $value")
         }
@@ -54,14 +53,11 @@ trait ExcelOptionsTrait extends Serializable {
     val param = parameters.getOrElse(paramName, default.toString)
     if (param == null) {
       default
-    }
-    else if (param.toLowerCase(Locale.ROOT) == "true") {
+    } else if (param.toLowerCase(Locale.ROOT) == "true") {
       true
-    }
-    else if (param.toLowerCase(Locale.ROOT) == "false") {
+    } else if (param.toLowerCase(Locale.ROOT) == "false") {
       false
-    }
-    else {
+    } else {
       throw new Exception(s"$paramName flag can be true or false")
     }
   }
@@ -93,8 +89,8 @@ trait ExcelOptionsTrait extends Serializable {
   val excerptSize = getInt("excerptSize")
 
   /** Forcibly apply the specified or inferred schema to data files. If the option is enabled, headers of ABC files will
-   * be ignored.
-   */
+    * be ignored.
+    */
   val enforceSchema = getBool("enforceSchema", default = true)
 
   /* Name for column of corrupted records */
@@ -143,19 +139,19 @@ trait ExcelOptionsTrait extends Serializable {
   }
 
   /** Optional parameter for using a streaming reader which can help with big files (will fail if used with xls format
-   * files)
-   */
+    * files)
+    */
   val maxRowsInMemory = getInt("maxRowsInMemory")
 
   // scalastyle:off
   /** Optional parameter for <a
-   * href="https://poi.apache.org/apidocs/5.0/org/apache/poi/util/IOUtils.html#setByteArrayMaxOverride-int-">maxByteArraySize</a>
-   */
+    * href="https://poi.apache.org/apidocs/5.0/org/apache/poi/util/IOUtils.html#setByteArrayMaxOverride-int-">maxByteArraySize</a>
+    */
   val maxByteArraySize = getInt("maxByteArraySize")
 
   // scalastyle:on
   /** Optional parameter for specifying the number of bytes at which a zip entry is regarded as too large for holding in
-   * memory and the data is put in a temp file instead - useful for sheets with a lot of data
-   */
+    * memory and the data is put in a temp file instead - useful for sheets with a lot of data
+    */
   val tempFileThreshold = getInt("tempFileThreshold")
 }
