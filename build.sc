@@ -108,7 +108,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"com.github.virtuald:curvesapi:1.07",
       ivy"commons-codec:commons-codec:1.15",
       ivy"org.apache.commons:commons-math3:3.6.1",
-      ivy"org.scala-lang.modules::scala-collection-compat:2.10.0"
+      ivy"org.scala-lang.modules::scala-collection-compat:2.11.0"
     )
     if (sparkVersion >= "3.3.0") {
       base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.20.0")
