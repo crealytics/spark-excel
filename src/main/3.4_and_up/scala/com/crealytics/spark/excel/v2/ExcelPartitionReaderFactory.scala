@@ -31,27 +31,27 @@ import scala.util.control.NonFatal
 /** A factory used to create Excel readers.
   *
   * @param sqlConf
-  * SQL configuration.
+  *   SQL configuration.
   * @param broadcastedConf
-  * Broadcasted serializable Hadoop Configuration.
+  *   Broadcasted serializable Hadoop Configuration.
   * @param dataSchema
-  * Schema of Excel files.
+  *   Schema of Excel files.
   * @param readDataSchema
-  * Required data schema in the batch scan.
+  *   Required data schema in the batch scan.
   * @param partitionSchema
-  * Schema of partitions.
+  *   Schema of partitions.
   * @param options
-  * Options for parsing Excel files.
+  *   Options for parsing Excel files.
   */
 case class ExcelPartitionReaderFactory(
-    sqlConf: SQLConf,
-    broadcastedConf: Broadcast[SerializableConfiguration],
-    dataSchema: StructType,
-    readDataSchema: StructType,
-    partitionSchema: StructType,
-    options: ExcelOptions,
-    filters: Seq[Filter]
-  ) extends FilePartitionReaderFactory {
+  sqlConf: SQLConf,
+  broadcastedConf: Broadcast[SerializableConfiguration],
+  dataSchema: StructType,
+  readDataSchema: StructType,
+  partitionSchema: StructType,
+  options: ExcelOptions,
+  filters: Seq[Filter]
+) extends FilePartitionReaderFactory {
 
   override def buildReader(file: PartitionedFile): PartitionReader[InternalRow] = {
     val conf = broadcastedConf.value.value
@@ -68,12 +68,12 @@ case class ExcelPartitionReaderFactory(
   }
 
   private def readFile(
-                        conf: Configuration,
-                        file: PartitionedFile,
-                        parser: ExcelParser,
-                        headerChecker: ExcelHeaderChecker,
-                        requiredSchema: StructType
-                      ): SheetData[InternalRow] = {
+    conf: Configuration,
+    file: PartitionedFile,
+    parser: ExcelParser,
+    headerChecker: ExcelHeaderChecker,
+    requiredSchema: StructType
+  ): SheetData[InternalRow] = {
     val excelHelper = ExcelHelper(options)
     val sheetData = excelHelper.getSheetData(conf, file.filePath.toUri)
     try {
@@ -92,7 +92,7 @@ case class ExcelPartitionReaderFactory(
 }
 
 private class SparkExcelPartitionReaderFromIterator(sheetData: SheetData[InternalRow])
-  extends PartitionReaderFromIterator[InternalRow](sheetData.rowIterator) {
+    extends PartitionReaderFromIterator[InternalRow](sheetData.rowIterator) {
   override def close(): Unit = {
     super.close()
     sheetData.close()

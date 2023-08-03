@@ -20,11 +20,12 @@ import org.apache.spark.sql.catalyst.util.CaseInsensitiveMap
 import org.apache.spark.sql.internal.SQLConf
 
 class ExcelOptions(
-                    @transient
-                    val parameters: CaseInsensitiveMap[String],
-                    val defaultTimeZoneId: String,
-                    val defaultColumnNameOfCorruptRecord: String
-                  ) extends ExcelOptionsTrait with Serializable {
+  @transient
+  val parameters: CaseInsensitiveMap[String],
+  val defaultTimeZoneId: String,
+  val defaultColumnNameOfCorruptRecord: String
+) extends ExcelOptionsTrait
+    with Serializable {
   // all parameter handling is implemented in ExcelOptionsTrait
 
   def this(parameters: Map[String, String], defaultTimeZoneId: String) = {

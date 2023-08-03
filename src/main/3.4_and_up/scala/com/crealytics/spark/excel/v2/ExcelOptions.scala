@@ -20,15 +20,13 @@ import org.apache.spark.sql.catalyst.FileSourceOptions
 import org.apache.spark.sql.catalyst.util.CaseInsensitiveMap
 import org.apache.spark.sql.internal.SQLConf
 
-
 class ExcelOptions(
-                    @transient
-                    val parameters: CaseInsensitiveMap[String],
-                    val defaultTimeZoneId: String,
-                    val defaultColumnNameOfCorruptRecord: String
-                  ) extends FileSourceOptions(parameters)
-  with ExcelOptionsTrait {
-
+  @transient
+  val parameters: CaseInsensitiveMap[String],
+  val defaultTimeZoneId: String,
+  val defaultColumnNameOfCorruptRecord: String
+) extends FileSourceOptions(parameters)
+    with ExcelOptionsTrait {
 
   def this(parameters: Map[String, String], defaultTimeZoneId: String) = {
     this(CaseInsensitiveMap(parameters), defaultTimeZoneId, SQLConf.get.columnNameOfCorruptRecord)
