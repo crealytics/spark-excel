@@ -99,16 +99,16 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"org.apache.xmlbeans:xmlbeans:5.1.1",
       ivy"com.norbitltd::spoiwo:2.2.1",
       ivy"com.github.pjfanning:excel-streaming-reader:4.1.0",
-      ivy"com.github.pjfanning:poi-shared-strings:2.5.6",
+      ivy"com.github.pjfanning:poi-shared-strings:2.6.0",
       ivy"commons-io:commons-io:2.13.0",
       ivy"org.apache.commons:commons-compress:1.23.0",
       ivy"org.apache.logging.log4j:log4j-api:2.20.0",
       ivy"com.zaxxer:SparseBitSet:1.2",
       ivy"org.apache.commons:commons-collections4:4.4",
       ivy"com.github.virtuald:curvesapi:1.07",
-      ivy"commons-codec:commons-codec:1.15",
+      ivy"commons-codec:commons-codec:1.16.0",
       ivy"org.apache.commons:commons-math3:3.6.1",
-      ivy"org.scala-lang.modules::scala-collection-compat:2.10.0"
+      ivy"org.scala-lang.modules::scala-collection-compat:2.11.0"
     )
     if (sparkVersion >= "3.3.0") {
       base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.20.0")
