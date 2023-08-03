@@ -15,11 +15,33 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
   val sparkVersionSpecificSources = if (sparkVersion >= "3.4.0") {
     Seq("scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala", "3.3_and_up/scala", "3.4_and_up/scala")
   } else if (sparkVersion >= "3.3.0") {
-    Seq("scala",  "3.0_3.1_3.2_3.3/scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala", "3.3_and_up/scala")
+    Seq(
+      "scala",
+      "3.0_3.1_3.2_3.3/scala",
+      "3.0_and_up/scala",
+      "3.1_and_up/scala",
+      "3.2_and_up/scala",
+      "3.3_and_up/scala"
+    )
   } else if (sparkVersion >= "3.2.0") {
-    Seq("scala", "3.0_3.1_3.2/scala", "3.0_3.1_3.2_3.3/scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala")
+    Seq(
+      "scala",
+      "3.0_3.1_3.2/scala",
+      "3.0_3.1_3.2_3.3/scala",
+      "3.0_and_up/scala",
+      "3.1_and_up/scala",
+      "3.2_and_up/scala"
+    )
   } else if (sparkVersion >= "3.1.0") {
-    Seq("scala", "3.1/scala", "3.0_3.1/scala", "3.0_3.1_3.2_3.3/scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala", "3.1_and_up/scala")
+    Seq(
+      "scala",
+      "3.1/scala",
+      "3.0_3.1/scala",
+      "3.0_3.1_3.2_3.3/scala",
+      "3.0_3.1_3.2/scala",
+      "3.0_and_up/scala",
+      "3.1_and_up/scala"
+    )
   } else if (sparkVersion >= "3.0.0") {
     Seq("scala", "3.0/scala", "3.0_3.1/scala", "3.0_3.1_3.2_3.3/scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala")
   } else if (sparkVersion >= "2.4.0") {
@@ -86,7 +108,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"com.github.virtuald:curvesapi:1.07",
       ivy"commons-codec:commons-codec:1.15",
       ivy"org.apache.commons:commons-math3:3.6.1",
-      ivy"org.scala-lang.modules::scala-collection-compat:2.10.0"
+      ivy"org.scala-lang.modules::scala-collection-compat:2.11.0"
     )
     if (sparkVersion >= "3.3.0") {
       base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.20.0")
@@ -136,9 +158,9 @@ val spark34 = List("3.4.1")
 
 val crossMatrix = {
 
-  (spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33 ++ spark34).map(spark => (scala212, spark)) ++ (spark32 ++ spark33 ++ spark34).map(
-    spark => (scala213, spark)
-  )
+  (spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33 ++ spark34).map(spark =>
+    (scala212, spark)
+  ) ++ (spark32 ++ spark33 ++ spark34).map(spark => (scala213, spark))
 
   //  (spark34).map(spark => (scala212, spark))
 }
