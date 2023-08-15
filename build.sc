@@ -99,7 +99,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"org.apache.xmlbeans:xmlbeans:5.1.1",
       ivy"com.norbitltd::spoiwo:2.2.1",
       ivy"com.github.pjfanning:excel-streaming-reader:4.1.1",
-      ivy"com.github.pjfanning:poi-shared-strings:2.6.0",
+      ivy"com.github.pjfanning:poi-shared-strings:2.6.1",
       ivy"commons-io:commons-io:2.13.0",
       ivy"org.apache.commons:commons-compress:1.23.0",
       ivy"org.apache.logging.log4j:log4j-api:2.20.0",
@@ -136,7 +136,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
     }
 
     def ivyDeps = sparkDeps ++ Agg(
-      ivy"org.typelevel::cats-core:2.9.0",
+      ivy"org.typelevel::cats-core:2.10.0",
       ivy"org.scalatest::scalatest:3.2.16",
       ivy"org.scalatestplus::scalacheck-1-16:3.2.14.0",
       ivy"org.scalacheck::scalacheck:1.17.0",
