@@ -136,7 +136,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
     }
 
     def ivyDeps = sparkDeps ++ Agg(
-      ivy"org.typelevel::cats-core:2.9.0",
+      ivy"org.typelevel::cats-core:2.10.0",
       ivy"org.scalatest::scalatest:3.2.16",
       ivy"org.scalatestplus::scalacheck-1-16:3.2.14.0",
       ivy"org.scalacheck::scalacheck:1.17.0",
