@@ -103,7 +103,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"commons-io:commons-io:2.13.0",
       ivy"org.apache.commons:commons-compress:1.24.0",
       ivy"org.apache.logging.log4j:log4j-api:2.20.0",
-      ivy"com.zaxxer:SparseBitSet:1.2",
+      ivy"com.zaxxer:SparseBitSet:1.3",
       ivy"org.apache.commons:commons-collections4:4.4",
       ivy"com.github.virtuald:curvesapi:1.08",
       ivy"commons-codec:commons-codec:1.16.0",
