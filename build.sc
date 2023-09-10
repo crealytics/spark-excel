@@ -101,7 +101,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"com.github.pjfanning:excel-streaming-reader:4.1.1",
       ivy"com.github.pjfanning:poi-shared-strings:2.6.1",
       ivy"commons-io:commons-io:2.13.0",
-      ivy"org.apache.commons:commons-compress:1.23.0",
+      ivy"org.apache.commons:commons-compress:1.24.0",
       ivy"org.apache.logging.log4j:log4j-api:2.20.0",
       ivy"com.zaxxer:SparseBitSet:1.2",
       ivy"org.apache.commons:commons-collections4:4.4",
