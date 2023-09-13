@@ -155,10 +155,11 @@ val spark31 = List("3.1.1", "3.1.2", "3.1.3")
 val spark32 = List("3.2.4")
 val spark33 = List("3.3.3")
 val spark34 = List("3.4.1")
+val spark35 = List("3.5.0")
 
 val crossMatrix = {
 
-  (spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33 ++ spark34).map(spark =>
+  (spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33 ++ spark34 ++ spark35).map(spark =>
     (scala212, spark)
   ) ++ (spark32 ++ spark33 ++ spark34).map(spark => (scala213, spark))
 
