@@ -2,6 +2,31 @@ Next
 ====
 
 
+## [v0.20.0] - 2023-09-19
+### :wrench: Chores
+- [`f965333`](https://github.com/crealytics/spark-excel/commit/f965333b179ac623cf9ddd882b40715bf3579062) - Update scalafmt-core from 3.7.4 to 3.7.11 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`d26f939`](https://github.com/crealytics/spark-excel/commit/d26f939646b805beff0052834beb1ab9902816b4) - Update scala-collection-compat from 2.10.0 to 2.11.0 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`c9d40b7`](https://github.com/crealytics/spark-excel/commit/c9d40b777b71f642f314e4fa8d70a4413c8117b2) - Update commons-codec from 1.15 to 1.16.0 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`3d47bd3`](https://github.com/crealytics/spark-excel/commit/3d47bd37e49671b734c10d5116601a6f71e2fced) - Update poi-shared-strings from 2.5.6 to 2.6.0 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`be92459`](https://github.com/crealytics/spark-excel/commit/be924599e944e3782b74f47b69a1a95251e8bd52) - Update excel-streaming-reader from 4.0.5 to 4.1.0 *(PR [#761](https://github.com/crealytics/spark-excel/pull/761) by [@scala-steward](https://github.com/scala-steward))*
+- [`922458a`](https://github.com/crealytics/spark-excel/commit/922458af6fbb479b9567ce424e15dda7d9ca68c2) - Update scalafmt-core from 3.7.11 to 3.7.12 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`e3419cb`](https://github.com/crealytics/spark-excel/commit/e3419cb251806c8b95d1e4a285e14e40e9664fde) - Update curvesapi from 1.07 to 1.08 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`80834d9`](https://github.com/crealytics/spark-excel/commit/80834d9c0cc245db3deacf573844ea99baa25311) - Update cats-core from 2.9.0 to 2.10.0 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`c412e40`](https://github.com/crealytics/spark-excel/commit/c412e400faae412473aa78c2ab8f41dc5295a12e) - Update poi-shared-strings from 2.6.0 to 2.6.1 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`c83ab2a`](https://github.com/crealytics/spark-excel/commit/c83ab2a16de58faf5f14b9cb6950eee6360169b9) - Update excel-streaming-reader from 4.1.0 to 4.1.1 *(PR [#768](https://github.com/crealytics/spark-excel/pull/768) by [@scala-steward](https://github.com/scala-steward))*
+- [`1d5344d`](https://github.com/crealytics/spark-excel/commit/1d5344d13dc13868f6eacf584bf5a4f3c665b9e9) - Update spark-core, spark-hive, spark-sql from 3.3.2 to 3.3.3 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`f3d5212`](https://github.com/crealytics/spark-excel/commit/f3d5212145c273fdc6a0efc0021fbbdea6c2c04c) - Update scalafmt-core from 3.7.12 to 3.7.13 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`e14f473`](https://github.com/crealytics/spark-excel/commit/e14f473b6f158603d77c91e843c9fd376f4a483a) - Update mill-main from 0.11.1 to 0.11.2 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`111648e`](https://github.com/crealytics/spark-excel/commit/111648ee8cb009abd472b9971c4a3b33a5ca1b8b) - Update commons-compress from 1.23.0 to 1.24.0 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`a302268`](https://github.com/crealytics/spark-excel/commit/a302268fa56007766e89ad76fea0443ea90cd79d) - Update scalatest from 3.2.16 to 3.2.17 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`f632e72`](https://github.com/crealytics/spark-excel/commit/f632e722b850bdb72d85adbabd704112793e1d45) - Update scalafmt-core from 3.7.13 to 3.7.14 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`e133acb`](https://github.com/crealytics/spark-excel/commit/e133acb45e6542046de5adf4d355a0ca8622fe6e) - Update SparseBitSet from 1.2 to 1.3 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`5031c9b`](https://github.com/crealytics/spark-excel/commit/5031c9b06e342e3a396ca68d9d8801b89378d309) - Update scala-library from 2.13.11 to 2.13.12 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`596c1a3`](https://github.com/crealytics/spark-excel/commit/596c1a30a0be7c34f1d7d03652a1d395f32a9c18) - Update excel-streaming-reader from 4.1.1 to 4.1.2 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`8d6015d`](https://github.com/crealytics/spark-excel/commit/8d6015d404c9651318651b88ac5b30feb750abdf) - Update mill-main from 0.11.2 to 0.11.3 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`0174550`](https://github.com/crealytics/spark-excel/commit/0174550041b520056217cfa8aac277ec070ce03b) - Update spark-core, spark-hive, spark-sql from 3.4.1 to 3.5.0 *(commit by [@scala-steward](https://github.com/scala-steward))*
+
+
 ## [v0.19.0] - 2023-08-01
 ### :wrench: Chores
 - [`ff059db`](https://github.com/crealytics/spark-excel/commit/ff059dbb02761910d69446f6aec00192d998e2ac) - Update spark-core, spark-hive, spark-sql from 3.2.3 to 3.2.4 *(commit by [@scala-steward](https://github.com/scala-steward))*
@@ -208,3 +233,4 @@ Next
 [v0.18.5]: https://github.com/crealytics/spark-excel/compare/v0.18.4...v0.18.5
 [v0.18.6]: https://github.com/crealytics/spark-excel/compare/v0.18.6-beta1...v0.18.6
 [v0.19.0]: https://github.com/crealytics/spark-excel/compare/v0.18.7...v0.19.0
+[v0.20.0]: https://github.com/crealytics/spark-excel/compare/v0.19.0...v0.20.0
