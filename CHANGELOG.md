@@ -2,6 +2,11 @@ Next
 ====
 
 
+## [v0.20.1] - 2023-09-28
+### :wrench: Chores
+- [`faeefbd`](https://github.com/crealytics/spark-excel/commit/faeefbd655799a0d3202825c88993d1640e54a89) - Update mill to 0.11.4 *(commit by [@nightscape](https://github.com/nightscape))*
+
+
 ## [v0.20.0] - 2023-09-19
 ### :wrench: Chores
 - [`f965333`](https://github.com/crealytics/spark-excel/commit/f965333b179ac623cf9ddd882b40715bf3579062) - Update scalafmt-core from 3.7.4 to 3.7.11 *(commit by [@scala-steward](https://github.com/scala-steward))*
@@ -234,3 +239,4 @@ Next
 [v0.18.6]: https://github.com/crealytics/spark-excel/compare/v0.18.6-beta1...v0.18.6
 [v0.19.0]: https://github.com/crealytics/spark-excel/compare/v0.18.7...v0.19.0
 [v0.20.0]: https://github.com/crealytics/spark-excel/compare/v0.19.0...v0.20.0
+[v0.20.1]: https://github.com/crealytics/spark-excel/compare/v0.20.0...v0.20.1
