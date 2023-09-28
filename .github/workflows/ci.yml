@@ -73,7 +73,7 @@ jobs:
           jdkFile: ${{ steps.download-java-temurin-8.outputs.jdkFile }}
       - uses: jodersky/setup-mill@master
         with:
-          mill-version: 0.11.3
+          mill-version: 0.11.4
       - name: Cache mill
         uses: actions/cache@v3
         with:
@@ -146,6 +146,6 @@ jobs:
 
       - uses: jodersky/setup-mill@master
         with:
-          mill-version: 0.11.3
+          mill-version: 0.11.4
       - name: Publish
         run: mill -i io.kipp.mill.ci.release.ReleaseModule/publishAll
