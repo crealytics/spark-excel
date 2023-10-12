@@ -89,7 +89,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
     sparkDeps
   }
 
-  val poiVersion = "5.2.3"
+  val poiVersion = "5.2.4"
 
   override def ivyDeps = {
     val base = Agg(
@@ -98,8 +98,8 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"org.apache.poi:poi-ooxml-lite:$poiVersion",
       ivy"org.apache.xmlbeans:xmlbeans:5.1.1",
       ivy"com.norbitltd::spoiwo:2.2.1",
-      ivy"com.github.pjfanning:excel-streaming-reader:4.1.2",
-      ivy"com.github.pjfanning:poi-shared-strings:2.6.1",
+      ivy"com.github.pjfanning:excel-streaming-reader:4.2.0",
+      ivy"com.github.pjfanning:poi-shared-strings:2.7.0",
       ivy"commons-io:commons-io:2.14.0",
       ivy"org.apache.commons:commons-compress:1.24.0",
       ivy"org.apache.logging.log4j:log4j-api:2.20.0",
