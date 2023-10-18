@@ -102,7 +102,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"com.github.pjfanning:poi-shared-strings:2.7.0",
       ivy"commons-io:commons-io:2.14.0",
       ivy"org.apache.commons:commons-compress:1.24.0",
-      ivy"org.apache.logging.log4j:log4j-api:2.20.0",
+      ivy"org.apache.logging.log4j:log4j-api:2.21.0",
       ivy"com.zaxxer:SparseBitSet:1.3",
       ivy"org.apache.commons:commons-collections4:4.4",
       ivy"com.github.virtuald:curvesapi:1.08",
@@ -111,7 +111,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"org.scala-lang.modules::scala-collection-compat:2.11.0"
     )
     if (sparkVersion >= "3.3.0") {
-      base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.20.0")
+      base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.21.0")
     } else {
       base
     }
