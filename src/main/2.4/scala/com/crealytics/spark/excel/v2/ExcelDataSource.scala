@@ -45,7 +45,7 @@ class ExcelDataSource extends DataSourceV2 with ReadSupport with WriteSupport wi
   /* The string that represents the format that this data source provider uses */
   override def shortName(): String = "excel"
 
-  /** Creates a {@link DataSourceReader} to scan the data from this data source.
+  /** Creates a {@@linkDataSourceReader} to scan the data from this data source.
     *
     * If this method fails (by throwing an exception), the action will fail and no Spark job will be submitted.
     *
@@ -55,7 +55,7 @@ class ExcelDataSource extends DataSourceV2 with ReadSupport with WriteSupport wi
   override def createReader(options: DataSourceOptions): DataSourceReader =
     new ExcelDataSourceReader(sparkSession, options.asMap.asScala.toMap, options.paths.toSeq, None)
 
-  /** Creates a {@link DataSourceReader} to scan the data from this data source.
+  /** Creates a {@@linkDataSourceReader} to scan the data from this data source.
     *
     * If this method fails (by throwing an exception), the action will fail and no Spark job will be submitted.
     *
@@ -67,14 +67,14 @@ class ExcelDataSource extends DataSourceV2 with ReadSupport with WriteSupport wi
   override def createReader(schema: StructType, options: DataSourceOptions): DataSourceReader =
     new ExcelDataSourceReader(sparkSession, options.asMap.asScala.toMap, options.paths.toSeq, Some(schema))
 
-  /** Creates an optional {@link DataSourceWriter} to save the data to this data source. Data sources can return None if
+  /** Creates an optional {@@linkDataSourceWriter} to save the data to this data source. Data sources can return None if
     * there is no writing needed to be done according to the save mode.
     *
     * If this method fails (by throwing an exception), the action will fail and no Spark job will be submitted.
     *
     * @param writeUUID
     *   A unique string for the writing job. It's possible that there are many writing jobs running at the same time,
-    *   and the returned {@link DataSourceWriter} can use this job id to distinguish itself from other jobs.
+    *   and the returned {@@linkDataSourceWriter} can use this job id to distinguish itself from other jobs.
     * @param schema
     *   the schema of the data to be written.
     * @param mode
@@ -160,14 +160,14 @@ class ExcelDataSourceReader(
     _pushedFilters
   }
 
-  /** Returns the filters that are pushed to the data source via {@link #pushFilters(Filter[])}.
+  /** Returns the filters that are pushed to the data source via {@@link#pushFilters(Filter[])} .
     *
     * There are 3 kinds of filters:
     *   1. pushable filters which don't need to be evaluated again after scanning. 2. pushable filters which still need
     *      to be evaluated after scanning, e.g. parquet row group filter. 3. non-pushable filters. Both case 1 and 2
     *      should be considered as pushed filters and should be returned by this method.
     *
-    * It's possible that there is no filters in the query and {@link #pushFilters(Filter[])} is never called, empty
+    * It's possible that there is no filters in the query and {@@link#pushFilters(Filter[])} is never called, empty
     * array should be returned for this case.
     */
   override def pushedFilters(): Array[Filter] = _pushedFilters
@@ -177,7 +177,7 @@ class ExcelDataSourceReader(
     * Implementation should try its best to prune the unnecessary columns or nested fields, but it's also OK to do the
     * pruning partially, e.g., a data source may not be able to prune nested fields, and only prune top-level columns.
     *
-    * Note that, data source readers should update {@link DataSourceReader#readSchema()} after applying column pruning.
+    * Note that, data source readers should update {@@linkDataSourceReader#readSchema()} after applying column pruning.
     */
   override def pruneColumns(requiredSchema: StructType): Unit = {
     _requiredSchema = Some(requiredSchema)
@@ -216,7 +216,7 @@ class ExcelDataSourceReader(
     }
   }
 
-  /** Returns a list of {@link InputPartition}s. Each {@link InputPartition} is responsible for creating a data reader
+  /** Returns a list of {@@linkInputPartition} s. Each {@@linkInputPartition} is responsible for creating a data reader
     * to output data of one RDD partition. The number of input partitions returned here is the same as the number of RDD
     * partitions this scan outputs.
     *
