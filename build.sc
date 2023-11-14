@@ -2,14 +2,14 @@ import $ivy.`io.chris-kipp::mill-ci-release::0.1.9`
 import io.kipp.mill.ci.release.CiReleaseModule
 import coursier.maven.MavenRepository
 import mill._, scalalib._, publish._
-import mill.modules.Assembly._
+import Assembly._
 
 trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiReleaseModule {
   outer =>
   override def scalaVersion = crossValue
   val sparkVersion = crossValue2
 
-  override def millSourcePath = super.millSourcePath / os.up / os.up / os.up
+  override def millSourcePath = super.millSourcePath / os.up
 
   // Custom source layout for Spark Data Source API 2
   val sparkVersionSpecificSources = if (sparkVersion >= "3.4.0") {
