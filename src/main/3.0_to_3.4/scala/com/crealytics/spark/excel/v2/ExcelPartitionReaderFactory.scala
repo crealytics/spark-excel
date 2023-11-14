@@ -42,7 +42,7 @@ import scala.util.control.NonFatal
   *   Required data schema in the batch scan.
   * @param partitionSchema
   *   Schema of partitions.
-  * @param parsedOptions
+  * @param options
   *   Options for parsing Excel files.
   */
 case class ExcelPartitionReaderFactory(
@@ -51,19 +51,19 @@ case class ExcelPartitionReaderFactory(
   dataSchema: StructType,
   readDataSchema: StructType,
   partitionSchema: StructType,
-  parsedOptions: ExcelOptions,
+  options: ExcelOptions,
   filters: Seq[Filter]
 ) extends FilePartitionReaderFactory {
 
   override def buildReader(file: PartitionedFile): PartitionReader[InternalRow] = {
     val conf = broadcastedConf.value.value
     val actualDataSchema =
-      StructType(dataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord))
+      StructType(dataSchema.filterNot(_.name == options.columnNameOfCorruptRecord))
     val actualReadDataSchema =
-      StructType(readDataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord))
-    val parser = new ExcelParser(actualDataSchema, actualReadDataSchema, parsedOptions, filters)
+      StructType(readDataSchema.filterNot(_.name == options.columnNameOfCorruptRecord))
+    val parser = new ExcelParser(actualDataSchema, actualReadDataSchema, options, filters)
     val headerChecker =
-      new ExcelHeaderChecker(actualReadDataSchema, parsedOptions, source = s"Excel file: ${file.filePath}")
+      new ExcelHeaderChecker(actualReadDataSchema, options, source = s"Excel file: ${file.filePath}")
     val iter = readFile(conf, file, parser, headerChecker, readDataSchema)
     val partitionReader = new SparkExcelPartitionReaderFromIterator(iter)
     new PartitionReaderWithPartitionValues(partitionReader, readDataSchema, partitionSchema, file.partitionValues)
@@ -76,8 +76,8 @@ case class ExcelPartitionReaderFactory(
     headerChecker: ExcelHeaderChecker,
     requiredSchema: StructType
   ): SheetData[InternalRow] = {
-    val excelHelper = ExcelHelper(parsedOptions)
-    val sheetData = excelHelper.getSheetData(conf, URI.create(file.filePath))
+    val excelHelper = ExcelHelper(options)
+    val sheetData = excelHelper.getSheetData(conf, URI.create(file.filePath.toString))
     try {
       SheetData(
         ExcelParser.parseIterator(sheetData.rowIterator, parser, headerChecker, requiredSchema),

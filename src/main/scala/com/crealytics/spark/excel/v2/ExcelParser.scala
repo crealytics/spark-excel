@@ -42,7 +42,7 @@ import org.apache.poi.ss.usermodel.DateUtil
   *   The pushdown filters that should be applied to converted values.
   */
 class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val options: ExcelOptions, filters: Seq[Filter])
-    extends Logging {
+    extends Logging with ExcelParserBase {
   require(
     requiredSchema.toSet.subsetOf(dataSchema.toSet),
     s"requiredSchema (${requiredSchema.catalogString}) should be the subset of " +
@@ -95,7 +95,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
   private val pushedFilters = new ExcelFilters(filters, requiredSchema)
 
   /* Retrieve the raw record string. */
-  private def getCurrentInput: UTF8String = UTF8String
+  protected def getCurrentInput: UTF8String = UTF8String
     .fromString("TODO: how to show the corrupted record?")
 
   /** This parser first picks some tokens from the input tokens, according to the required schema, then parse these
@@ -352,7 +352,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
 
   private def convert(tokens: Vector[Cell]): Option[InternalRow] = {
     if (tokens == null) {
-      throw BadRecordException(() => getCurrentInput, () => None, new RuntimeException("Malformed Excel record"))
+      throw badRecord(Array.empty, new RuntimeException("Malformed Excel record"))
     }
 
     var badRecordException: Option[Throwable] =
@@ -396,7 +396,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
     if (skipRow) { noRows }
     else {
       if (badRecordException.isDefined) {
-        throw BadRecordException(() => getCurrentInput, () => requiredRow.headOption, badRecordException.get)
+        throw badRecord(requiredRow.toArray, badRecordException.get)
       } else { requiredRow }
     }
   }

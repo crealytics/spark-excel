@@ -18,7 +18,7 @@ package com.crealytics.spark.excel.v2
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.{InternalRow, FileSourceOptions}
 import org.apache.spark.sql.connector.read.PartitionReader
 import org.apache.spark.sql.execution.datasources.PartitionedFile
 import org.apache.spark.sql.execution.datasources.v2._
@@ -26,6 +26,8 @@ import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.util.SerializableConfiguration
+
+import java.net.URI
 import scala.util.control.NonFatal
 
 /** A factory used to create Excel readers.
@@ -40,7 +42,7 @@ import scala.util.control.NonFatal
   *   Required data schema in the batch scan.
   * @param partitionSchema
   *   Schema of partitions.
-  * @param options
+  * @param parsedOptions
   *   Options for parsing Excel files.
   */
 case class ExcelPartitionReaderFactory(
@@ -49,19 +51,22 @@ case class ExcelPartitionReaderFactory(
   dataSchema: StructType,
   readDataSchema: StructType,
   partitionSchema: StructType,
-  options: ExcelOptions,
+  parsedOptions: ExcelOptions,
   filters: Seq[Filter]
 ) extends FilePartitionReaderFactory {
-
+  protected def options: FileSourceOptions = new FileSourceOptions(Map(
+    FileSourceOptions.IGNORE_CORRUPT_FILES -> "true",
+    FileSourceOptions.IGNORE_MISSING_FILES -> "true"
+  ))
   override def buildReader(file: PartitionedFile): PartitionReader[InternalRow] = {
     val conf = broadcastedConf.value.value
     val actualDataSchema =
-      StructType(dataSchema.filterNot(_.name == options.columnNameOfCorruptRecord))
+      StructType(dataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord))
     val actualReadDataSchema =
-      StructType(readDataSchema.filterNot(_.name == options.columnNameOfCorruptRecord))
-    val parser = new ExcelParser(actualDataSchema, actualReadDataSchema, options, filters)
+      StructType(readDataSchema.filterNot(_.name == parsedOptions.columnNameOfCorruptRecord))
+    val parser = new ExcelParser(actualDataSchema, actualReadDataSchema, parsedOptions, filters)
     val headerChecker =
-      new ExcelHeaderChecker(actualReadDataSchema, options, source = s"Excel file: ${file.filePath}")
+      new ExcelHeaderChecker(actualReadDataSchema, parsedOptions, source = s"Excel file: ${file.filePath}")
     val iter = readFile(conf, file, parser, headerChecker, readDataSchema)
     val partitionReader = new SparkExcelPartitionReaderFromIterator(iter)
     new PartitionReaderWithPartitionValues(partitionReader, readDataSchema, partitionSchema, file.partitionValues)
@@ -74,8 +79,8 @@ case class ExcelPartitionReaderFactory(
     headerChecker: ExcelHeaderChecker,
     requiredSchema: StructType
   ): SheetData[InternalRow] = {
-    val excelHelper = ExcelHelper(options)
-    val sheetData = excelHelper.getSheetData(conf, file.filePath.toUri)
+    val excelHelper = ExcelHelper(parsedOptions)
+    val sheetData = excelHelper.getSheetData(conf, URI.create(file.filePath.toString))
     try {
       SheetData(
         ExcelParser.parseIterator(sheetData.rowIterator, parser, headerChecker, requiredSchema),

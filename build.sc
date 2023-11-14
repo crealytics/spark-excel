@@ -8,50 +8,25 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
   outer =>
   override def scalaVersion = crossValue
   val sparkVersion = crossValue2
+  val Array(sparkMajor, sparkMinor, sparkPatch) = sparkVersion.split("\\.")
+  val sparkBinaryVersion = s"$sparkMajor.$sparkMinor"
 
   override def millSourcePath = super.millSourcePath / os.up
 
-  // Custom source layout for Spark Data Source API 2
-  val sparkVersionSpecificSources = if (sparkVersion >= "3.4.0") {
-    Seq("scala", "3.0_and_up/scala", "3.1_and_up/scala", "3.2_and_up/scala", "3.3_and_up/scala", "3.4_and_up/scala")
-  } else if (sparkVersion >= "3.3.0") {
-    Seq(
-      "scala",
-      "3.0_3.1_3.2_3.3/scala",
-      "3.0_and_up/scala",
-      "3.1_and_up/scala",
-      "3.2_and_up/scala",
-      "3.3_and_up/scala"
-    )
-  } else if (sparkVersion >= "3.2.0") {
-    Seq(
-      "scala",
-      "3.0_3.1_3.2/scala",
-      "3.0_3.1_3.2_3.3/scala",
-      "3.0_and_up/scala",
-      "3.1_and_up/scala",
-      "3.2_and_up/scala"
-    )
-  } else if (sparkVersion >= "3.1.0") {
-    Seq(
-      "scala",
-      "3.1/scala",
-      "3.0_3.1/scala",
-      "3.0_3.1_3.2_3.3/scala",
-      "3.0_3.1_3.2/scala",
-      "3.0_and_up/scala",
-      "3.1_and_up/scala"
-    )
-  } else if (sparkVersion >= "3.0.0") {
-    Seq("scala", "3.0/scala", "3.0_3.1/scala", "3.0_3.1_3.2_3.3/scala", "3.0_3.1_3.2/scala", "3.0_and_up/scala")
-  } else if (sparkVersion >= "2.4.0") {
-    Seq("scala", "2.4/scala")
-  } else {
-    throw new UnsupportedOperationException(s"sparkVersion ${sparkVersion} is not supported")
+  def sparkVersionSpecificSources = T {
+    val versionSpecificDirs = os.list(os.pwd / "src" / "main")
+    val Array(sparkMajor, sparkMinor, sparkPatch) = sparkVersion.split("\\.")
+    val sparkBinaryVersion = s"$sparkMajor.$sparkMinor"
+    versionSpecificDirs.filter(_.last match {
+        case "scala" => true
+        case `sparkBinaryVersion` => true
+        case s"${sparkMaj}.${sparkMin}_and_up" => sparkMaj == sparkMajor && sparkMin <= sparkMinor
+        case s"${sparkLow}_to_${sparkHigh}" => sparkLow <= sparkVersion && sparkHigh >= sparkBinaryVersion
+        case _ => false
+    })
   }
-
   override def sources = T.sources {
-    super.sources() ++ sparkVersionSpecificSources.map(s => PathRef(millSourcePath / "src" / "main" / os.RelPath(s)))
+    super.sources() ++ sparkVersionSpecificSources().map(PathRef(_))
   }
 
   override def docSources = T.sources(Seq[PathRef]())
@@ -156,14 +131,10 @@ val spark32 = List("3.2.4")
 val spark33 = List("3.3.3")
 val spark34 = List("3.4.1")
 val spark35 = List("3.5.0")
+val sparkVersions = spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33 ++ spark34 ++ spark35
+val crossMatrix =
+  sparkVersions.map(spark => (scala212, spark)) ++
+  sparkVersions.filter(_ >= "3.2").map(spark => (scala213, spark))
 
-val crossMatrix = {
-
-  (spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33 ++ spark34 ++ spark35).map(spark =>
-    (scala212, spark)
-  ) ++ (spark32 ++ spark33 ++ spark34 ++ spark35).map(spark => (scala213, spark))
-
-  //  (spark34).map(spark => (scala212, spark))
-}
 
 object `spark-excel` extends Cross[SparkModule](crossMatrix) {}
