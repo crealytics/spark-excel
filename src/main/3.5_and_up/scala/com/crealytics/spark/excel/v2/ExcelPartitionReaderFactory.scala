@@ -18,7 +18,7 @@ package com.crealytics.spark.excel.v2
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.sql.catalyst.{InternalRow, FileSourceOptions}
+import org.apache.spark.sql.catalyst.{FileSourceOptions, InternalRow}
 import org.apache.spark.sql.connector.read.PartitionReader
 import org.apache.spark.sql.execution.datasources.PartitionedFile
 import org.apache.spark.sql.execution.datasources.v2._
@@ -54,10 +54,9 @@ case class ExcelPartitionReaderFactory(
   parsedOptions: ExcelOptions,
   filters: Seq[Filter]
 ) extends FilePartitionReaderFactory {
-  protected def options: FileSourceOptions = new FileSourceOptions(Map(
-    FileSourceOptions.IGNORE_CORRUPT_FILES -> "true",
-    FileSourceOptions.IGNORE_MISSING_FILES -> "true"
-  ))
+  protected def options: FileSourceOptions = new FileSourceOptions(
+    Map(FileSourceOptions.IGNORE_CORRUPT_FILES -> "true", FileSourceOptions.IGNORE_MISSING_FILES -> "true")
+  )
   override def buildReader(file: PartitionedFile): PartitionReader[InternalRow] = {
     val conf = broadcastedConf.value.value
     val actualDataSchema =

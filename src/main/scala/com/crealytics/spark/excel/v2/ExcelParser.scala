@@ -42,7 +42,8 @@ import org.apache.poi.ss.usermodel.DateUtil
   *   The pushdown filters that should be applied to converted values.
   */
 class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val options: ExcelOptions, filters: Seq[Filter])
-    extends Logging with ExcelParserBase {
+    extends Logging
+    with ExcelParserBase {
   require(
     requiredSchema.toSet.subsetOf(dataSchema.toSet),
     s"requiredSchema (${requiredSchema.catalogString}) should be the subset of " +
