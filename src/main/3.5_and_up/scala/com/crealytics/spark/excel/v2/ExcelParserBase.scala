@@ -24,5 +24,5 @@ trait ExcelParserBase {
 
   protected def getCurrentInput: UTF8String
   def badRecord(partialResults: Array[InternalRow], baseException: Throwable): BadRecordException =
-      BadRecordException(() => getCurrentInput, () => partialResults, baseException)
+    BadRecordException(() => getCurrentInput, () => partialResults, baseException)
 }
