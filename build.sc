@@ -18,11 +18,11 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
     val Array(sparkMajor, sparkMinor, sparkPatch) = sparkVersion.split("\\.")
     val sparkBinaryVersion = s"$sparkMajor.$sparkMinor"
     versionSpecificDirs.filter(_.last match {
-        case "scala" => true
-        case `sparkBinaryVersion` => true
-        case s"${sparkMaj}.${sparkMin}_and_up" => sparkMaj == sparkMajor && sparkMin <= sparkMinor
-        case s"${sparkLow}_to_${sparkHigh}" => sparkLow <= sparkVersion && sparkHigh >= sparkBinaryVersion
-        case _ => false
+      case "scala" => true
+      case `sparkBinaryVersion` => true
+      case s"${sparkMaj}.${sparkMin}_and_up" => sparkMaj == sparkMajor && sparkMin <= sparkMinor
+      case s"${sparkLow}_to_${sparkHigh}" => sparkLow <= sparkVersion && sparkHigh >= sparkBinaryVersion
+      case _ => false
     })
   }
   override def sources = T.sources {
@@ -71,7 +71,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"org.apache.poi:poi:$poiVersion",
       ivy"org.apache.poi:poi-ooxml:$poiVersion",
       ivy"org.apache.poi:poi-ooxml-lite:$poiVersion",
-      ivy"org.apache.xmlbeans:xmlbeans:5.1.1",
+      ivy"org.apache.xmlbeans:xmlbeans:5.2.0",
       ivy"com.norbitltd::spoiwo:2.2.1",
       ivy"com.github.pjfanning:excel-streaming-reader:4.2.0",
       ivy"com.github.pjfanning:poi-shared-strings:2.7.0",
@@ -134,7 +134,6 @@ val spark35 = List("3.5.0")
 val sparkVersions = spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33 ++ spark34 ++ spark35
 val crossMatrix =
   sparkVersions.map(spark => (scala212, spark)) ++
-  sparkVersions.filter(_ >= "3.2").map(spark => (scala213, spark))
-
+    sparkVersions.filter(_ >= "3.2").map(spark => (scala213, spark))
 
 object `spark-excel` extends Cross[SparkModule](crossMatrix) {}
