@@ -18,11 +18,11 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
     val Array(sparkMajor, sparkMinor, sparkPatch) = sparkVersion.split("\\.")
     val sparkBinaryVersion = s"$sparkMajor.$sparkMinor"
     versionSpecificDirs.filter(_.last match {
-        case "scala" => true
-        case `sparkBinaryVersion` => true
-        case s"${sparkMaj}.${sparkMin}_and_up" => sparkMaj == sparkMajor && sparkMin <= sparkMinor
-        case s"${sparkLow}_to_${sparkHigh}" => sparkLow <= sparkVersion && sparkHigh >= sparkBinaryVersion
-        case _ => false
+      case "scala" => true
+      case `sparkBinaryVersion` => true
+      case s"${sparkMaj}.${sparkMin}_and_up" => sparkMaj == sparkMajor && sparkMin <= sparkMinor
+      case s"${sparkLow}_to_${sparkHigh}" => sparkLow <= sparkVersion && sparkHigh >= sparkBinaryVersion
+      case _ => false
     })
   }
   override def sources = T.sources {
@@ -77,7 +77,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"com.github.pjfanning:poi-shared-strings:2.7.0",
       ivy"commons-io:commons-io:2.15.0",
       ivy"org.apache.commons:commons-compress:1.24.0",
-      ivy"org.apache.logging.log4j:log4j-api:2.21.1",
+      ivy"org.apache.logging.log4j:log4j-api:2.22.0",
       ivy"com.zaxxer:SparseBitSet:1.3",
       ivy"org.apache.commons:commons-collections4:4.4",
       ivy"com.github.virtuald:curvesapi:1.08",
@@ -86,7 +86,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"org.scala-lang.modules::scala-collection-compat:2.11.0"
     )
     if (sparkVersion >= "3.3.0") {
-      base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.21.1")
+      base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.22.0")
     } else {
       base
     }
@@ -134,7 +134,6 @@ val spark35 = List("3.5.0")
 val sparkVersions = spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33 ++ spark34 ++ spark35
 val crossMatrix =
   sparkVersions.map(spark => (scala212, spark)) ++
-  sparkVersions.filter(_ >= "3.2").map(spark => (scala213, spark))
-
+    sparkVersions.filter(_ >= "3.2").map(spark => (scala213, spark))
 
 object `spark-excel` extends Cross[SparkModule](crossMatrix) {}
