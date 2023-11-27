@@ -64,7 +64,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
     sparkDeps
   }
 
-  val poiVersion = "5.2.4"
+  val poiVersion = "5.2.5"
 
   override def ivyDeps = {
     val base = Agg(
