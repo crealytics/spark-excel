@@ -2,6 +2,21 @@ Next
 ====
 
 
+## [v0.20.3] - 2023-12-06
+### :wrench: Chores
+- [`83dfb22`](https://github.com/crealytics/spark-excel/commit/83dfb22668b02b03dfd854511c172e3292309377) - Update commons-io from 2.14.0 to 2.15.0 *(PR [#801](https://github.com/crealytics/spark-excel/pull/801) by [@scala-steward](https://github.com/scala-steward))*
+- [`3acf3a7`](https://github.com/crealytics/spark-excel/commit/3acf3a7b97942910da99199820e64097bc7fb85d) - Update log4j-api, log4j-core from 2.21.1 to 2.22.0 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`3918a56`](https://github.com/crealytics/spark-excel/commit/3918a56507b2b97be288dd56052851ae7e4d16fe) - Update scalafmt-core from 3.7.16 to 3.7.17 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`c84832c`](https://github.com/crealytics/spark-excel/commit/c84832cc47a3a9be5861d1303c2ebba11d0fb7cc) - Update xmlbeans from 5.1.1 to 5.2.0 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`01a2be7`](https://github.com/crealytics/spark-excel/commit/01a2be7780c1120e75dd8bf1aa9b054a2f641178) - Update poi, poi-ooxml, poi-ooxml-lite from 5.2.4 to 5.2.5 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`8bf8176`](https://github.com/crealytics/spark-excel/commit/8bf8176cf7159c38bd0f32eaf72ede23b7e5f708) - Update poi-shared-strings from 2.7.0 to 2.7.1 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`394243d`](https://github.com/crealytics/spark-excel/commit/394243d91d6ae7ad59370dbdae3ec6f1648e2765) - Update excel-streaming-reader from 4.2.0 to 4.2.1 *(PR [#811](https://github.com/crealytics/spark-excel/pull/811) by [@scala-steward](https://github.com/scala-steward))*
+- [`b44806d`](https://github.com/crealytics/spark-excel/commit/b44806d63b8eb29c531d9e7394d69af9458e22c2) - Update commons-compress from 1.24.0 to 1.25.0 *(PR [#805](https://github.com/crealytics/spark-excel/pull/805) by [@scala-steward](https://github.com/scala-steward))*
+- [`67e69ab`](https://github.com/crealytics/spark-excel/commit/67e69ab6f41109e364f88c87eb421d167c15ed3b) - Update mill-main from 0.11.5 to 0.11.6 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`4ae7658`](https://github.com/crealytics/spark-excel/commit/4ae76584af0ca4fc05513b5a0d690c7deb32fcac) - Update commons-io from 2.15.0 to 2.15.1 *(commit by [@scala-steward](https://github.com/scala-steward))*
+- [`d35d8b4`](https://github.com/crealytics/spark-excel/commit/d35d8b45b28e89a29b9ee34cb6edd8d90a025d70) - Update spark-core, spark-hive, spark-sql from 3.4.1 to 3.4.2 *(commit by [@scala-steward](https://github.com/scala-steward))*
+
+
 ## [v0.20.2] - 2023-11-14
 ### :bug: Bug Fixes
 - [`af8172a`](https://github.com/crealytics/spark-excel/commit/af8172a68049a8e26fc4657bec539f94e982476c) - Fix 3.5.0 compile issues *(commit by [@nightscape](https://github.com/nightscape))*
@@ -258,3 +273,4 @@ Next
 [v0.20.0]: https://github.com/crealytics/spark-excel/compare/v0.19.0...v0.20.0
 [v0.20.1]: https://github.com/crealytics/spark-excel/compare/v0.20.0...v0.20.1
 [v0.20.2]: https://github.com/crealytics/spark-excel/compare/v0.20.1...v0.20.2
+[v0.20.3]: https://github.com/crealytics/spark-excel/compare/v0.20.2...v0.20.3
