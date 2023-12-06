@@ -13,6 +13,21 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
 
   override def millSourcePath = super.millSourcePath / os.up
 
+  object LowerOrEqual {
+    def unapply(otherVersion: String): Boolean = otherVersion match {
+      case s"${sparkMaj}.${sparkMin}.${sparkPat}" => sparkMaj == sparkMajor && (sparkMin < sparkMinor || (sparkMin == sparkMinor && sparkPat <= sparkPatch))
+      case s"${sparkMaj}.${sparkMin}" => sparkMaj == sparkMajor && sparkMin <= sparkMinor
+      case sparkMaj => sparkMaj == sparkMajor
+    }
+  }
+  object HigherOrEqual {
+    def unapply(otherVersion: String): Boolean = otherVersion match {
+      case s"${sparkMaj}.${sparkMin}.${sparkPat}" => sparkMaj == sparkMajor && (sparkMin > sparkMinor || (sparkMin == sparkMinor && sparkPat >= sparkPatch))
+      case s"${sparkMaj}.${sparkMin}" => sparkMaj == sparkMajor && sparkMin >= sparkMinor
+      case sparkMaj => sparkMaj == sparkMajor
+    }
+  }
+
   def sparkVersionSpecificSources = T {
     val versionSpecificDirs = os.list(os.pwd / "src" / "main")
     val Array(sparkMajor, sparkMinor, sparkPatch) = sparkVersion.split("\\.")
@@ -20,8 +35,8 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
     versionSpecificDirs.filter(_.last match {
       case "scala" => true
       case `sparkBinaryVersion` => true
-      case s"${sparkMaj}.${sparkMin}_and_up" => sparkMaj == sparkMajor && sparkMin <= sparkMinor
-      case s"${sparkLow}_to_${sparkHigh}" => sparkLow <= sparkVersion && sparkHigh >= sparkBinaryVersion
+      case s"${LowerOrEqual()}_and_up" => true
+      case s"${LowerOrEqual()}_to_${HigherOrEqual()}" => true
       case _ => false
     })
   }
