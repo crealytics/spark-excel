@@ -15,14 +15,16 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
 
   object LowerOrEqual {
     def unapply(otherVersion: String): Boolean = otherVersion match {
-      case s"${sparkMaj}.${sparkMin}.${sparkPat}" => sparkMaj == sparkMajor && (sparkMin < sparkMinor || (sparkMin == sparkMinor && sparkPat <= sparkPatch))
+      case s"${sparkMaj}.${sparkMin}.${sparkPat}" =>
+        sparkMaj == sparkMajor && (sparkMin < sparkMinor || (sparkMin == sparkMinor && sparkPat <= sparkPatch))
       case s"${sparkMaj}.${sparkMin}" => sparkMaj == sparkMajor && sparkMin <= sparkMinor
       case sparkMaj => sparkMaj == sparkMajor
     }
   }
   object HigherOrEqual {
     def unapply(otherVersion: String): Boolean = otherVersion match {
-      case s"${sparkMaj}.${sparkMin}.${sparkPat}" => sparkMaj == sparkMajor && (sparkMin > sparkMinor || (sparkMin == sparkMinor && sparkPat >= sparkPatch))
+      case s"${sparkMaj}.${sparkMin}.${sparkPat}" =>
+        sparkMaj == sparkMajor && (sparkMin > sparkMinor || (sparkMin == sparkMinor && sparkPat >= sparkPatch))
       case s"${sparkMaj}.${sparkMin}" => sparkMaj == sparkMajor && sparkMin >= sparkMinor
       case sparkMaj => sparkMaj == sparkMajor
     }
@@ -74,7 +76,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
   )
 
   override def compileIvyDeps = if (sparkVersion < "3.3.0") {
-    sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
+    sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:2.0.9".excludeOrg("stax"))
   } else {
     sparkDeps
   }
