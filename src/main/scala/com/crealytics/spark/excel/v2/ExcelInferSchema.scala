@@ -40,16 +40,11 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
       } else Vector.empty
 
     /* Possible StructField for row-is-hidden column */
-    val rowIsHiddenField =
-      if (options.columnNameOfRowIsHidden.isDefined) {
-        Vector[StructField](StructField(options.columnNameOfRowIsHidden.get, BooleanType, false))
-      } else Vector.empty
+    val rowIsHiddenField = options.columnNameOfRowIsHidden.map(cn => StructField(cn, BooleanType, false)).toSeq
 
-    /* Header without row-is-hidden-column */
-    var dataHeader = if (options.columnNameOfRowIsHidden.isDefined) header.tail else header
-
+    /* Header without row-is-hidden-column and row-number-column */
+    val dataHeader = header.drop(options.columnNameOfRowIsHidden.size + options.columnNameOfRowNumber.size)
     /* Header without row-number-column */
-    dataHeader = if (options.columnNameOfRowNumber.isDefined) dataHeader.tail else dataHeader
 
     /* Normal data fields */
     val dataFields =
