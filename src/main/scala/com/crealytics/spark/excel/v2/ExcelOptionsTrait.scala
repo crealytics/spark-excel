@@ -119,6 +119,9 @@ trait ExcelOptionsTrait extends Serializable {
   /* Additional column for excel row number */
   val columnNameOfRowNumber = parameters.get("columnNameOfRowNumber")
 
+  /* Additional column for excel row is hidden */
+  val columnNameOfRowIsHidden = parameters.get("columnNameOfRowIsHidden")
+
   /* Data address, default to everything */
   val dataAddress = parameters.getOrElse("dataAddress", "A1")
 

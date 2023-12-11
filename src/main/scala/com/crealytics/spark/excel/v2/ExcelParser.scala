@@ -64,11 +64,16 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
   private type ValueConverter = Cell => Any
 
   /* Implement column pruning right inside this class */
-  private val parsedSchema =
-    if (options.columnNameOfRowNumber.isDefined) {
+  private var parsedSchema =
+    if (options.columnNameOfRowIsHidden.isDefined) {
       dataSchema
-        .filter(_.name != options.columnNameOfRowNumber.get)
+        .filter(_.name != options.columnNameOfRowIsHidden.get)
     } else dataSchema
+  parsedSchema =
+    if (options.columnNameOfRowNumber.isDefined) {
+      parsedSchema
+        .filter(_.name != options.columnNameOfRowNumber.get)
+    } else parsedSchema
 
   /* This index is used to reorder parsed tokens */
   private val tokenIndexArr = requiredSchema
@@ -79,6 +84,12 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
   private val rowNumberPosition =
     if (options.columnNameOfRowNumber.isDefined) {
       Some(requiredSchema.fieldIndex(options.columnNameOfRowNumber.get))
+    } else None
+
+  /* Excel row is hidden (if configured) */
+  private val rowIsHidden =
+    if (options.columnNameOfRowIsHidden.isDefined) {
+      Some(requiredSchema.fieldIndex(options.columnNameOfRowIsHidden.get))
     } else None
 
   /* Pre-allocated Some to avoid the overhead of building Some per each-row. */
@@ -380,6 +391,19 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
             /* Handle additional excel-row-number */
             if (tokens.isEmpty) { row.setNullAt(i) }
             else { row(i) = tokens.head.getRowIndex }
+          } else if (rowIsHidden.isDefined && i == rowIsHidden.get) {
+            /* Handle additional excel-row-is-hidden */
+            if (tokens.isEmpty) {
+              row.setNullAt(i)
+            }
+            else {
+              val r = tokens.head.getRow
+              if (r == null) {
+                row.setNullAt(i)
+              } else {
+                row(i) = r.getZeroHeight
+              }
+            }
           } else {
             /* Normal data column */
             row(i) = valueConverters(i).apply(tokens(tokenIndexArr(i)))

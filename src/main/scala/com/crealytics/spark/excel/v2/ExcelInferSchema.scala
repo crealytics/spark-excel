@@ -39,8 +39,17 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
         Vector[StructField](StructField(options.columnNameOfRowNumber.get, IntegerType, false))
       } else Vector.empty
 
+    /* Possible StructField for row-is-hidden column */
+    val rowIsHiddenField =
+      if (options.columnNameOfRowIsHidden.isDefined) {
+        Vector[StructField](StructField(options.columnNameOfRowIsHidden.get, BooleanType, false))
+      } else Vector.empty
+
+    /* Header without row-is-hidden-column */
+    var dataHeader = if (options.columnNameOfRowIsHidden.isDefined) header.tail else header
+
     /* Header without row-number-column */
-    val dataHeader = if (options.columnNameOfRowNumber.isDefined) header.tail else header
+    dataHeader = if (options.columnNameOfRowNumber.isDefined) dataHeader.tail else dataHeader
 
     /* Normal data fields */
     val dataFields =
@@ -54,7 +63,7 @@ class ExcelInferSchema(val options: ExcelOptions) extends Serializable {
         dataHeader.map(fieldName => StructField(fieldName, StringType, nullable = true))
       }
 
-    StructType(rowNumField ++ dataFields)
+    StructType(rowIsHiddenField ++ rowNumField ++ dataFields)
   }
 
   private def toStructFields(fieldTypes: Vector[DataType], header: Vector[String]): Vector[StructField] = {

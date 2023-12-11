@@ -216,6 +216,10 @@ class ExcelHelper private (options: ExcelOptions) {
       if (options.columnNameOfRowNumber.isDefined) Vector[String](options.columnNameOfRowNumber.get)
       else Vector.empty[String]
 
+    val rowIsHiddenColumn =
+      if (options.columnNameOfRowIsHidden.isDefined) Vector[String](options.columnNameOfRowIsHidden.get)
+      else Vector.empty[String]
+
     val dataColumns =
       if (options.header) {
         val headerNames = firstRow.map(dataFormatter.formatCellValue)
@@ -246,7 +250,7 @@ class ExcelHelper private (options: ExcelOptions) {
         }
       }
 
-    rowNumColumn ++ dataColumns
+    rowIsHiddenColumn ++ rowNumColumn ++ dataColumns
   }
 
   /** Get parsed range address from given ExcelOption
