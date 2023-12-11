@@ -248,7 +248,7 @@ class ExcelHelper private (options: ExcelOptions) {
         }
       }
 
-    rowIsHiddenColumn ++ rowNumColumn ++ dataColumns
+    rowIsHiddenColumn.toVector ++ rowNumColumn ++ dataColumns
   }
 
   /** Get parsed range address from given ExcelOption
