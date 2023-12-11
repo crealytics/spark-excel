@@ -26,8 +26,8 @@ import scala.jdk.CollectionConverters._
 
 /** Related issues: #40 Allow reading only a subset of rows https://github.com/crealytics/spark-excel/issues/40 #59 Rows
   * are returned in incorrect order on cluster https://github.com/crealytics/spark-excel/issues/59 #115 Add excel row
-  * number column https://github.com/crealytics/spark-excel/issues/115 #749 Add excel row
-  * is hidden column https://github.com/crealytics/spark-excel/issues/749
+  * number column https://github.com/crealytics/spark-excel/issues/115 #749 Add excel row is hidden column
+  * https://github.com/crealytics/spark-excel/issues/749
   */
 object RowNumberIsHiddenColumnSuite {
 
@@ -109,8 +109,12 @@ class RowNumberIsHiddenColumnSuite extends AnyFunSuite with DataFrameSuiteBase w
     val df = readFromResources(
       spark,
       path = "issue_749_max.xlsx",
-      Map("header" -> false, "keepUndefinedRows" -> false,
-        "columnNameOfRowNumber" -> "RowID", "columnNameOfRowIsHidden" -> "RowIsHidden"),
+      Map(
+        "header" -> false,
+        "keepUndefinedRows" -> false,
+        "columnNameOfRowNumber" -> "RowID",
+        "columnNameOfRowIsHidden" -> "RowIsHidden"
+      ),
       schema = expectedSchema
     )
     val expected = spark.createDataFrame(expectedData_NoKeep, expectedSchema)
@@ -121,8 +125,12 @@ class RowNumberIsHiddenColumnSuite extends AnyFunSuite with DataFrameSuiteBase w
     val df = readFromResources(
       spark,
       path = "/issue_749_max.xlsx",
-      Map("header" -> false, "keepUndefinedRows" -> true,
-        "columnNameOfRowNumber" -> "RowID", "columnNameOfRowIsHidden" -> "RowIsHidden"),
+      Map(
+        "header" -> false,
+        "keepUndefinedRows" -> true,
+        "columnNameOfRowNumber" -> "RowID",
+        "columnNameOfRowIsHidden" -> "RowIsHidden"
+      ),
       schema = expectedSchema
     )
     val expected = spark.createDataFrame(expectedData_Keep, expectedSchema)
@@ -133,8 +141,12 @@ class RowNumberIsHiddenColumnSuite extends AnyFunSuite with DataFrameSuiteBase w
     val df = readFromResources(
       spark,
       path = "/issue_749_max.xlsx",
-      Map("header" -> false, "keepUndefinedRows" -> false,
-        "columnNameOfRowNumber" -> "RowID", "columnNameOfRowIsHidden" -> "RowIsHidden"),
+      Map(
+        "header" -> false,
+        "keepUndefinedRows" -> false,
+        "columnNameOfRowNumber" -> "RowID",
+        "columnNameOfRowIsHidden" -> "RowIsHidden"
+      ),
       schema = expectedSchema
     ).select("RowIsHidden", "3", "RowID", "2")
     val expected = spark.createDataFrame(expectedData_Projection, expectedSchema_Projection)

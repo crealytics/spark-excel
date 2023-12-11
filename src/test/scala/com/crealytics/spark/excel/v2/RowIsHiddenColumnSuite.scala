@@ -25,8 +25,8 @@ import java.util
 import scala.jdk.CollectionConverters._
 
 /** Related issues: #40 Allow reading only a subset of rows https://github.com/crealytics/spark-excel/issues/40 #59 Rows
-  * are returned in incorrect order on cluster https://github.com/crealytics/spark-excel/issues/59 #749 Add excel row
-  * is hidden column https://github.com/crealytics/spark-excel/issues/749
+  * are returned in incorrect order on cluster https://github.com/crealytics/spark-excel/issues/59 #749 Add excel row is
+  * hidden column https://github.com/crealytics/spark-excel/issues/749
   */
 object RowIsHiddenColumnSuite {
 

@@ -69,11 +69,10 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
       dataSchema
         .filter(_.name != options.columnNameOfRowIsHidden.get)
     } else dataSchema
-  parsedSchema =
-    if (options.columnNameOfRowNumber.isDefined) {
-      parsedSchema
-        .filter(_.name != options.columnNameOfRowNumber.get)
-    } else parsedSchema
+  parsedSchema = if (options.columnNameOfRowNumber.isDefined) {
+    parsedSchema
+      .filter(_.name != options.columnNameOfRowNumber.get)
+  } else parsedSchema
 
   /* This index is used to reorder parsed tokens */
   private val tokenIndexArr = requiredSchema
@@ -395,8 +394,7 @@ class ExcelParser(dataSchema: StructType, requiredSchema: StructType, val option
             /* Handle additional excel-row-is-hidden */
             if (tokens.isEmpty) {
               row.setNullAt(i)
-            }
-            else {
+            } else {
               val r = tokens.head.getRow
               if (r == null) {
                 row.setNullAt(i)
