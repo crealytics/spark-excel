@@ -15,14 +15,16 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
 
   object LowerOrEqual {
     def unapply(otherVersion: String): Boolean = otherVersion match {
-      case s"${sparkMaj}.${sparkMin}.${sparkPat}" => sparkMaj == sparkMajor && (sparkMin < sparkMinor || (sparkMin == sparkMinor && sparkPat <= sparkPatch))
+      case s"${sparkMaj}.${sparkMin}.${sparkPat}" =>
+        sparkMaj == sparkMajor && (sparkMin < sparkMinor || (sparkMin == sparkMinor && sparkPat <= sparkPatch))
       case s"${sparkMaj}.${sparkMin}" => sparkMaj == sparkMajor && sparkMin <= sparkMinor
       case sparkMaj => sparkMaj == sparkMajor
     }
   }
   object HigherOrEqual {
     def unapply(otherVersion: String): Boolean = otherVersion match {
-      case s"${sparkMaj}.${sparkMin}.${sparkPat}" => sparkMaj == sparkMajor && (sparkMin > sparkMinor || (sparkMin == sparkMinor && sparkPat >= sparkPatch))
+      case s"${sparkMaj}.${sparkMin}.${sparkPat}" =>
+        sparkMaj == sparkMajor && (sparkMin > sparkMinor || (sparkMin == sparkMinor && sparkPat >= sparkPatch))
       case s"${sparkMaj}.${sparkMin}" => sparkMaj == sparkMajor && sparkMin >= sparkMinor
       case sparkMaj => sparkMaj == sparkMajor
     }
@@ -92,7 +94,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"com.github.pjfanning:poi-shared-strings:2.7.1",
       ivy"commons-io:commons-io:2.15.1",
       ivy"org.apache.commons:commons-compress:1.25.0",
-      ivy"org.apache.logging.log4j:log4j-api:2.22.0",
+      ivy"org.apache.logging.log4j:log4j-api:2.22.1",
       ivy"com.zaxxer:SparseBitSet:1.3",
       ivy"org.apache.commons:commons-collections4:4.4",
       ivy"com.github.virtuald:curvesapi:1.08",
@@ -101,7 +103,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"org.scala-lang.modules::scala-collection-compat:2.11.0"
     )
     if (sparkVersion >= "3.3.0") {
-      base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.22.0")
+      base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.22.1")
     } else {
       base
     }
