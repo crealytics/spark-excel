@@ -15,14 +15,16 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
 
   object LowerOrEqual {
     def unapply(otherVersion: String): Boolean = otherVersion match {
-      case s"${sparkMaj}.${sparkMin}.${sparkPat}" => sparkMaj == sparkMajor && (sparkMin < sparkMinor || (sparkMin == sparkMinor && sparkPat <= sparkPatch))
+      case s"${sparkMaj}.${sparkMin}.${sparkPat}" =>
+        sparkMaj == sparkMajor && (sparkMin < sparkMinor || (sparkMin == sparkMinor && sparkPat <= sparkPatch))
       case s"${sparkMaj}.${sparkMin}" => sparkMaj == sparkMajor && sparkMin <= sparkMinor
       case sparkMaj => sparkMaj == sparkMajor
     }
   }
   object HigherOrEqual {
     def unapply(otherVersion: String): Boolean = otherVersion match {
-      case s"${sparkMaj}.${sparkMin}.${sparkPat}" => sparkMaj == sparkMajor && (sparkMin > sparkMinor || (sparkMin == sparkMinor && sparkPat >= sparkPatch))
+      case s"${sparkMaj}.${sparkMin}.${sparkPat}" =>
+        sparkMaj == sparkMajor && (sparkMin > sparkMinor || (sparkMin == sparkMinor && sparkPat >= sparkPatch))
       case s"${sparkMaj}.${sparkMin}" => sparkMaj == sparkMajor && sparkMin >= sparkMinor
       case sparkMaj => sparkMaj == sparkMajor
     }
@@ -143,7 +145,7 @@ val spark24 = List("2.4.1", "2.4.7", "2.4.8")
 val spark30 = List("3.0.1", "3.0.3")
 val spark31 = List("3.1.1", "3.1.2", "3.1.3")
 val spark32 = List("3.2.4")
-val spark33 = List("3.3.3")
+val spark33 = List("3.3.4")
 val spark34 = List("3.4.1", "3.4.2")
 val spark35 = List("3.5.0")
 val sparkVersions = spark24 ++ spark30 ++ spark31 ++ spark32 ++ spark33 ++ spark34 ++ spark35
