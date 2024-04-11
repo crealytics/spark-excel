@@ -76,7 +76,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
   )
 
   override def compileIvyDeps = if (sparkVersion < "3.3.0") {
-    sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:1.7.36".excludeOrg("stax"))
+    sparkDeps ++ Agg(ivy"org.slf4j:slf4j-api:2.0.12".excludeOrg("stax"))
   } else {
     sparkDeps
   }
