@@ -5,6 +5,13 @@ labels: [Bug, Needs Triage]
 body:
 - type: checkboxes
   attributes:
+    label: Am I using the newest version of the library?
+    description: Please always use the latest version before posting any issues. Your bug might already have been solved..
+    options:
+    - label: I have made sure that I'm using the latest version of the library.
+      required: true
+- type: checkboxes
+  attributes:
     label: Is there an existing issue for this?
     description: Please search to see if an issue already exists for the bug you encountered.
     options:
