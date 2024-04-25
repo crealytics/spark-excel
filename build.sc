@@ -90,7 +90,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"org.apache.poi:poi-ooxml-lite:$poiVersion",
       ivy"org.apache.xmlbeans:xmlbeans:5.2.0",
       ivy"com.norbitltd::spoiwo:2.2.1",
-      ivy"com.github.pjfanning:excel-streaming-reader:4.3.0",
+      ivy"com.github.pjfanning:excel-streaming-reader:4.3.1",
       ivy"com.github.pjfanning:poi-shared-strings:2.8.0",
       ivy"commons-io:commons-io:2.16.1",
       ivy"org.apache.commons:commons-compress:1.26.1",
