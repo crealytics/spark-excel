@@ -234,7 +234,7 @@ dataFrame.write
         .save("some/path")
 ````
 
-Need some more examples? Check out the [test cases](src/test/scala/com/crealytics/spark/v2/excel/DataFrameWriterApiComplianceSuite.scala)
+Need some more examples? Check out the [test cases](src/test/scala/com/crealytics/spark/excel/v2/DataFrameWriterApiComplianceSuite.scala)
 or have a look at our wiki
 
 ## Building From Source
