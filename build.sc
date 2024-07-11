@@ -1,10 +1,16 @@
+import $ivy.`com.lihaoyi::mill-contrib-sonatypecentral:`
+import mill.contrib.sonatypecentral.SonatypeCentralPublishModule
 import $ivy.`io.chris-kipp::mill-ci-release::0.1.10`
 import io.kipp.mill.ci.release.CiReleaseModule
 import coursier.maven.MavenRepository
 import mill._, scalalib._, publish._
 import Assembly._
 
-trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiReleaseModule {
+trait SparkModule
+    extends Cross.Module2[String, String]
+    with SbtModule
+    with CiReleaseModule
+    with SonatypeCentralPublishModule {
   outer =>
   override def scalaVersion = crossValue
   val sparkVersion = crossValue2
