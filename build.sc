@@ -91,7 +91,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"org.apache.xmlbeans:xmlbeans:5.2.1",
       ivy"com.norbitltd::spoiwo:2.2.1",
       ivy"com.github.pjfanning:excel-streaming-reader:5.0.2",
-      ivy"commons-io:commons-io:2.16.1",
+      ivy"commons-io:commons-io:2.17.0",
       ivy"org.apache.commons:commons-compress:1.27.1",
       ivy"org.apache.logging.log4j:log4j-api:2.24.0",
       ivy"com.zaxxer:SparseBitSet:1.3",
