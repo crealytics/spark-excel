@@ -16,11 +16,8 @@
 
 package com.crealytics.spark.excel
 
-import com.crealytics.spark.DataFrameSuiteBase
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Row, _}
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
+import org.apache.spark.sql.Row
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
@@ -85,39 +82,42 @@ object ErrorsAsStringsReadSuite {
   private val excelLocation = "/spreadsheets/with_errors_all_types.xlsx"
 }
 
-class ErrorsAsStringsReadSuite extends AnyFunSpec with DataFrameSuiteBase with Matchers {
+class ErrorsAsStringsReadSuite extends BaseExcelTestSuite with ReadTestTrait {
   import ErrorsAsStringsReadSuite._
 
-  def readFromResources(path: String, setErrorCellsToFallbackValues: Boolean, inferSchema: Boolean): DataFrame = {
-    val url = getClass.getResource(path)
-    spark.read
-      .excel(setErrorCellsToFallbackValues = setErrorCellsToFallbackValues, inferSchema = inferSchema, excerptSize = 3)
-      .load(url.getPath)
+  test("should read errors in string format when setErrorCellsToFallbackValues=true and inferSchema=true") {
+    val df = readExcel(
+      ExcelTestUtils.resourcePath(excelLocation),
+      Map("setErrorCellsToFallbackValues" -> "true", "inferSchema" -> "true", "excerptSize" -> "3")
+    )
+    val expected = createDataFrame(expectedDataErrorsAsStringsInfer.asScala.toSeq, expectedSchemaInfer)
+    assertDataFrameEquals(expected, df)
   }
 
-  describe("spark-excel") {
-    it("should read errors in string format when setErrorCellsToFallbackValues=true and inferSchema=true") {
-      val df = readFromResources(excelLocation, true, true)
-      val expected = spark.createDataFrame(expectedDataErrorsAsStringsInfer, expectedSchemaInfer)
-      assertDataFrameEquals(expected, df)
-    }
+  test("should read errors as null when setErrorCellsToFallbackValues=false and inferSchema=true") {
+    val df = readExcel(
+      ExcelTestUtils.resourcePath(excelLocation),
+      Map("setErrorCellsToFallbackValues" -> "false", "inferSchema" -> "true", "excerptSize" -> "3")
+    )
+    val expected = createDataFrame(expectedDataErrorsAsNullInfer.asScala.toSeq, expectedSchemaInfer)
+    assertDataFrameEquals(expected, df)
+  }
 
-    it("should read errors as null when setErrorCellsToFallbackValues=false and inferSchema=true") {
-      val df = readFromResources(excelLocation, false, true)
-      val expected = spark.createDataFrame(expectedDataErrorsAsNullInfer, expectedSchemaInfer)
-      assertDataFrameEquals(expected, df)
-    }
+  test("should read errors in string format when setErrorCellsToFallbackValues=true and inferSchema=false") {
+    val df = readExcel(
+      ExcelTestUtils.resourcePath(excelLocation),
+      Map("setErrorCellsToFallbackValues" -> "true", "inferSchema" -> "false", "excerptSize" -> "3")
+    )
+    val expected = createDataFrame(expectedDataErrorsAsStringsNonInfer.asScala.toSeq, expectedSchemaNonInfer)
+    assertDataFrameEquals(expected, df)
+  }
 
-    it("should read errors in string format when setErrorCellsToFallbackValues=true and inferSchema=false") {
-      val df = readFromResources(excelLocation, true, false)
-      val expected = spark.createDataFrame(expectedDataErrorsAsStringsNonInfer, expectedSchemaNonInfer)
-      assertDataFrameEquals(expected, df)
-    }
-
-    it("should read errors in string format when setErrorCellsToFallbackValues=false and inferSchema=false") {
-      val df = readFromResources(excelLocation, false, false)
-      val expected = spark.createDataFrame(expectedDataErrorsAsNullNonInfer, expectedSchemaNonInfer)
-      assertDataFrameEquals(expected, df)
-    }
+  test("should read errors in string format when setErrorCellsToFallbackValues=false and inferSchema=false") {
+    val df = readExcel(
+      ExcelTestUtils.resourcePath(excelLocation),
+      Map("setErrorCellsToFallbackValues" -> "false", "inferSchema" -> "false", "excerptSize" -> "3")
+    )
+    val expected = createDataFrame(expectedDataErrorsAsNullNonInfer.asScala.toSeq, expectedSchemaNonInfer)
+    assertDataFrameEquals(expected, df)
   }
 }
