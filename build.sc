@@ -93,7 +93,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"com.github.pjfanning:excel-streaming-reader:5.0.2",
       ivy"commons-io:commons-io:2.17.0",
       ivy"org.apache.commons:commons-compress:1.27.1",
-      ivy"org.apache.logging.log4j:log4j-api:2.24.0",
+      ivy"org.apache.logging.log4j:log4j-api:2.24.1",
       ivy"com.zaxxer:SparseBitSet:1.3",
       ivy"org.apache.commons:commons-collections4:4.4",
       ivy"com.github.virtuald:curvesapi:1.08",
@@ -102,7 +102,7 @@ trait SparkModule extends Cross.Module2[String, String] with SbtModule with CiRe
       ivy"org.scala-lang.modules::scala-collection-compat:2.12.0"
     )
     if (sparkVersion >= "3.3.0") {
-      base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.24.0")
+      base ++ Agg(ivy"org.apache.logging.log4j:log4j-core:2.24.1")
     } else {
       base
     }
