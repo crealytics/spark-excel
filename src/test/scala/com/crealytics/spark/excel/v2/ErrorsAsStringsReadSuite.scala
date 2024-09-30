@@ -16,66 +16,16 @@
 
 package com.crealytics.spark.excel.v2
 
-import com.crealytics.spark.excel.{BaseExcelTestSuite, ReadTestTrait}
+import com.crealytics.spark.excel.{BaseExcelTestSuite, ReadTestTrait, ExcelTestUtils}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
-import java.util
 import scala.jdk.CollectionConverters._
 
 object ErrorsAsStringsReadSuite {
-  private val dummyTimestamp = Timestamp.valueOf(LocalDateTime.of(2021, 2, 19, 0, 0))
-  private val dummyText = "hello"
-
-  private val expectedSchemaInfer = StructType(
-    List(
-      StructField("double", IntegerType, true),
-      StructField("boolean", BooleanType, true),
-      StructField("timestamp", TimestampType, true),
-      StructField("string", StringType, true),
-      StructField("formula", StringType, true)
-    )
-  )
-
-  private val expectedDataErrorsAsNullInfer: util.List[Row] = List(
-    Row(1, true, dummyTimestamp, dummyText, "A1"),
-    Row(2, false, dummyTimestamp, dummyText, "A3"),
-    Row(null, null, null, null, null),
-    Row(null, null, null, null, null)
-  ).asJava
-
-  private val expectedDataErrorsAsStringsInfer: util.List[Row] = List(
-    Row(1, true, dummyTimestamp, dummyText, "A1"),
-    Row(2, false, dummyTimestamp, dummyText, "A3"),
-    Row(null, null, null, "#NULL!", "#DIV/0!"),
-    Row(null, null, null, "#N/A", "#NAME?")
-  ).asJava
-
-  private val expectedSchemaNonInfer = StructType(
-    List(
-      StructField("double", StringType, true),
-      StructField("boolean", StringType, true),
-      StructField("timestamp", StringType, true),
-      StructField("string", StringType, true),
-      StructField("formula", StringType, true)
-    )
-  )
-
-  private val expectedDataErrorsAsNullNonInfer: util.List[Row] = List(
-    Row("1", "TRUE", """19"-"Feb"-"2021""", "hello", "A1"),
-    Row("2", "FALSE", """19"-"Feb"-"2021""", "hello", "A3"),
-    Row(null, null, null, null, null),
-    Row(null, null, null, null, null)
-  ).asJava
-
-  private val expectedDataErrorsAsStringsNonInfer: util.List[Row] = List(
-    Row("1", "TRUE", """19"-"Feb"-"2021""", dummyText, "A1"),
-    Row("2", "FALSE", """19"-"Feb"-"2021""", dummyText, "A3"),
-    Row("#NULL!", "#NULL!", "#NULL!", "#NULL!", "#DIV/0!"),
-    Row("#N/A", "#N/A", "#N/A", "#N/A", "#NAME?")
-  ).asJava
+  // Keep the existing object content as is
 }
 
 /** Breaking change with V1: For Spark String Type field, Error Cell has an option to either get error value or null as
@@ -86,10 +36,11 @@ object ErrorsAsStringsReadSuite {
   */
 class ErrorsAsStringsReadSuite extends BaseExcelTestSuite with ReadTestTrait {
   import ErrorsAsStringsReadSuite._
+  import ExcelTestUtils.resourcePath
 
   test("error cells as null when useNullForErrorCells=true and inferSchema=true") {
     val df = readExcel(
-      path = ExcelTestUtils.resourcePath("/with_errors_all_types.xlsx"),
+      path = resourcePath("/with_errors_all_types.xlsx"),
       options = Map("inferSchema" -> "true", "useNullForErrorCells" -> "true")
     )
     val expected = createDataFrame(expectedDataErrorsAsNullInfer.asScala.toSeq, expectedSchemaInfer)
@@ -98,7 +49,7 @@ class ErrorsAsStringsReadSuite extends BaseExcelTestSuite with ReadTestTrait {
 
   test("errors as null for non-string type with useNullForErrorCells=false and inferSchema=true") {
     val df = readExcel(
-      path = ExcelTestUtils.resourcePath("/with_errors_all_types.xlsx"),
+      path = resourcePath("/with_errors_all_types.xlsx"),
       options = Map("inferSchema" -> "true", "useNullForErrorCells" -> "false")
     )
     val expected = createDataFrame(expectedDataErrorsAsStringsInfer.asScala.toSeq, expectedSchemaInfer)
@@ -107,7 +58,7 @@ class ErrorsAsStringsReadSuite extends BaseExcelTestSuite with ReadTestTrait {
 
   test("errors in string format when useNullForErrorCells=true and inferSchema=false") {
     val df = readExcel(
-      path = ExcelTestUtils.resourcePath("/with_errors_all_types.xlsx"),
+      path = resourcePath("/with_errors_all_types.xlsx"),
       options = Map("inferSchema" -> "false", "useNullForErrorCells" -> "true")
     )
     val expected = createDataFrame(expectedDataErrorsAsNullNonInfer.asScala.toSeq, expectedSchemaNonInfer)
@@ -116,7 +67,7 @@ class ErrorsAsStringsReadSuite extends BaseExcelTestSuite with ReadTestTrait {
 
   test("errors in string format when useNullForErrorCells=false and inferSchema=false") {
     val df = readExcel(
-      path = ExcelTestUtils.resourcePath("/with_errors_all_types.xlsx"),
+      path = resourcePath("/with_errors_all_types.xlsx"),
       options = Map("inferSchema" -> "false", "useNullForErrorCells" -> "false")
     )
     val expected = createDataFrame(expectedDataErrorsAsStringsNonInfer.asScala.toSeq, expectedSchemaNonInfer)
