@@ -16,10 +16,9 @@
 
 package com.crealytics.spark.excel.v2
 
-import com.crealytics.spark.DataFrameSuiteBase
+import com.crealytics.spark.excel.{BaseExcelTestSuite, ReadTestTrait}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
-import org.scalatest.funsuite.AnyFunSuite
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
@@ -85,48 +84,42 @@ object ErrorsAsStringsReadSuite {
   * Related issues: Support ERROR cell type when using inferSchema=true link:
   * https://github.com/crealytics/spark-excel/pull/343
   */
-class ErrorsAsStringsReadSuite extends AnyFunSuite with DataFrameSuiteBase with ExcelTestingUtilities {
+class ErrorsAsStringsReadSuite extends BaseExcelTestSuite with ReadTestTrait {
   import ErrorsAsStringsReadSuite._
 
   test("error cells as null when useNullForErrorCells=true and inferSchema=true") {
-    val df = readFromResources(
-      spark,
-      path = "with_errors_all_types.xlsx",
-      options = Map("inferSchema" -> true, "useNullForErrorCells" -> true)
+    val df = readExcel(
+      path = ExcelTestUtils.resourcePath("/with_errors_all_types.xlsx"),
+      options = Map("inferSchema" -> "true", "useNullForErrorCells" -> "true")
     )
-    val expected = spark.createDataFrame(expectedDataErrorsAsNullInfer, expectedSchemaInfer)
+    val expected = createDataFrame(expectedDataErrorsAsNullInfer.asScala.toSeq, expectedSchemaInfer)
     assertDataFrameEquals(expected, df)
   }
 
   test("errors as null for non-string type with useNullForErrorCells=false and inferSchema=true") {
-    val df = readFromResources(
-      spark,
-      path = "with_errors_all_types.xlsx",
-      options = Map("inferSchema" -> true, "useNullForErrorCells" -> false)
+    val df = readExcel(
+      path = ExcelTestUtils.resourcePath("/with_errors_all_types.xlsx"),
+      options = Map("inferSchema" -> "true", "useNullForErrorCells" -> "false")
     )
-    val expected = spark.createDataFrame(expectedDataErrorsAsStringsInfer, expectedSchemaInfer)
+    val expected = createDataFrame(expectedDataErrorsAsStringsInfer.asScala.toSeq, expectedSchemaInfer)
     assertDataFrameEquals(expected, df)
   }
 
   test("errors in string format when useNullForErrorCells=true and inferSchema=false") {
-    val df = readFromResources(
-      spark,
-      path = "with_errors_all_types.xlsx",
-      options = Map("inferSchema" -> false, "useNullForErrorCells" -> true)
+    val df = readExcel(
+      path = ExcelTestUtils.resourcePath("/with_errors_all_types.xlsx"),
+      options = Map("inferSchema" -> "false", "useNullForErrorCells" -> "true")
     )
-    val expected = spark.createDataFrame(expectedDataErrorsAsNullNonInfer, expectedSchemaNonInfer)
+    val expected = createDataFrame(expectedDataErrorsAsNullNonInfer.asScala.toSeq, expectedSchemaNonInfer)
     assertDataFrameEquals(expected, df)
   }
 
   test("errors in string format when useNullForErrorCells=false and inferSchema=false") {
-    val df = readFromResources(
-      spark,
-      path = "with_errors_all_types.xlsx",
-      options = Map("inferSchema" -> false, "useNullForErrorCells" -> false)
+    val df = readExcel(
+      path = ExcelTestUtils.resourcePath("/with_errors_all_types.xlsx"),
+      options = Map("inferSchema" -> "false", "useNullForErrorCells" -> "false")
     )
-    val expected = spark
-      .createDataFrame(expectedDataErrorsAsStringsNonInfer, expectedSchemaNonInfer)
+    val expected = createDataFrame(expectedDataErrorsAsStringsNonInfer.asScala.toSeq, expectedSchemaNonInfer)
     assertDataFrameEquals(expected, df)
   }
-
 }
