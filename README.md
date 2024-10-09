@@ -243,6 +243,11 @@ This library is built with [Mill](https://github.com/com-lihaoyi/mill).
 To build a JAR file simply run e.g. `mill spark-excel[2.13.10,3.3.1].assembly` from the project root, where `2.13.10` is the Scala version and `3.3.1` the Spark version.
 To list all available combinations of Scala and Spark, run `mill resolve spark-excel[__]`.
 
+## Acknowledgements
+
+This project was originally developed at [crealytics](https://crealytics.com), an award-winning full-funnel digital marketing agency with over 15 years of experience crafting omnichannel media strategies for leading B2C and B2B businesses.
+We are grateful for their support in the initial development and open-sourcing of this library.
+
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=crealytics/spark-excel&type=Date)](https://star-history.com/#crealytics/spark-excel&Date)
